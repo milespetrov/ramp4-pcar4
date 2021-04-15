@@ -22,7 +22,7 @@
             </div>
         </template>
         <a
-            v-for="col in columnDefs.filter(c => c.headerName && c.headerName.length > 0)"
+            v-for="col in columnDefs.filter((c) => c.headerName && c.headerName.length > 0)"
             :key="col.headerName"
             v-on:click="
                 columnApi.setColumnVisible(col.field, col.hide);
@@ -46,7 +46,6 @@
 import { Vue, Watch, Component, Prop } from 'vue-property-decorator';
 import { Get, Sync, Call } from 'vuex-pathify';
 
-@Component
 export default class ColumnDropdown extends Vue {
     @Prop() columnDefs!: Array<Object>;
     @Prop() columnApi!: Object;

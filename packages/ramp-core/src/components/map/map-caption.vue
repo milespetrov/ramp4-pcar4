@@ -26,14 +26,13 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Watch, Prop, Inject } from 'vue-property-decorator';
+import { Vue, Watch, Prop, Inject } from 'vue-property-decorator';
 import { debounce } from 'debounce';
 import { ApiBundle, MapMove } from 'ramp-geoapi';
 import { GlobalEvents } from '@/api';
 
-@Component
 export default class MapCaptionV extends Vue {
-    isImperialScale: boolean = false;
+    isImperialScale = false;
 
     scale: { label: string; width: string } = { label: '0km', width: '0px' };
 
@@ -114,7 +113,7 @@ export default class MapCaptionV extends Vue {
 
         this.scale = {
             width: `${pixels}px`,
-            label: `${distance}${unit}`
+            label: `${distance}${unit}`,
         };
     }
 
@@ -131,7 +130,7 @@ export default class MapCaptionV extends Vue {
         const mapCursorPoint = this.$iApi.map.screenPointToMapPoint(screenX, screenY);
 
         // project from map co-ords to lat long.
-        RAMP.geoapi.utils.proj.projectGeometry(4326, mapCursorPoint).then((llPoint: any) => {
+        window.RAMP.geoapi.utils.proj.projectGeometry(4326, mapCursorPoint).then((llPoint: any) => {
             // update our private property
             const castPoint: ApiBundle.Point = llPoint;
             this.latLongCursor.lat = castPoint.y;

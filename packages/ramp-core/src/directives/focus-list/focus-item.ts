@@ -1,3 +1,5 @@
+import { Directive } from 'vue';
+
 const ITEM_ATTR = 'focus-item';
 
 /**
@@ -16,24 +18,20 @@ const ITEM_ATTR = 'focus-item';
  * </div>
  * ```
  */
-export const FocusItem: Vue.DirectiveOptions = {
-    bind(el: HTMLElement /*, binding: Vue.VNodeDirective , vnode: Vue.VNode */) {
+export const FocusItem: Directive = {
+    beforeMount(el: HTMLElement /*, binding: Vue.VNodeDirective , vnode: Vue.VNode */) {
         if (!el.hasAttribute('id')) {
             el.setAttribute('id', generateID());
         }
         // add the focus item attribute since the directive attribute will only stick around if its bound (i.e. :v-focus-item=...)
         el.toggleAttribute(ITEM_ATTR, true);
-    }
+    },
 };
 
 function generateID(): string {
     let newID;
     do {
-        newID =
-            'focus-item-' +
-            Math.random()
-                .toString(36)
-                .substring(2, 9);
+        newID = 'focus-item-' + Math.random().toString(36).substring(2, 9);
     } while (document.getElementById(newID) !== null);
 
     return newID;

@@ -4,8 +4,8 @@
             <zoom-nav-section class="mapnav-section bg-white-75 hover:bg-white"></zoom-nav-section>
             <span class="py-1"></span>
             <div class="mapnav-section bg-white-75 hover:bg-white">
-                <template v-for="(button, index) in visible">
-                    <component :is="button.id + '-nav-button'" :key="button.id + 'button'"></component>
+                <template v-for="(button, index) in visible" :key="button.id + 'button'">
+                    <component :is="button.id + '-nav-button'"></component>
                     <divider-nav class="mapnav-divider" v-if="index !== visible.length - 1" :key="button.id + 'spacer'"></divider-nav>
                 </template>
             </div>
@@ -14,26 +14,19 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Watch } from 'vue-property-decorator';
+import { Vue, Options, Watch } from 'vue-property-decorator';
 import { Get, Call } from 'vuex-pathify';
 
 import { GlobalEvents } from '@/api';
 
-import FullscreenNavV from './buttons/fullscreen-nav.vue';
-import HomeNavV from './buttons/home-nav.vue';
 import ZoomNavV from './buttons/zoom-nav.vue';
 import DividerNavV from './buttons/divider-nav.vue';
-import MapnavButtonV from './button.vue';
 
-Vue.component('fullscreen-nav-button', FullscreenNavV);
-Vue.component('home-nav-button', HomeNavV);
-Vue.component('mapnav-button', MapnavButtonV);
-
-@Component({
+@Options({
     components: {
         'divider-nav': DividerNavV,
-        'zoom-nav-section': ZoomNavV
-    }
+        'zoom-nav-section': ZoomNavV,
+    },
 })
 export default class MapNavV extends Vue {
     @Get('mapnav/visible') visible!: any[];

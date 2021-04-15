@@ -31,12 +31,11 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { Vue, Prop } from 'vue-property-decorator';
 import { Get, Sync, Call } from 'vuex-pathify';
 
 import { LegendStore } from './store';
 
-@Component
 export default class LegendHeaderV extends Vue {
     @Call(LegendStore.showAll) show!: () => void;
     @Call(LegendStore.hideAll) hide!: () => void;

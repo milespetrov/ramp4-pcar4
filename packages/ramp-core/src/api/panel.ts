@@ -33,9 +33,9 @@ export class PanelAPI extends APIScope {
 
             // merge `messages`, `dateTimeFormats` and  `numberFormats` into the global locale
             // ignore `sharedMessages` prop as it makes no sense to use it here
-            Object.entries(i18n.messages || {}).forEach(value => $i18n.mergeLocaleMessage(...value));
-            Object.entries(i18n.dateTimeFormats || {}).forEach(value => $i18n.mergeDateTimeFormat(...value));
-            Object.entries(i18n.numberFormats || {}).forEach(value => $i18n.mergeNumberFormat(...value));
+            Object.entries(i18n.messages || {}).forEach((value) => $i18n.global.mergeLocaleMessage(...value));
+            Object.entries(i18n.dateTimeFormats || {}).forEach((value) => $i18n.global.mergeDateTimeFormat(...value));
+            Object.entries(i18n.numberFormats || {}).forEach((value) => $i18n.global.mergeNumberFormat(...value));
         }
 
         // TODO: check if the panel with the same id already exist and don't create a new one
@@ -46,7 +46,7 @@ export class PanelAPI extends APIScope {
         }, []);
 
         // register all the panels with the store
-        panels.forEach(panel => this.$vApp.$store.set(`panel/${PanelMutation.REGISTER_PANEL}!`, { panel }));
+        panels.forEach((panel) => this.$vApp.$store.set(`panel/${PanelMutation.REGISTER_PANEL}!`, { panel }));
 
         // return either a single panel or a set of panels, depending on the function input
         if (panels.length === 1) {
@@ -91,7 +91,7 @@ export class PanelAPI extends APIScope {
      * @memberof PanelAPI
      */
     open(value: string | PanelInstance | PanelInstancePath): PanelInstance {
-        let panel: PanelInstance, screen: string | undefined, props: object | undefined;
+        let panel: PanelInstance, screen: string | undefined, props: Record<string, any> | undefined;
 
         // figure out what is passed to the function and retrieve the panel object
         if (typeof value === 'string' || value instanceof PanelInstance) {
@@ -187,7 +187,7 @@ export class PanelAPI extends APIScope {
 
         // if the panel is not currently pinned, and the `value` is not `true`, don't do anything,
         // as this might unintentionally unpin a different panel;
-        // say `panelA` is pinned and if the following is called `$iApi.panel.pin(panelB, false)`, it should do nothing
+        // say `panelA` is pinned and if the following is called `$iApi.panelAPI.pin(panelB, false)`, it should do nothing
         if (!panel.isPinned && !pin) {
             return panel;
         }
@@ -241,7 +241,7 @@ export class PanelAPI extends APIScope {
      * @returns {(PanelInstance | null)}
      * @memberof PanelAPI
      */
-    setStyle(value: string | PanelInstance, style: object, replace: boolean = false): PanelInstance | null {
+    setStyle(value: string | PanelInstance, style: Record<string, unknown>, replace = false): PanelInstance | null {
         const panel = this.get(value);
 
         this.$vApp.$store.set(`panel/items@${panel.id}.style`, replace ? style : { ...panel.style, ...style });
@@ -276,9 +276,9 @@ export type PanelConfigPair = { id: string; config: PanelConfig };
 export type PanelInstanceSet = { [name: string]: PanelInstance };
 
 /**
- * A path specifying panel id, screen id, and any props for that panel screen. Used when opening a panel through `$iApi.panel.open(...)`.
+ * A path specifying panel id, screen id, and any props for that panel screen. Used when opening a panel through `$iApi.panelAPI.open(...)`.
  */
-export type PanelInstancePath = { id: string; screen?: string; props?: object };
+export type PanelInstancePath = { id: string; screen?: string; props?: Record<string, unknown> };
 
 /**
  * A set of common registration options to apply to panels being registered.

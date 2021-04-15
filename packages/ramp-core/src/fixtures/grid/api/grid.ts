@@ -21,9 +21,9 @@ export class GridAPI extends FixtureInstance {
                 state: new TableStateManager({
                     table: {
                         showFilter: true,
-                        filterByExtent: false
-                    }
-                })
+                        filterByExtent: false,
+                    },
+                }),
             };
 
             this.$vApp.$store.set('grid/addGrid!', gridSettings);
@@ -32,7 +32,7 @@ export class GridAPI extends FixtureInstance {
         const prevUid = this.$vApp.$store.get('grid/currentUid', uid ? uid : null);
         this.$vApp.$store.set('grid/currentUid', uid ? uid : null);
 
-        const panel = this.$iApi.panel.get('grid-panel');
+        const panel = this.$iApi.panelAPI.get('grid-panel');
 
         if (open === false) {
             // force close
@@ -41,7 +41,7 @@ export class GridAPI extends FixtureInstance {
         }
 
         if (!panel.isOpen) {
-            this.$iApi.panel.open('grid-panel');
+            this.$iApi.panelAPI.open('grid-panel');
         } else if (prevUid !== uid || open === true) {
             // don't toggle off if different layer or force open, use key prop to force rerender
             panel.show({ screen: 'grid-screen', props: { key: uid } });

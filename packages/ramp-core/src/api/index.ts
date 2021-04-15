@@ -1,15 +1,9 @@
-import Vue from 'vue';
 import GapiLoader, { GeoApi, ApiBundle as GeoApiBundle } from 'ramp-geoapi';
-
 import { InstanceAPI, AppVersion } from './internal';
-import mixin from './mixin';
 
 export * from './internal';
 
 declare const __VERSION__: AppVersion;
-
-// install/register mixin plugin with Vue, so it's available on all Vue instances
-Vue.use(mixin);
 
 export interface RampGeo {
     Extent: typeof GeoApiBundle.Extent;
@@ -66,7 +60,7 @@ gapiPromise.then((gapi: GeoApi) => {
         PointStyleOptions: GeoApiBundle.PointStyleOptions,
         Polygon: GeoApiBundle.Polygon,
         PolygonStyleOptions: GeoApiBundle.PolygonStyleOptions,
-        SpatialReference: GeoApiBundle.SpatialReference
+        SpatialReference: GeoApiBundle.SpatialReference,
     };
 });
 
@@ -88,7 +82,7 @@ const api: APIInterface = {
         }
 
         return rampgeo;
-    }
+    },
 };
 
 // export `InstanceApi` as `Instance` on global RAMP interface

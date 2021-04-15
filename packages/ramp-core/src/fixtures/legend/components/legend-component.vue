@@ -3,7 +3,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { Vue, Prop } from 'vue-property-decorator';
 import { Get, Sync, Call } from 'vuex-pathify';
 
 import { LegendStore } from '../store';
@@ -14,7 +14,6 @@ import LegendGroupV from './legend-group.vue';
 import LegendVisibilitySetV from './legend-visibility-set.vue';
 import LegendPlaceholderV from './legend-placeholder.vue';
 
-@Component
 export default class LegendComponentV extends Vue {
     @Prop() legendItem!: LegendItem;
     @Prop() props!: any;
@@ -24,7 +23,7 @@ export default class LegendComponentV extends Vue {
         VisibilitySet: LegendVisibilitySetV,
         LegendGroup: LegendGroupV,
         LegendEntry: LayerEntryV,
-        Placeholder: LegendPlaceholderV
+        Placeholder: LegendPlaceholderV,
     };
 }
 </script>

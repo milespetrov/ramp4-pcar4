@@ -15,17 +15,17 @@ class BasemapFixture extends BasemapAPI {
 
         this.$vApp.$store.registerModule('basemap', basemap());
 
-        this.$iApi.panel.register(
+        this.$iApi.panelAPI.register(
             {
                 id: 'basemap-panel',
                 config: {
-                    screens: { 'basemap-component': BasemapComponent }
-                }
+                    screens: { 'basemap-component': BasemapComponent },
+                },
             },
             { i18n: { messages } }
         );
 
-        this.$iApi.panel.open('basemap-panel');
+        this.$iApi.panelAPI.open('basemap-panel');
     }
 
     removed() {

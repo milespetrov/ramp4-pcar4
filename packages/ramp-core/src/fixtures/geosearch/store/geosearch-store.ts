@@ -36,7 +36,7 @@ const getters = {
         // sort the type filters in alphabetical order
         types.sort((typeA: any, typeB: any) => (typeA.name > typeB.name ? 1 : -1));
         return types;
-    }
+    },
 };
 
 const mutations = {
@@ -48,7 +48,7 @@ const mutations = {
     },
     SET_EXTENT: (state: GeosearchState, extent: any) => {
         state.queryParams.extent = extent;
-    }
+    },
 };
 
 const actions = {
@@ -57,7 +57,7 @@ const actions = {
      *
      * @function runQuery
      */
-    runQuery: function(context: GeosearchContext): void {
+    runQuery: function (context: GeosearchContext): void {
         // set loading flag to true and turn off when reach return
         context.commit('SET_LOADING_RESULTS', true);
         // when no search value is specified
@@ -74,13 +74,13 @@ const actions = {
                     context.commit('SET_SAVED_RESULTS', data);
 
                     // replace old saved results
-                    let filteredData = filter(context.state.resultsVisible, context.state.queryParams, context.state.savedResults);
+                    const filteredData = filter(context.state.resultsVisible, context.state.queryParams, context.state.savedResults);
                     context.commit('SET_SEARCH_RESULTS', filteredData || []);
                     context.commit('SET_LOADING_RESULTS', false);
                 });
             } else {
                 // otherwise no new search term so we only need to filter on query param values
-                let filteredData = filter(context.state.resultsVisible, context.state.queryParams, context.state.savedResults);
+                const filteredData = filter(context.state.resultsVisible, context.state.queryParams, context.state.savedResults);
                 context.commit('SET_SEARCH_RESULTS', filteredData || []);
                 context.commit('SET_LOADING_RESULTS', false);
             }
@@ -92,7 +92,7 @@ const actions = {
      * @function setProvince
      * @param   {string}    province   the province code all results must be in
      */
-    setProvince: function(context: GeosearchContext, province: string): void {
+    setProvince: function (context: GeosearchContext, province: string): void {
         context.commit('SET_PROVINCE', typeof province === 'undefined' ? '' : province);
         // run query after province filter changes
         context.dispatch('runQuery');
@@ -103,7 +103,7 @@ const actions = {
      * @function setType
      * @param   {string}    type   the type code all results must have
      */
-    setType: function(context: GeosearchContext, type: string): void {
+    setType: function (context: GeosearchContext, type: string): void {
         context.commit('SET_TYPE', typeof type === 'undefined' ? '' : type);
         // run query after type filter changes
         context.dispatch('runQuery');
@@ -114,7 +114,7 @@ const actions = {
      * @function setSearchTerm
      * @param   {string}    searchTerm  current geosearch search value term
      */
-    setSearchTerm: function(context: GeosearchContext, searchTerm: any): void {
+    setSearchTerm: function (context: GeosearchContext, searchTerm: any): void {
         context.commit('SET_LAST_SEARCH_VAL', context.state.searchVal);
         context.commit('SET_SEARCH_VAL', searchTerm);
         // run query after search term changes
@@ -126,7 +126,7 @@ const actions = {
      * @function setMapExtent
      * @param   {any}    mapExtent   current map extent info
      */
-    setMapExtent: function(context: GeosearchContext, mapExtent: any): void {
+    setMapExtent: function (context: GeosearchContext, mapExtent: any): void {
         // if results should be filtered by current map view
         if (mapExtent.visible !== undefined) {
             context.commit('SET_RESULTS_VISIBLE', mapExtent.visible);
@@ -137,7 +137,7 @@ const actions = {
             // run query after toggling map extent filters
             context.dispatch('runQuery');
         });
-    }
+    },
 };
 
 /**
@@ -152,7 +152,7 @@ function filter(visibleOnly: boolean, queryParams: any, data: Array<any>) {
     if (visibleOnly && queryParams.extent) {
         // ensure bbox boundaries are within the current map extent properties
         data = data.filter(
-            r =>
+            (r) =>
                 r.bbox[0] <= queryParams.extent.xmax &&
                 r.bbox[1] <= queryParams.extent.ymax &&
                 r.bbox[2] >= queryParams.extent.xmin &&
@@ -160,10 +160,10 @@ function filter(visibleOnly: boolean, queryParams: any, data: Array<any>) {
         );
     }
     if (queryParams.province && queryParams.province !== '...') {
-        data = data.filter(r => r.location.province.name && r.location.province.name === queryParams.province);
+        data = data.filter((r) => r.location.province.name && r.location.province.name === queryParams.province);
     }
     if (queryParams.type && queryParams.type !== '...') {
-        data = data.filter(r => r.type === queryParams.type);
+        data = data.filter((r) => r.type === queryParams.type);
     }
     return data;
 }
@@ -216,7 +216,7 @@ export enum GeosearchStore {
     /**
      * (Action) setMapExtent: (mapExtent: any)
      */
-    setMapExtent = 'geosearch/setMapExtent'
+    setMapExtent = 'geosearch/setMapExtent',
 }
 
 export function geosearch() {
@@ -227,6 +227,6 @@ export function geosearch() {
         state,
         getters: { ...getters },
         actions: { ...actions, ...make.actions(state) },
-        mutations: { ...mutations, ...make.mutations(state) }
+        mutations: { ...mutations, ...make.mutations(state) },
     };
 }

@@ -15,16 +15,10 @@
 </template>
 
 <script lang="ts">
-import { Vue, Watch, Component } from 'vue-property-decorator';
+import { Vue } from 'vue-property-decorator';
 import { Get, Sync, Call } from 'vuex-pathify';
 import { AppbarItemInstance } from './store';
-import DividerV from './divider.vue';
-import AppbarButtonV from './button.vue';
 
-Vue.component('divider', DividerV);
-Vue.component('appbar-button', AppbarButtonV);
-
-@Component
 export default class AppbarV extends Vue {
     @Get('appbar/visible') items!: AppbarItemInstance[];
 }

@@ -9,9 +9,7 @@
         <template #content>
             <div class="flex justify-center">
                 <!-- Loading Screen -->
-                <div v-if="state.status == 'loading'" class="flex flex-col justify-center text-center">
-                    Loading...
-                </div>
+                <div v-if="state.status == 'loading'" class="flex flex-col justify-center text-center">Loading...</div>
 
                 <!-- Found Screen, XML -->
                 <div v-else-if="payload.type === 'xml' && state.status == 'success'" class="flex flex-col justify-center"></div>
@@ -35,7 +33,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { Vue, Prop } from 'vue-property-decorator';
 import { Get, Sync, Call } from 'vuex-pathify';
 
 import { PanelInstance } from '@/api';
@@ -44,14 +42,13 @@ import { MetadataPayload, MetadataResult, MetadataState } from './definitions';
 import XSLT_en from './files/xstyle_default_en.xsl';
 import XSLT_fr from './files/xstyle_default_fr.xsl';
 
-@Component
 export default class MetadataV extends Vue {
     @Prop() panel!: PanelInstance;
     @Prop() payload!: MetadataPayload;
 
     state: MetadataState = {
         status: 'loading',
-        response: null
+        response: null,
     };
 
     cache: { [id: string]: string } = {};
@@ -59,7 +56,7 @@ export default class MetadataV extends Vue {
     mounted() {
         if (this.payload.type === 'xml') {
             // This site prevents CORS errors. Helpful for testing purposes.
-            this.loadFromURL('https://cors-anywhere.herokuapp.com/' + this.payload.url, []).then(r => {
+            this.loadFromURL('https://cors-anywhere.herokuapp.com/' + this.payload.url, []).then((r) => {
                 this.state.status = 'success';
 
                 // Append the content to the panel.
@@ -68,7 +65,7 @@ export default class MetadataV extends Vue {
                 }
             });
         } else if (this.payload.type === 'html') {
-            this.requestContent('https://cors-anywhere.herokuapp.com/' + this.payload.url).then(r => {
+            this.requestContent('https://cors-anywhere.herokuapp.com/' + this.payload.url).then((r) => {
                 this.state.status = 'success';
                 this.state.response = (r as MetadataResult).response;
             });
@@ -90,7 +87,7 @@ export default class MetadataV extends Vue {
         XSLT = XSLT.replace(/\{\{([\w.]+)\}\}/g, (_: string, tag: string) => this.$t(tag));
 
         if (!this.cache[xmlUrl]) {
-            return this.requestContent(xmlUrl).then(xmlData => {
+            return this.requestContent(xmlUrl).then((xmlData) => {
                 this.cache[xmlUrl] = (xmlData as MetadataResult).response;
                 return this.applyXSLT(this.cache[xmlUrl], XSLT, params);
             });
@@ -121,7 +118,7 @@ export default class MetadataV extends Vue {
             xsltProc.importStylesheet(xslDoc);
             // [patched from ECDMP] Add parameters to xsl document (setParameter = Chrome/FF/Others)
             if (params) {
-                params.forEach(p => xsltProc.setParameter('', p.key, p.value || ''));
+                params.forEach((p) => xsltProc.setParameter('', p.key, p.value || ''));
             }
             output = xsltProc.transformToFragment(xmlDoc, document);
         } else if (window.hasOwnProperty('ActiveXObject')) {

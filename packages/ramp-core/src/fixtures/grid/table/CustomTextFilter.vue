@@ -13,7 +13,6 @@
 <script lang="ts">
 import { Vue, Watch, Component, Prop } from 'vue-property-decorator';
 
-@Component
 export default class CustomTextFilter extends Vue {
     beforeMount() {
         // Load previously stored value (if saved in table state manager)
@@ -30,7 +29,7 @@ export default class CustomTextFilter extends Vue {
             instance.setModel({
                 filterType: 'text',
                 type: 'contains',
-                filter: this.filterValue
+                filter: this.filterValue,
             });
 
             // Save the new filter value in the state manager. Allows for quick recovery if the grid is
@@ -51,7 +50,7 @@ export default class CustomTextFilter extends Vue {
         return {
             filterType: 'text',
             type: 'contains',
-            filter: this.filterValue
+            filter: this.filterValue,
         };
     }
 }

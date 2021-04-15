@@ -1,4 +1,4 @@
-import Vue, { Component, VueConstructor } from 'vue';
+import Vue, { Component } from 'vue';
 
 import { APIScope, InstanceAPI, isVueConstructor, isComponentOptions, isTypeofImportVue } from './internal';
 
@@ -8,7 +8,7 @@ import {
     PanelConfigScreens,
     PanelConfigStyle,
     AsyncComponentFactoryEh,
-    AsyncComponentEh
+    AsyncComponentEh,
 } from '@/store/modules/panel';
 
 import ScreenSpinnerV from '@/components/panel-stack/screen-spinner.vue';
@@ -61,7 +61,7 @@ export class PanelInstance extends APIScope {
     registerScreen(id: string): void {
         const screen = this.screens[id];
 
-        let payload: AsyncComponentFactoryEh | VueConstructor | Component;
+        let payload: AsyncComponentFactoryEh | Component;
 
         // the `screen` value can be either a `string` component file path, an component `object`, a component constructor function, or an `AsynComponentFunction`
         // - `object` or `VueConstructor` => use as is as all the component code is already loaded
@@ -84,14 +84,14 @@ export class PanelInstance extends APIScope {
 
             // for async components, wait until they are resolved and patch in panel's i18n messages
             const component = new Promise<Component>((resolve, reject) => {
-                asyncComponent.then(data => {
+                asyncComponent.then((data) => {
                     // wait until the component promise is resolved and mark it as loaded
                     this.loadedScreens.push(id);
 
                     // if data is a `*.vue` file, use its `default` export
                     resolve(isTypeofImportVue(data) ? data.default : data);
                 });
-                asyncComponent.catch(error => reject(error));
+                asyncComponent.catch((error) => reject(error));
             });
 
             payload = () => ({
@@ -103,7 +103,7 @@ export class PanelInstance extends APIScope {
                 // TODO: add error component
                 // error: ErrorComponent,
                 // Delay before showing the loading component. Default: 200ms.
-                delay: 200
+                delay: 200,
                 // The error component will be displayed if a timeout is
                 // provided and exceeded. Default: Infinity.
                 // TODO: restore the error timeout
@@ -111,7 +111,7 @@ export class PanelInstance extends APIScope {
             });
         }
 
-        Vue.component(id, payload);
+        this.$iApi.$vApp.component(id, payload);
     }
 
     /**
@@ -186,13 +186,13 @@ export class PanelInstance extends APIScope {
      * @returns {this}
      * @memberof PanelInstance
      */
-    open(value?: string | { screen: string; props?: object }): this {
+    open(value?: string | { screen: string; props?: Record<string, unknown> }): this {
         if (typeof value === 'undefined') {
             // if no screen id is provided, open the panel using the default value
-            this.$iApi.panel.open(this);
+            this.$iApi.panelAPI.open(this);
         } else {
             // pass the screen id and props, if given, to the `open` function
-            this.$iApi.panel.open({ id: this.id, ...(typeof value === 'string' ? { screen: value } : value) });
+            this.$iApi.panelAPI.open({ id: this.id, ...(typeof value === 'string' ? { screen: value } : value) });
         }
 
         return this;
@@ -206,7 +206,7 @@ export class PanelInstance extends APIScope {
      * @memberof PanelInstance
      */
     get isOpen(): boolean {
-        return this.$iApi.panel.opened.indexOf(this) !== -1;
+        return this.$iApi.panelAPI.opened.indexOf(this) !== -1;
     }
 
     /**
@@ -217,7 +217,7 @@ export class PanelInstance extends APIScope {
      * @memberof PanelInstance
      */
     close(): this {
-        this.$iApi.panel.close(this);
+        this.$iApi.panelAPI.close(this);
 
         return this;
     }
@@ -230,18 +230,18 @@ export class PanelInstance extends APIScope {
      * @returns {this}
      * @memberof PanelInstance
      */
-    toggle(value?: boolean | { screen: string; props?: object; toggle?: boolean }): this {
+    toggle(value?: boolean | { screen: string; props?: Record<string, unknown>; toggle?: boolean }): this {
         // toggle panel if no value provided, force toggle panel if value specified, or toggle panel on specified screen if provided
         // ensure that a toggle value must be provided to panel API toggle if called
         if (typeof value === 'undefined') {
-            this.$iApi.panel.toggle(this, !this.isOpen);
+            this.$iApi.panelAPI.toggle(this, !this.isOpen);
         } else if (typeof value === 'boolean') {
             // only call forced toggle if it is possible to do so
             if (value !== this.isOpen) {
-                this.$iApi.panel.toggle(this, value);
+                this.$iApi.panelAPI.toggle(this, value);
             }
         } else {
-            this.$iApi.panel.toggle(
+            this.$iApi.panelAPI.toggle(
                 { id: this.id, screen: value.screen, props: value.props },
                 typeof value.toggle !== 'undefined' ? value.toggle : !this.isOpen
             );
@@ -264,7 +264,7 @@ export class PanelInstance extends APIScope {
         value = typeof value !== 'undefined' ? value : !this.isPinned;
 
         // TODO: change to toggle the pin status
-        this.$iApi.panel.pin(this, value);
+        this.$iApi.panelAPI.pin(this, value);
 
         return this;
     }
@@ -277,7 +277,7 @@ export class PanelInstance extends APIScope {
      * @memberof PanelInstance
      */
     get isPinned(): boolean {
-        return this.$iApi.panel.pinned !== null && this.$iApi.panel.pinned.id === this.id;
+        return this.$iApi.panelAPI.pinned !== null && this.$iApi.panelAPI.pinned.id === this.id;
     }
 
     /**
@@ -291,7 +291,7 @@ export class PanelInstance extends APIScope {
     show(value: string | PanelConfigRoute): this {
         const route = typeof value === 'string' ? { screen: value } : value;
 
-        this.$iApi.panel.show(this, route);
+        this.$iApi.panelAPI.show(this, route);
 
         return this;
     }
@@ -305,8 +305,8 @@ export class PanelInstance extends APIScope {
      * @returns {this}
      * @memberof PanelInstance
      */
-    setStyles(style: object, replace: boolean = false): this {
-        this.$iApi.panel.setStyle(this, style, replace);
+    setStyles(style: Record<string, unknown>, replace = false): this {
+        this.$iApi.panelAPI.setStyle(this, style, replace);
 
         return this;
     }

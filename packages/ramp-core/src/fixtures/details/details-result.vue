@@ -26,7 +26,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { Vue, Prop } from 'vue-property-decorator';
 import { Get, Sync, Call } from 'vuex-pathify';
 import { DetailsStore } from './store';
 
@@ -34,7 +34,6 @@ import { PanelInstance } from '@/api';
 import { IdentifyResult } from 'ramp-geoapi';
 import BaseLayer from 'ramp-geoapi/dist/layer/BaseLayer';
 
-@Component({})
 export default class DetailsResultV extends Vue {
     @Prop() panel!: PanelInstance;
     @Prop() resultIndex!: number;
@@ -53,7 +52,7 @@ export default class DetailsResultV extends Vue {
 
     /**
      * Updates the value of icon[idx] with the svg string of the item.
-     * 
+     *
      * @param {any} data data of item in identifyResult.items
      * @param {number} idx index of item in identifyResult.items
      */
@@ -65,7 +64,10 @@ export default class DetailsResultV extends Vue {
             return;
         }
         const oidField = layer.getOidField(uid);
-        layer.getIcon(data[oidField], uid).then(value => {if (this.icon[idx] !== value) this.$set(this.icon, idx, value)});
+        layer.getIcon(data[oidField], uid).then((value) => {
+            // TODO: this.$set doesn't exist
+            // if (this.icon[idx] !== value) this.$set(this.icon, idx, value);
+        });
     }
 
     /**

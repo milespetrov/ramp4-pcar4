@@ -19,7 +19,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { Vue, Options, Prop } from 'vue-property-decorator';
 import { Get, Sync, Call } from 'vuex-pathify';
 import { PanelInstance } from '@/api';
 
@@ -28,11 +28,11 @@ import { LegendItem } from './store/legend-defs';
 import LegendHeaderV from './legend-header.vue';
 import LegendComponentV from './components/legend-component.vue';
 
-@Component({
+@Options({
     components: {
         'legend-header': LegendHeaderV,
-        'legend-component': LegendComponentV
-    }
+        'legend-component': LegendComponentV,
+    },
 })
 export default class LegendV extends Vue {
     @Prop() panel!: PanelInstance;

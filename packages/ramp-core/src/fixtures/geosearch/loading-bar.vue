@@ -9,9 +9,8 @@
 </template>
 
 <script>
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { Vue, Prop } from 'vue-property-decorator';
 
-@Component
 export default class LoadingBar extends Vue {}
 </script>
 

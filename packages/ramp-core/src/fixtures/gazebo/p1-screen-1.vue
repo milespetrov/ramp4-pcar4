@@ -1,8 +1,6 @@
 <template>
     <panel-screen :panel="panel">
-        <template #header>
-            Gazebo/Panel 1/Screen A
-        </template>
+        <template #header> Gazebo/Panel 1/Screen A </template>
 
         <template #controls>
             <div class="flex">
@@ -30,13 +28,12 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { Vue, Prop } from 'vue-property-decorator';
 import { Get, Sync, Call } from 'vuex-pathify';
 
 import { PanelConfigRoute } from '@/store/modules/panel';
 import { PanelInstance } from '../../api';
 
-@Component
 export default class P1Screen1V extends Vue {
     // ❌ this is a horrible way, don't do that! this is directly tapping into the store and two-way binds `route` property fro a specific panel
     // this will work, but all possible interactions should go through the API, because the store implementation might change and this will break
@@ -46,7 +43,7 @@ export default class P1Screen1V extends Vue {
     // ❌ also don't do this for the reasons above 👇
     @Sync('panel/pinned') pinned!: PanelInstance | null;
 
-    url: string = 'https://i2.wp.com/freepngimages.com/wp-content/uploads/2017/08/wooden-garden-gazebo.png?w=860';
+    url = 'https://i2.wp.com/freepngimages.com/wp-content/uploads/2017/08/wooden-garden-gazebo.png?w=860';
 
     pinPanel(): void {
         // this is fine, but the name of the panel is hardcoded there, so you wouldn't need to update it if it ever changes

@@ -1,14 +1,13 @@
 <template>
     <div>
-        <input class="rv-min" style="width: 45%;" type="text" v-model="minVal" @keyup="minValChanged()" placeholder="min" />
-        <input class="rv-max" style="width: 45%;" type="text" v-model="maxVal" @keyup="maxValChanged()" placeholder="max" />
+        <input class="rv-min" style="width: 45%" type="text" v-model="minVal" @keyup="minValChanged()" placeholder="min" />
+        <input class="rv-max" style="width: 45%" type="text" v-model="maxVal" @keyup="maxValChanged()" placeholder="max" />
     </div>
 </template>
 
 <script lang="ts">
 import { Vue, Watch, Component, Prop } from 'vue-property-decorator';
 
-@Component
 export default class CustomNumberFilter extends Vue {
     beforeMount() {
         // Load previously stored values (if saved in table state manager)
@@ -54,7 +53,7 @@ export default class CustomNumberFilter extends Vue {
                 filterType: 'number',
                 type: 'inRange',
                 filter: this.minVal,
-                filterTo: this.maxVal
+                filterTo: this.maxVal,
             });
         } else if (this.minVal === '') {
             // If only the maximum value is set, set the filter to display all items
@@ -62,7 +61,7 @@ export default class CustomNumberFilter extends Vue {
             instance.setModel({
                 filterType: 'number',
                 type: 'lessThanOrEqual',
-                filter: this.maxVal
+                filter: this.maxVal,
             });
         } else if (this.maxVal === '') {
             // If only the minimum value is set, set the filter to display all items
@@ -70,7 +69,7 @@ export default class CustomNumberFilter extends Vue {
             instance.setModel({
                 filterType: 'number',
                 type: 'greaterThanOrEqual',
-                filter: this.minVal
+                filter: this.minVal,
             });
         } else {
             // Clear the filter if neither value is set.
@@ -91,7 +90,7 @@ export default class CustomNumberFilter extends Vue {
             filterType: 'number',
             type: 'inRange',
             filter: this.minVal,
-            filterTo: this.maxVal
+            filterTo: this.maxVal,
         };
     }
 }

@@ -18,12 +18,12 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { Vue, Options, Prop } from 'vue-property-decorator';
 import { Get, Sync, Call } from 'vuex-pathify';
 import { ToggleButton } from 'vue-js-toggle-button';
 
-@Component({
-    components: { 'toggle-button': ToggleButton }
+@Options({
+    components: { 'toggle-button': ToggleButton },
 })
 export default class ToggleSwitchControl extends Vue {
     @Prop() config: any;

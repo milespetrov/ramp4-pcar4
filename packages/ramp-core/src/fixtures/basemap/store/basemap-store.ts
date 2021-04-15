@@ -1,4 +1,4 @@
-import { ActionContext } from 'vuex';
+import { ActionContext, Module } from 'vuex';
 import { make } from 'vuex-pathify';
 
 import { BasemapState } from './basemap-state';
@@ -16,10 +16,10 @@ const actions = {
      *
      * @function selectBasemap
      */
-    selectBasemap: function(context: BasemapContext, basemap: any): void {
+    selectBasemap: function (context: BasemapContext, basemap: any): void {
         // TODO: reloading map with new basemap projection
         context.commit('SET_SELECTED_BASEMAP', basemap);
-    }
+    },
 };
 
 export enum BasemapStore {
@@ -38,10 +38,10 @@ export enum BasemapStore {
     /**
      * (Action) selectBasemap: () => void
      */
-    selectBasemap = 'basemap/selectBasemap'
+    selectBasemap = 'basemap/selectBasemap',
 }
 
-export function basemap() {
+export function basemap(): Module<typeof state, any> {
     const state = new BasemapState();
 
     return {
@@ -49,6 +49,6 @@ export function basemap() {
         state,
         getters: { ...getters },
         actions: { ...actions, ...make.actions(state) },
-        mutations: { ...mutations, ...make.mutations(state) }
+        mutations: { ...mutations, ...make.mutations(state) },
     };
 }

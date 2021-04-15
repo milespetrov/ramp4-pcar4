@@ -11,19 +11,18 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
-import { Get, Sync, Call } from 'vuex-pathify';
+import { Vue, Options } from 'vue-property-decorator';
 
 import EsriMap from '@/components/map/esri-map.vue';
 import PanelStackV from '@/components/panel-stack/panel-stack.vue';
 import MapCaptionV from '@/components/map/map-caption.vue';
 
-@Component({
+@Options({
     components: {
         EsriMap,
         'panel-stack': PanelStackV,
-        'map-caption': MapCaptionV
-    }
+        'map-caption': MapCaptionV,
+    },
 })
 export default class Shell extends Vue {}
 </script>

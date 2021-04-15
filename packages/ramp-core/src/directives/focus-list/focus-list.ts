@@ -1,3 +1,5 @@
+import { Directive, DirectiveBinding } from 'vue';
+
 enum KEYS {
     ArrowDown = 'ArrowDown',
     ArrowDownIE = 'Down',
@@ -10,7 +12,7 @@ enum KEYS {
     Escape = 'Escape',
     EscapeIE = 'Esc',
     Enter = 'Enter',
-    Space = ' '
+    Space = ' ',
 }
 
 const LIST_ATTR = 'focus-list';
@@ -36,8 +38,8 @@ const TABBABLE_TAGS = `button,input,select,a,textarea,[contenteditable],[${LIST_
  * </div>
  * ```
  */
-export const FocusList: Vue.DirectiveOptions = {
-    bind(el: HTMLElement, binding: Vue.VNodeDirective /*, vnode: Vue.VNode */) {
+export const FocusList: Directive = {
+    beforeMount(el: HTMLElement, binding: DirectiveBinding /*, vnode: Vue.VNode */) {
         // make it tabbable if it isn't
         // NOTE: +<string> = the string as a number, +<null> = 0
         if (+el.getAttribute('tabindex')! <= 0) {
@@ -50,9 +52,9 @@ export const FocusList: Vue.DirectiveOptions = {
         // before the element is on screen and populated, etc. etc.
         new FocusListManager(el, binding.value);
     },
-    componentUpdated(el: HTMLElement) {
+    updated(el: HTMLElement) {
         syncTabIndex(el);
-    }
+    },
 };
 
 /**
@@ -61,7 +63,7 @@ export const FocusList: Vue.DirectiveOptions = {
  * @param {Element} element the element containing the tabbable items
  */
 function syncTabIndex(element: HTMLElement) {
-    let tabbable = element.querySelectorAll(TABBABLE_TAGS);
+    const tabbable = element.querySelectorAll(TABBABLE_TAGS);
     //const tempFocusManager = this;
     tabbable.forEach((el: Element) => {
         // make sure its not part of a sub-list
@@ -108,15 +110,14 @@ class FocusListManager {
         // remove the ability to tab to sub-items
         this.setTabIndex(-1);
 
-        const focusManager = this;
-        element.addEventListener('keydown', function(event: KeyboardEvent) {
-            focusManager.onKeydown(event);
+        element.addEventListener('keydown', function (event: KeyboardEvent) {
+            this.onkeydown && this.onkeydown(event);
         });
-        element.addEventListener('click', function(event: MouseEvent) {
-            focusManager.onClick(event);
+        element.addEventListener('click', function (event: MouseEvent) {
+            this.onclick && this.onclick(event);
         });
-        element.addEventListener('focus', function(event: FocusEvent) {
-            focusManager.onFocus();
+        element.addEventListener('focus', function (event: FocusEvent) {
+            this.onfocus && this.onfocus(event);
         });
     }
 
@@ -127,7 +128,7 @@ class FocusListManager {
      * @param {Element} focusItem the element containing the tabbable items, defaults to the focus list
      */
     setTabIndex(value: number, focusItem: Element = this.element) {
-        let tabbable = focusItem.querySelectorAll(TABBABLE_TAGS);
+        const tabbable = focusItem.querySelectorAll(TABBABLE_TAGS);
         tabbable.forEach((el: Element) => {
             // set tab index if not under a sublist OR it is under a `.focused` item of a sublist
             // always set tabindex to -1 if wanted (if focus moves away from an item you want sublists to all be untabbable as well)
@@ -178,7 +179,7 @@ class FocusListManager {
      * @param {HTMLElement[]}listOfItems The list of items being moved through
      * @param {boolean} reverse true iff the highlight should move back one spot
      */
-    shiftHighlight(listOfItems: HTMLElement[], reverse: boolean = false) {
+    shiftHighlight(listOfItems: HTMLElement[], reverse = false) {
         this.defocusItem(this.highlightedItem);
         if (reverse) {
             // if the main element is highlighted, move it to the last sub-item
@@ -186,7 +187,7 @@ class FocusListManager {
             if (this.highlightedItem === this.element) {
                 this.highlightedItem = listOfItems[listOfItems.length - 1];
             } else {
-                let index = Array.prototype.indexOf.call(listOfItems, this.highlightedItem);
+                const index = Array.prototype.indexOf.call(listOfItems, this.highlightedItem);
                 this.highlightedItem = listOfItems[index - 1] || listOfItems[listOfItems.length - 1];
             }
         } else {
@@ -195,7 +196,7 @@ class FocusListManager {
             if (this.highlightedItem === this.element) {
                 this.highlightedItem = listOfItems[0];
             } else {
-                let index = Array.prototype.indexOf.call(listOfItems, this.highlightedItem);
+                const index = Array.prototype.indexOf.call(listOfItems, this.highlightedItem);
                 this.highlightedItem = listOfItems[index + 1] || listOfItems[0];
             }
         }
@@ -210,9 +211,8 @@ class FocusListManager {
      * @param {KeyboardEvent} event keydown event
      */
     onKeydown(event: KeyboardEvent) {
-        const tempFocusManager = this;
         const listOfItems: HTMLElement[] = Array.prototype.filter.call(this.element.querySelectorAll(`[${ITEM_ATTR}]`), (el: Element) => {
-            return el.closest(`[${LIST_ATTR}]`) === tempFocusManager.element;
+            return el.closest(`[${LIST_ATTR}]`) === this.element;
         });
 
         if (listOfItems.length === 0) {

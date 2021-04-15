@@ -39,12 +39,11 @@
 </template>
 
 <script lang="ts">
-import { Vue, Prop, Component } from 'vue-property-decorator';
+import { Vue, Prop } from 'vue-property-decorator';
 import { Get, Sync, Call } from 'vuex-pathify';
 
 import { BasemapStore } from './store';
 
-@Component
 export default class BasemapItem extends Vue {
     @Prop() basemap!: any;
     @Get(BasemapStore.selectedBasemap) selectedBasemap!: any;

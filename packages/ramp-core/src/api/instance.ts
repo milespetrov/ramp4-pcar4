@@ -1,25 +1,61 @@
-import Vue, { VueConstructor } from 'vue';
+import { createApp, ComponentPublicInstance, DefineComponent } from 'vue';
 import { RampMap } from 'ramp-geoapi';
 import { RampConfigs } from '@/types';
-import { Store } from 'vuex';
 import { i18n } from '@/lang';
 import screenfull from 'screenfull';
 
-import App from '@/app.vue';
-import { createStore, RootState } from '@/store';
+import { createStore, Store } from '@/store';
 import { ConfigStore } from '@/store/modules/config';
 
 import { FixtureAPI, PanelAPI, GlobalEvents, EventAPI } from './internal';
 import { MapAPI } from './map';
+
+import { FocusList, FocusItem } from '@/directives/focus-list';
+import TooltipV from '@/components/util/tooltip.vue';
+
+import PanelScreenV from '@/components/panel-stack/panel-screen.vue';
+import PinV from '@/components/panel-stack/controls/pin.vue';
+import CloseV from '@/components/panel-stack/controls/close.vue';
+import BackV from '@/components/panel-stack/controls/back.vue';
+import PanelOptionsMenuV from '@/components/panel-stack/controls/panel-options-menu.vue';
+import DropdownMenuV from '@/components/controls/dropdown-menu.vue';
+import FullscreenNavV from '@/fixtures/mapnav/buttons/fullscreen-nav.vue';
+import HomeNavV from '@/fixtures/mapnav/buttons/home-nav.vue';
+import MapnavButtonV from '@/fixtures/mapnav/button.vue';
+import DividerV from '@/fixtures/appbar/divider.vue';
+import AppbarButtonV from '@/fixtures/appbar/button.vue';
+
+declare module '@vue/runtime-core' {
+    //interface ComponentCustomProperties {
+    //   $store: any;
+    //}
+
+    interface ComponentCustomProperties extends InstanceAPI {
+        $store: Store;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        $options: { [key: string]: any };
+        $iApi: InstanceAPI;
+    }
+
+    interface App extends InstanceAPI {
+        $store: Store;
+        $i18n: typeof i18n;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        $options: { [key: string]: any };
+        $iApi: InstanceAPI;
+    }
+}
 
 interface RampOptions {
     loadDefaultFixtures?: boolean;
     loadDefaultEvents?: boolean;
 }
 
+//app.config.globalProperties.$const = CONSTANTS;
+
 export class InstanceAPI {
     readonly fixture: FixtureAPI;
-    readonly panel: PanelAPI;
+    readonly panelAPI: PanelAPI;
     readonly event: EventAPI;
     readonly mapActions: MapAPI;
 
@@ -33,17 +69,20 @@ export class InstanceAPI {
      * @type {Vue}
      * @memberof InstanceAPI
      */
-    readonly $vApp: Vue;
+    readonly $vApp;
+
+    $vm: ComponentPublicInstance;
 
     private _isFullscreen: boolean;
 
     constructor(element: HTMLElement, configs?: RampConfigs, options?: RampOptions) {
         this.event = new EventAPI(this);
 
-        this.$vApp = createApp(element, this);
+        this.$vApp = createRamp(element, this).app;
+        this.$vm = createRamp(element, this).vm;
 
         this.fixture = new FixtureAPI(this); // pass the iApi reference to the FixtureAPI
-        this.panel = new PanelAPI(this);
+        this.panelAPI = new PanelAPI(this);
         this.mapActions = new MapAPI(this);
 
         // TODO: decide whether to move to src/main.ts:createApp
@@ -54,17 +93,17 @@ export class InstanceAPI {
 
             // register first config for all available languages and then overwrite configs per language as needed
             this.$vApp.$store.set(ConfigStore.registerConfig, { config: defaultConfig });
-            for (let lang in configs) {
+            for (const lang in configs) {
                 this.$vApp.$store.set(ConfigStore.registerConfig, { config: configs[lang], langs: [lang] });
             }
         }
 
-        this._isFullscreen = screenfull.isEnabled && screenfull.isFullscreen && screenfull.element === this.$vApp.$root.$el;
+        this._isFullscreen = screenfull.isEnabled && screenfull.isFullscreen && screenfull.element === this.$vApp._container;
         if (screenfull.isEnabled) {
             // update fullscreen flag as needed (getters don't work right with screenfull)
             screenfull.onchange(() => {
                 // screnfull decrees a second enabled check
-                this._isFullscreen = screenfull.isEnabled && screenfull.isFullscreen && screenfull.element === this.$vApp.$root.$el;
+                this._isFullscreen = screenfull.isEnabled && screenfull.isFullscreen && screenfull.element === this.$vApp._container;
             });
         }
 
@@ -91,7 +130,7 @@ export class InstanceAPI {
      * @returns {VueConstructor}
      * @memberof InstanceAPI
      */
-    component(id: string): VueConstructor;
+    component(id: string): any;
     /**
      * Registers a global Vue component given an id and a constructor.
      *
@@ -101,15 +140,15 @@ export class InstanceAPI {
      * @returns {VC}
      * @memberof InstanceAPI
      */
-    component<VC extends VueConstructor>(id: string, vueConstructor: VC): VC;
-    component(id: string, definition?: VueConstructor): VueConstructor {
+    component<VC extends DefineComponent>(id: string, vueConstructor: any): VC;
+    component(id: string, definition?: any) {
         if (definition) {
-            const vc = Vue.component(id, definition);
+            const vc = this.$vApp.component(id, definition);
             this.event.emit(GlobalEvents.COMPONENT, id);
             return vc;
         }
 
-        return Vue.component(id);
+        return this.$vApp.component(id);
     }
 
     /**
@@ -120,10 +159,10 @@ export class InstanceAPI {
      * @memberof InstanceAPI
      */
     get screenSize(): string | null {
-        if (!this.$vApp || !this.$vApp.$el) {
+        if (!this.$vApp || !this.$vApp._container) {
             return null;
         }
-        const classList = this.$vApp.$el.classList;
+        const classList = (<Element>this.$vApp._container).classList;
         if (classList.contains('lg')) {
             return 'lg';
         } else if (classList.contains('md')) {
@@ -141,7 +180,7 @@ export class InstanceAPI {
      * @memberof InstanceAPI
      */
     getConfig(): void {
-        const language = this.$vApp.$i18n.locale;
+        const language = this.$vApp.$i18n.global.locale;
         return this.$vApp.$store.get(ConfigStore.getActiveConfig, language);
     }
 
@@ -152,7 +191,7 @@ export class InstanceAPI {
      * @memberof InstanceAPI
      */
     setLanguage(language: string): void {
-        this.$vApp.$i18n.locale = language;
+        this.$vApp.$i18n.global.locale = language;
         const activeConfig = this.getConfig();
         console.log('active config: ', activeConfig);
         // TODO: do something with active config - reload map?
@@ -166,21 +205,21 @@ export class InstanceAPI {
      * @memberof InstanceAPI
      */
     get language(): string {
-        return this.$vApp.$i18n.locale;
+        return this.$vApp.$i18n.global.locale;
     }
 
     /**
      * The current animation status.
-     * 
+     *
      * @readonly
      * @type string
      * @memberof InstanceAPI
      */
     get animate(): string {
-        if (this.$vApp.$el.classList.contains("animation-enabled")) {
-            return "on"
+        if (this.$vApp._container && this.$vApp._container.classList.contains('animation-enabled')) {
+            return 'on';
         }
-        return "off"
+        return 'off';
     }
 
     /**
@@ -191,7 +230,7 @@ export class InstanceAPI {
     toggleFullscreen(): void {
         if (screenfull.isEnabled) {
             // TODO: decide if we should add an event. theres already a `screefull.onchange`
-            screenfull.toggle(this.$vApp.$root.$el);
+            screenfull.toggle(this.$vApp._container || undefined);
         }
     }
 
@@ -214,15 +253,36 @@ export class InstanceAPI {
  * @param {InstanceAPI} iApi R4MP API reference that controls this R4MP Vue application
  * @returns {Vue}
  */
-function createApp(element: HTMLElement, iApi: InstanceAPI): Vue {
-    const store: Store<RootState> = createStore();
+function createRamp(element: HTMLElement, iApi: InstanceAPI) {
+    const store = createStore();
 
     // passing the `iApi` reference to the root Vue component will propagate it to all the child component in this instance of R4MP Vue application
     // if several R4MP apps are created, each will contain a reference of its own API instance
-    return new Vue({
-        iApi,
-        store,
-        i18n,
-        render: h => h(App)
-    }).$mount(element);
+    const app = createApp({});
+    Object.assign(app.config.globalProperties, iApi);
+    app.config.globalProperties.iApi = iApi;
+    app.use(i18n);
+    app.use(store);
+    app.directive('focus-list', FocusList);
+    app.directive('focus-item', FocusItem);
+
+    app.component('tooltip', TooltipV);
+
+    app.component('panel-screen', PanelScreenV);
+    app.component('pin', PinV);
+    app.component('close', CloseV);
+    app.component('back', BackV);
+    app.component('panel-options-menu', PanelOptionsMenuV);
+    app.component('dropdown-menu', DropdownMenuV);
+
+    app.component('fullscreen-nav-button', FullscreenNavV);
+    app.component('home-nav-button', HomeNavV);
+    app.component('mapnav-button', MapnavButtonV);
+
+    app.component('divider', DividerV);
+    app.component('appbar-button', AppbarButtonV);
+
+    const vm = app.mount(element);
+
+    return { app, vm };
 }

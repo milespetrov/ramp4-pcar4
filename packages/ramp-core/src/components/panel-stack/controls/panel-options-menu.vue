@@ -13,19 +13,18 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
-import { Get, Sync, Call } from 'vuex-pathify';
+import { Vue, Options, Prop } from 'vue-property-decorator';
 import DropdownMenuV from '@/components/controls/dropdown-menu.vue';
 
-@Component({
+@Options({
     components: {
-        'dropdown-menu': DropdownMenuV
-    }
+        'dropdown-menu': DropdownMenuV,
+    },
 })
 export default class MenuV extends Vue {
     data() {
         return {
-            open: false
+            open: false,
         };
     }
 }

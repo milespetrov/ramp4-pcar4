@@ -36,18 +36,18 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { Vue, Options, Prop } from 'vue-property-decorator';
 import { Get, Sync, Call } from 'vuex-pathify';
 
 import { LegendStore } from '../store';
 import { LegendSet } from '../store/legend-defs';
 import CheckboxV from './checkbox.vue';
 
-@Component({
+@Options({
     components: {
         LegendComponent: () => import('./legend-component.vue'),
-        checkbox: CheckboxV
-    }
+        checkbox: CheckboxV,
+    },
 })
 export default class LegendVisibilitySetV extends Vue {
     @Prop() legendItem!: LegendSet;

@@ -12,7 +12,6 @@
 <script lang="ts">
 import { Vue, Watch, Component, Prop } from 'vue-property-decorator';
 
-@Component
 export default class CustomNumberFilter extends Vue {
     beforeMount() {
         // Load previously stored values (if saved in table state manager)
@@ -59,7 +58,7 @@ export default class CustomNumberFilter extends Vue {
                 filterType: 'date',
                 type: 'inRange',
                 dateFrom: this.minVal,
-                dateTo: this.maxVal
+                dateTo: this.maxVal,
             });
         } else if (this.minVal === '') {
             // If only the maximum value is set, display all dates that occur before it.
@@ -67,7 +66,7 @@ export default class CustomNumberFilter extends Vue {
                 filterType: 'date',
                 type: 'inRange',
                 dateFrom: minPossibleDate,
-                dateTo: this.maxVal
+                dateTo: this.maxVal,
             });
         } else if (this.maxVal === '') {
             // If only the minimum value is set, display all dates that occur after it.
@@ -75,7 +74,7 @@ export default class CustomNumberFilter extends Vue {
                 filterType: 'date',
                 type: 'inRange',
                 dateFrom: this.minVal,
-                dateTo: maxPossibleDate
+                dateTo: maxPossibleDate,
             });
         } else {
             // If neither value is set, clear the date filter.
@@ -96,7 +95,7 @@ export default class CustomNumberFilter extends Vue {
             filterType: 'date',
             type: 'inRange',
             filter: this.minVal,
-            filterTo: this.maxVal
+            filterTo: this.maxVal,
         };
     }
 }

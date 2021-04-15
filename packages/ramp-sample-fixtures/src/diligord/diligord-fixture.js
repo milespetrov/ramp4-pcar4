@@ -40,7 +40,7 @@
             // this returns `true` if the current panel is pinned by comparing the id of the pinned panel with the id of this panel
             // this is used to modify the icon inside the `pin` header control
             isPinned: function() {
-                return this.$iApi.panel.pinned && this.$iApi.panel.pinned.id === this.panel.id;
+                return this.$iApi.panelAPI.pinned && this.$iApi.panelAPI.pinned.id === this.panel.id;
 
                 // or just
                 // return this.panel.isPinned;
@@ -168,7 +168,7 @@
             document.querySelector('.ramp-app').after(component.$el);
 
             // this life hook is called when the fixture is added to R4MP, and now it's possible to open our panel
-            this.$iApi.panel.register(dpanel).open();
+            this.$iApi.panelAPI.register(dpanel).open();
         }
 
         // TEMP CODE FOR SAMPLE

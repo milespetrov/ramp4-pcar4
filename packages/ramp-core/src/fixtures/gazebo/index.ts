@@ -23,15 +23,15 @@ class GazeboFixture extends FixtureInstance {
 
         this.$iApi.component('gazebo-appbar-button', GazeboAppbarButton);
 
-        this.$iApi.panel.register(
+        this.$iApi.panelAPI.register(
             {
                 // panel-1 has examples of how not to bind things and interact with stuff; bad panel ❌
                 // it generally avoids using API and goes straight to the store; fixtures/panels/screens should not do that;
                 p1: {
                     screens: {
                         'p-1-screen-1': P1Screen1V,
-                        'p-1-screen-2': P1Screen2V
-                    }
+                        'p-1-screen-2': P1Screen2V,
+                    },
                 },
                 // panel-2 has examples of how properly bind things and interact with stuff; good panel ✔
                 // use API functions; underlying store structure might change and all the code accessing the store directly will break
@@ -42,10 +42,10 @@ class GazeboFixture extends FixtureInstance {
 
                         // for the demo purposes, delay resolution of a component by 2 seconds
                         'p-2-screen-1': () => {
-                            return new Promise<AsyncComponentEh>(resolve =>
+                            return new Promise<AsyncComponentEh>((resolve) =>
                                 setTimeout(
                                     () =>
-                                        import(/* webpackChunkName: "p-2-screen-1" */ `./p2-screen-1.vue`).then(data => {
+                                        import(/* webpackChunkName: "p-2-screen-1" */ `./p2-screen-1.vue`).then((data) => {
                                             resolve(data);
                                         }),
                                     2000
@@ -57,7 +57,7 @@ class GazeboFixture extends FixtureInstance {
                         'p-2-screen-2': 'gazebo/p2-screen-2.vue',
 
                         // importing directly; no lazy-loading
-                        'p-2-screen-3': P2Screen3V
+                        'p-2-screen-3': P2Screen3V,
 
                         // returning a `VueConstructor` in a promise also works
                         // 'p-2-screen-3': () => {
@@ -66,17 +66,14 @@ class GazeboFixture extends FixtureInstance {
                     },
                     style: {
                         'flex-grow': '1',
-                        'max-width': '500px'
-                    }
-                }
+                        'max-width': '500px',
+                    },
+                },
             },
             { i18n: { messages } }
         );
 
-        this.$iApi.panel
-            .get('p2')
-            .open({ screen: 'p-2-screen-2' })
-            .pin();
+        this.$iApi.panelAPI.get('p2').open({ screen: 'p-2-screen-2' }).pin();
     }
 }
 

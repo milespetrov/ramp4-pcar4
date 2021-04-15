@@ -6,16 +6,16 @@ import messages from './lang/lang.csv';
 
 class SettingsFixture extends SettingsAPI {
     async added() {
-        this.$iApi.panel.register(
+        this.$iApi.panelAPI.register(
             {
                 'settings-panel': {
                     screens: {
-                        'settings-screen-content': ScreenV
+                        'settings-screen-content': ScreenV,
                     },
                     style: {
-                        width: '350px'
-                    }
-                }
+                        width: '350px',
+                    },
+                },
             },
             { i18n: { messages } }
         );

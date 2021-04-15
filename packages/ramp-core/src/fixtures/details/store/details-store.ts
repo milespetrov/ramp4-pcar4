@@ -1,4 +1,4 @@
-import { ActionContext, Action, Mutation } from 'vuex';
+import { ActionContext, Module, Mutation } from 'vuex';
 import { make } from 'vuex-pathify';
 
 import { DetailsState } from './details-state';
@@ -7,11 +7,11 @@ import { RootState } from '@/store/state';
 type DetailsContext = ActionContext<DetailsState, RootState>;
 
 export enum DetailsAction {
-    setPayload = 'setPayload'
+    setPayload = 'setPayload',
 }
 
 export enum DetailsMutation {
-    SET_PAYLOAD = 'SET_PAYLOAD'
+    SET_PAYLOAD = 'SET_PAYLOAD',
 }
 
 const getters = {};
@@ -19,19 +19,19 @@ const getters = {};
 const actions = {
     [DetailsAction.setPayload](context: DetailsContext, value: any): void {
         context.commit(DetailsMutation.SET_PAYLOAD, value);
-    }
+    },
 };
 const mutations = {
     [DetailsMutation.SET_PAYLOAD](state: DetailsState, value: any): void {
         state.payload = value;
-    }
+    },
 };
 
 export enum DetailsStore {
-    payload = 'details/payload'
+    payload = 'details/payload',
 }
 
-export function details() {
+export function details(): Module<typeof state, any> {
     const state = new DetailsState();
 
     return {
@@ -39,6 +39,6 @@ export function details() {
         state,
         getters: { ...getters },
         actions: { ...actions },
-        mutations: { ...mutations, ...make.mutations(['items']) }
+        mutations: { ...mutations, ...make.mutations(['items']) },
     };
 }

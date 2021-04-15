@@ -3,7 +3,7 @@ import { IdentifyResult, IdentifyItem } from 'ramp-geoapi';
 import { DetailsConfig, DetailsItemSet, DetailsItemInstance } from '../store';
 
 export class DetailsAPI extends FixtureInstance {
-    get config(): DetailsConfig | undefined {
+    get config() {
         return super.config;
     }
 
@@ -17,11 +17,11 @@ export class DetailsAPI extends FixtureInstance {
         // Save the provided identify result in the store.
         this.$vApp.$store.set('details/setPayload!', payload);
 
-        let panel = this.$iApi.panel.get('details-panel');
+        const panel = this.$iApi.panelAPI.get('details-panel');
 
         // Open the details panel.
         if (!panel.isOpen) {
-            this.$iApi.panel.open({ id: 'details-panel', screen: 'details-screen-layers' });
+            this.$iApi.panelAPI.open({ id: 'details-panel', screen: 'details-screen-layers' });
         } else {
             panel.show('details-screen-layers');
         }
@@ -39,17 +39,21 @@ export class DetailsAPI extends FixtureInstance {
         const identifyResult: IdentifyResult = {
             items: [identifyItem],
             uid: uid,
-            isLoading: false
+            isLoading: false,
         };
 
         // Save the provided identify result in the store.
         this.$vApp.$store.set('details/setPayload!', [identifyResult]);
         // Open the details panel.
-        const panel = this.$iApi.panel.get('details-panel');
+        const panel = this.$iApi.panelAPI.get('details-panel');
         if (panel.isOpen) {
-            this.$iApi.panel.close(panel);
+            this.$iApi.panelAPI.close(panel);
         }
-        this.$iApi.panel.open({ id: 'details-panel', screen: 'details-screen-item', props: { isFeature: true, resultIndex: 0, itemIndex: 0 } });
+        this.$iApi.panelAPI.open({
+            id: 'details-panel',
+            screen: 'details-screen-item',
+            props: { isFeature: true, resultIndex: 0, itemIndex: 0 },
+        });
     }
 
     /**
@@ -81,7 +85,7 @@ export class DetailsAPI extends FixtureInstance {
      * @memberof DetailsAPI
      */
     _validateItems() {
-        Object.values(this.$vApp.$store.get<DetailsItemInstance[]>('details/items')!).forEach(item => {
+        Object.values(this.$vApp.$store.get<DetailsItemInstance[]>('details/items')!).forEach((item) => {
             if (item.template in this.$vApp.$options.components!) {
                 this.$vApp.$store.set(`details/items@${item.id}.componentId`, item.template);
             }

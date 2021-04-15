@@ -10,35 +10,16 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
-import { Get, Sync, Call } from 'vuex-pathify';
-
+import { Vue, Prop } from 'vue-property-decorator';
 import anime from 'animejs';
-
-import PanelScreenV from './panel-screen.vue';
-import PinV from './controls/pin.vue';
-import CloseV from './controls/close.vue';
-import BackV from './controls/back.vue';
-import PanelOptionsMenuV from './controls/panel-options-menu.vue';
-import DropdownMenuV from '@/components/controls/dropdown-menu.vue';
-
-Vue.component('panel-screen', PanelScreenV);
-Vue.component('pin', PinV);
-Vue.component('close', CloseV);
-Vue.component('back', BackV);
-Vue.component('panel-options-menu', PanelOptionsMenuV);
-Vue.component('dropdown-menu', DropdownMenuV);
-
 import { PanelInstance } from '@/api';
 
-@Component
 export default class PanelContainerV extends Vue {
     @Prop() panel!: PanelInstance;
-
     /**
      * Indicates if the transition should be skipped.
      */
-    skipTransition: boolean = false;
+    skipTransition = false;
 
     enter(el: HTMLElement, done: () => void): void {
         this.animateTransition(el, done, [0, 1]);
@@ -55,7 +36,7 @@ export default class PanelContainerV extends Vue {
 
         // with transition, even if it's instanteneous, there is that annoying flicker when the focus ring is set
         // just before the component is removed from DOM; supress the focus ring on the screen component just before `leave` event
-        this.$el.querySelectorAll('[focus-item').forEach(element => element.classList.remove('default-focus-style'));
+        el.querySelectorAll('[focus-item').forEach((element) => element.classList.remove('default-focus-style'));
     }
 
     leave(el: HTMLElement, done: () => void): void {
@@ -75,9 +56,9 @@ export default class PanelContainerV extends Vue {
             opacity: {
                 value,
                 duration: 400,
-                easing: 'cubicBezier(.5, .05, .1, .3)'
+                easing: 'cubicBezier(.5, .05, .1, .3)',
             },
-            complete: done
+            complete: done,
         });
     }
 }

@@ -39,17 +39,17 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+import { Vue, Options, Prop, Watch } from 'vue-property-decorator';
 import { Get, Sync, Call } from 'vuex-pathify';
 import { PanelInstance } from '@/api';
 
 import { BasemapStore } from './store';
 import BasemapItem from './basemap-item.vue';
 
-@Component({
+@Options({
     components: {
-        BasemapItem
-    }
+        BasemapItem,
+    },
 })
 export default class BasemapComponent extends Vue {
     @Prop() panel!: PanelInstance;
@@ -64,7 +64,7 @@ export default class BasemapComponent extends Vue {
 
     // filter out all the basemaps that match the current schema
     filterBasemaps(schemaId: string) {
-        return this.basemaps.filter(basemap => basemap.tileSchemaId === schemaId);
+        return this.basemaps.filter((basemap) => basemap.tileSchemaId === schemaId);
     }
 }
 </script>

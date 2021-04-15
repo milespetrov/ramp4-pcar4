@@ -7,16 +7,16 @@ import messages from './lang/lang.csv';
 
 class GridFixture extends GridAPI {
     async added() {
-        this.$iApi.panel.register(
+        this.$iApi.panelAPI.register(
             {
                 'grid-panel': {
                     screens: {
-                        'grid-screen': GridV
+                        'grid-screen': GridV,
                     },
                     style: {
-                        width: '900px'
-                    }
-                }
+                        width: '900px',
+                    },
+                },
             },
             { i18n: { messages } }
         );

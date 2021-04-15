@@ -5,7 +5,7 @@
                 {{
                     $t('filters.label.info', {
                         range: `${this.filterInfo.firstRow} - ${this.filterInfo.lastRow}`,
-                        total: this.filterInfo.visibleRows
+                        total: this.filterInfo.visibleRows,
                     })
                 }}
 
@@ -51,7 +51,7 @@
             :rowData="rowData"
             :frameworkComponents="frameworkComponents"
             @grid-ready="onGridReady"
-            @keydown.native="stopArrowKeyProp" 
+            @keydown="stopArrowKeyProp"
             @firstDataRendered="gridRendered"
         >
         </ag-grid-vue>
@@ -59,7 +59,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Watch, Component, Prop } from 'vue-property-decorator';
+import { Vue, Watch, Options, Prop } from 'vue-property-decorator';
 import { Get, Sync, Call } from 'vuex-pathify';
 import { GlobalEvents } from '../../../api/internal';
 import deepmerge from 'deepmerge';
@@ -83,10 +83,10 @@ import CustomHeader from './CustomHeader.vue';
 
 // these should match up with the `type` value returned by the attribute promise.
 const NUM_TYPES: string[] = ['oid', 'double', 'integer'];
-const DATE_TYPE: string = 'date';
-const TEXT_TYPE: string = 'string';
+const DATE_TYPE = 'date';
+const TEXT_TYPE = 'string';
 
-@Component({
+@Options({
     components: {
         'column-dropdown': ColumnDropdown,
         AgGridVue,
@@ -94,8 +94,8 @@ const TEXT_TYPE: string = 'string';
         CustomSelectorFilter,
         CustomDateFilter,
         CustomTextFilter,
-        CustomHeader
-    }
+        CustomHeader,
+    },
 })
 export default class TableComponent extends Vue {
     @Prop() layerUid!: string;
@@ -105,13 +105,13 @@ export default class TableComponent extends Vue {
     columnApi: any = null;
     columnDefs: any = [];
     rowData: any = [];
-    oidField: string = 'OBJECTID';
+    oidField = 'OBJECTID';
 
     quicksearch = '';
     filterInfo = {
         firstRow: 0,
         lastRow: 0,
-        visibleRows: 0
+        visibleRows: 0,
     };
     filterStatus = '';
 
@@ -125,7 +125,7 @@ export default class TableComponent extends Vue {
             numberFloatingFilter: CustomNumberFilter,
             textFloatingFilter: CustomTextFilter,
             selectorFloatingFilter: CustomSelectorFilter,
-            dateFloatingFilter: CustomDateFilter
+            dateFloatingFilter: CustomDateFilter,
         };
 
         // set up grid options
@@ -135,7 +135,7 @@ export default class TableComponent extends Vue {
             onFilterChanged: this.updateFilterInfo,
             onBodyScroll: this.updateFilterInfo,
             rowBuffer: 0,
-            suppressColumnVirtualisation: true
+            suppressColumnVirtualisation: true,
         };
 
         const fancyLayer: BaseLayer | undefined = this.getLayerByUid(this.layerUid);
@@ -164,7 +164,7 @@ export default class TableComponent extends Vue {
                         maxWidth: 400,
                         cellRenderer: (cell: any) => {
                             return cell.value;
-                        }
+                        },
                     };
 
                     // retrieve the field info for the column
@@ -184,7 +184,7 @@ export default class TableComponent extends Vue {
                             col.cellRenderer = (cell: any) => {
                                 // get YYYY-MM-DD from date
                                 return new Date(cell.value).toISOString().slice(0, 10);
-                            }
+                            };
                         } else if (fieldInfo.type === TEXT_TYPE) {
                             if (col.isSelector) {
                                 // set up a selector filter instead of a text filter if the `isSelector` flag is true.
@@ -269,7 +269,7 @@ export default class TableComponent extends Vue {
         let maxVal = state.getColumnFilter(colDef.field + ' max') !== undefined ? state.getColumnFilter(colDef.field + ' max') : '';
 
         colDef.floatingFilterComponent = 'dateFloatingFilter';
-        colDef.filterParams.comparator = function(filterDate: any, entryDate: any) {
+        colDef.filterParams.comparator = function (filterDate: any, entryDate: any) {
             let entry = new Date(entryDate);
             if (entry > filterDate) {
                 return 1;
@@ -282,7 +282,7 @@ export default class TableComponent extends Vue {
         colDef.filterParams.inRangeInclusive = true;
         colDef.floatingFilterComponentParams = {
             suppressFilterButton: true,
-            stateManager: state
+            stateManager: state,
         };
     }
 
@@ -295,7 +295,7 @@ export default class TableComponent extends Vue {
         colDef.floatingFilterComponentParams = {
             suppressFilterButton: true,
             stateManager: state,
-            rowData: rowData
+            rowData: rowData,
         };
     }
 
@@ -308,7 +308,7 @@ export default class TableComponent extends Vue {
         colDef.filterParams.inRangeInclusive = true;
         colDef.floatingFilterComponentParams = {
             suppressFilterButton: true,
-            stateManager: state
+            stateManager: state,
         };
     }
 
@@ -319,14 +319,14 @@ export default class TableComponent extends Vue {
         colDef.floatingFilterComponent = 'textFloatingFilter';
         colDef.floatingFilterComponentParams = {
             suppressFilterButton: true,
-            stateManager: state
+            stateManager: state,
         };
 
         // If we want to add different search methods in the future, consider using some sort of generic search function.
         // see: https://github.com/ramp4-pcar4/ramp4-pcar4/pull/57#pullrequestreview-377999397
 
         // default to regex filtering for text columns
-        colDef.filterParams.textCustomComparator = function(filter: any, gridValue: any, filterText: any) {
+        colDef.filterParams.textCustomComparator = function (filter: any, gridValue: any, filterText: any) {
             // treat * as a regular special character
             const newFilterText = filterText.replace(/\*/, '\\*');
             // surround filter text with .* to match anything before and after
@@ -335,7 +335,7 @@ export default class TableComponent extends Vue {
         };
 
         // modified from: https://www.ag-grid.com/javascript-grid-filter-text/#text-formatter
-        let disregardAccents = function(s: any) {
+        let disregardAccents = function (s: any) {
             if (isNaN(s)) {
                 // check if s is a number before trying to convert it to lowercase (otherwise throws error)
                 let r = s.toLowerCase();
@@ -355,7 +355,7 @@ export default class TableComponent extends Vue {
         };
 
         // for individual columns
-        colDef.filterParams.textFormatter = function(s: any) {
+        colDef.filterParams.textFormatter = function (s: any) {
             return disregardAccents(s);
         };
     }
@@ -379,7 +379,7 @@ export default class TableComponent extends Vue {
                         paddingTop: '3px',
                         textAlign: 'center',
                         justifyContent: 'center',
-                        alignItems: 'center'
+                        alignItems: 'center',
                     };
                 },
                 onCellClicked: (cell: any) => {
@@ -387,7 +387,7 @@ export default class TableComponent extends Vue {
                     delete fakeIdentifyItem['data']['rvInteractive'];
                     delete fakeIdentifyItem['data']['rvSymbol'];
                     this.$iApi.event.emit(GlobalEvents.DETAILS_OPEN, { identifyItem: fakeIdentifyItem, uid: this.layerUid });
-                }
+                },
             };
             colDef.push(detailsDef);
 
@@ -406,7 +406,7 @@ export default class TableComponent extends Vue {
                         paddingTop: '3px',
                         textAlign: 'center',
                         justifyContent: 'center',
-                        alignItems: 'center'
+                        alignItems: 'center',
                     };
                 },
                 onCellClicked: (cell: any) => {
@@ -414,14 +414,14 @@ export default class TableComponent extends Vue {
                     if (layer === undefined) return;
                     const oid = cell.data[this.oidField];
                     const opts = { getGeom: true };
-                    layer.getGraphic(oid, opts, this.layerUid).then(g => {
+                    layer.getGraphic(oid, opts, this.layerUid).then((g) => {
                         if (g.geometry === undefined) {
                             console.error(`Could not find graphic for objectid ${oid}`);
                         } else {
                             this.$iApi.map.zoomMapTo(g.geometry, 50000);
                         }
                     });
-                }
+                },
             };
             colDef.push(zoomDef);
         }
@@ -439,7 +439,7 @@ export default class TableComponent extends Vue {
                     if (layer === undefined) return;
                     const iconContainer = document.createElement('span');
                     const oid = cell.data[this.oidField];
-                    layer.getIcon(oid, this.layerUid).then(i => {
+                    layer.getIcon(oid, this.layerUid).then((i) => {
                         iconContainer.innerHTML = i;
                     });
                     return iconContainer;
@@ -447,9 +447,9 @@ export default class TableComponent extends Vue {
                 cellStyle: (cell: any) => {
                     return {
                         paddingTop: '7px',
-                        textAlign: 'center'
+                        textAlign: 'center',
                     };
-                }
+                },
             };
 
             colDef.push(iconDef);
@@ -474,6 +474,7 @@ export default class TableComponent extends Vue {
     }
 }
 
+// eslint-disable-next-line no-redeclare
 export default interface TableComponent {
     config: GridConfig;
     gridOptions: any;
@@ -493,22 +494,24 @@ export default interface TableComponent {
 }
 
 interface ColumnDefinition {
-    field: String;
-    headerName: String;
-    headerTooltip?: String;
-    alias?: String;
-    width?: Number;
-    maxWidth?: Number;
-    minWidth?: Number;
-    filter?: String;
+    field: string;
+    headerName: string;
+    headerTooltip?: string;
+    alias?: string;
+    width?: number;
+    maxWidth?: number;
+    minWidth?: number;
+    filter?: string;
     filterParams: {
+        // eslint-disable-next-line @typescript-eslint/ban-types
         comparator?: Function;
     };
+    // eslint-disable-next-line @typescript-eslint/ban-types
     cellRenderer: Function;
-    sortable: Boolean;
-    hide: Boolean;
-    isSelector: Boolean;
-    lockPosition: Boolean;
+    sortable: boolean;
+    hide: boolean;
+    isSelector: boolean;
+    lockPosition: boolean;
 }
 </script>
 

@@ -8,23 +8,23 @@ import messages from './lang/lang.csv';
 class LegendFixture extends LegendAPI {
     added() {
         console.log(`[fixture] ${this.id} added`);
-        this.$iApi.panel.register(
+        this.$iApi.panelAPI.register(
             {
                 'legend-panel': {
                     screens: {
-                        'legend-screen': LegendV
+                        'legend-screen': LegendV,
                     },
                     style: {
-                        width: '350px'
-                    }
-                }
+                        width: '350px',
+                    },
+                },
             },
             {
-                i18n: { messages }
+                i18n: { messages },
             }
         );
 
-        this.$iApi.panel.open('legend-panel');
+        this.$iApi.panelAPI.open('legend-panel');
 
         // TODO: register legend panel
         this.$iApi.component('legend-appbar-button', LegendAppbarButtonV);
@@ -34,7 +34,7 @@ class LegendFixture extends LegendAPI {
         this._parseConfig(this.config);
         this.$vApp.$watch(
             () => this.config,
-            value => this._parseConfig(value)
+            (value) => this._parseConfig(value)
         );
     }
 

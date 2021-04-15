@@ -9,7 +9,7 @@ export class MapAPI extends APIScope {
         IdentifyMode.Marker,
         IdentifyMode.Highlight,
         IdentifyMode.Haze,
-        IdentifyMode.Details
+        IdentifyMode.Details,
     ];
 
     // a note about modes and events.
@@ -31,19 +31,19 @@ export class MapAPI extends APIScope {
      * @memberof DetailsFixture
      */
     identify(payload: MapClick | ApiBundle.Point) {
-        let layers: BaseLayer[] | undefined = this.$vApp.$store.get(LayerStore.layers);
+        const layers: BaseLayer[] | undefined = this.$vApp.$store.get(LayerStore.layers);
 
         // Don't perform an identify request if the layers array hasn't been established yet.
         if (layers === undefined) return;
 
-        let p: IdentifyParameters = {
-            geometry: payload instanceof ApiBundle.Point ? payload : payload.mapPoint
+        const p: IdentifyParameters = {
+            geometry: payload instanceof ApiBundle.Point ? payload : payload.mapPoint,
         };
 
         // Perform an identify request on each layer. Does not perform the request on layers that do not have an identify function (layers that do not support identify).
         const identifyInstances: IdentifyResultSet[] = layers
-            .filter(layer => layer.supportsIdentify)
-            .map(layer => {
+            .filter((layer) => layer.supportsIdentify)
+            .map((layer) => {
                 return layer.identify(p);
             });
 
@@ -59,7 +59,7 @@ export class MapAPI extends APIScope {
                 screenX: screenPoint.screenX,
                 screenY: screenPoint.screenY,
                 button: 0,
-                clickTime: Date.now()
+                clickTime: Date.now(),
             };
         } else {
             mapClick = payload;
@@ -88,7 +88,7 @@ export class MapAPI extends APIScope {
         if (panKeys.includes(payload.key) && !this._activeKeys.includes(payload.key)) {
             this._activeKeys.push(payload.key);
             // don't pan in middle of zoom animation
-            if (!this._activeKeys.some(k => zoomKeys.includes(k))) {
+            if (!this._activeKeys.some((k) => zoomKeys.includes(k))) {
                 this.pan();
             }
         } else if (zoomKeys.includes(payload.key) && !this._activeKeys.includes(payload.key)) {
@@ -112,7 +112,7 @@ export class MapAPI extends APIScope {
         if (this._activeKeys.includes(payload.key) && !zoomKeys.includes(payload.key)) {
             this._activeKeys.splice(this._activeKeys.indexOf(payload.key), 1);
             // don't pan in middle of zoom animation
-            if (!this._activeKeys.some(k => zoomKeys.includes(k))) {
+            if (!this._activeKeys.some((k) => zoomKeys.includes(k))) {
                 this.pan();
             }
         }
@@ -136,7 +136,7 @@ export class MapAPI extends APIScope {
      */
     get keysActive(): boolean {
         const keys = ['-', '=', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowUp'];
-        return this._activeKeys.some(k => keys.includes(k));
+        return this._activeKeys.some((k) => keys.includes(k));
     }
 
     /**
@@ -198,7 +198,7 @@ export class MapAPI extends APIScope {
                 case 'Shift':
                     multiplier = 2;
                     break;
-            };
+            }
         }
 
         const scale = this.$iApi.map.getScale();
@@ -213,9 +213,7 @@ export class MapAPI extends APIScope {
     }
 }
 
-
 export enum IdentifyMode {
-
     /**
      * Runs the identify query and pipes the available results through the `identify` API endpoint.
      */
@@ -242,5 +240,5 @@ export enum IdentifyMode {
      * Dehighlights all other layers and features except the identify results (if `Highlight` is set) or the marker (if `Marker` is set`).
      * The haze will not be applied if neither `Marker` nor `Highlight` is set.
      */
-    Haze = 'haze'
+    Haze = 'haze',
 }

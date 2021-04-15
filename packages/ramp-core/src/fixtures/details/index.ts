@@ -10,18 +10,18 @@ import messages from './lang/lang.csv';
 
 class DetailsFixture extends DetailsAPI {
     async added() {
-        this.$iApi.panel.register(
+        this.$iApi.panelAPI.register(
             {
                 'details-panel': {
                     screens: {
                         'details-screen-layers': DetailsLayerV,
                         'details-screen-result': DetailsResultV,
-                        'details-screen-item': DetailsItemV
+                        'details-screen-item': DetailsItemV,
                     },
                     style: {
-                        width: '350px'
-                    }
-                }
+                        width: '350px',
+                    },
+                },
             },
             { i18n: { messages } }
         );
@@ -31,9 +31,9 @@ class DetailsFixture extends DetailsAPI {
         // Parse the details portion of the configuration file and save any custom
         // template bindings in the details store.
         this._parseConfig(this.config);
-        this.$vApp.$watch(
+        this.$vm.$watch(
             () => this.config,
-            value => this._parseConfig(value)
+            (value) => this._parseConfig(value)
         );
     }
 

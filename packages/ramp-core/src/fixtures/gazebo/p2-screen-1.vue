@@ -1,8 +1,6 @@
 <template>
     <panel-screen :panel="panel">
-        <template #header>
-            Gazebo/Panel 2/Screen A
-        </template>
+        <template #header> Gazebo/Panel 2/Screen A </template>
 
         <template #controls>
             <!-- <pin> is a global button component that any fixture/panel/screen can reuse -->
@@ -37,12 +35,11 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { Vue, Prop } from 'vue-property-decorator';
 import { Get, Sync, Call } from 'vuex-pathify';
 
 import { PanelInstance } from '@/api';
 
-@Component
 export default class P2Screen1V extends Vue {
     // ✔ this prop is always present and it's set by the panel-container component
     @Prop() panel!: PanelInstance;
@@ -56,7 +53,7 @@ export default class P2Screen1V extends Vue {
         return this.panel.isPinned;
 
         // ✔ this also works 👇
-        // return this.$iApi.panel.pinned !== null && this.$iApi.panel.pinned.id === this.panel.id;
+        // return this.$iApi.panelAPI.pinned !== null && this.$iApi.panelAPI.pinned.id === this.panel.id;
     }
 }
 </script>

@@ -11,7 +11,6 @@
 <script lang="ts">
 import { Vue, Watch, Component, Prop } from 'vue-property-decorator';
 
-@Component
 export default class CustomSelectorFilter extends Vue {
     beforeMount() {
         // Load previously stored value (if saved in table state manager)
@@ -44,7 +43,7 @@ export default class CustomSelectorFilter extends Vue {
                 instance.setModel({
                     filterType: 'text',
                     type: 'contains',
-                    filter: this.selectedOption
+                    filter: this.selectedOption,
                 });
             }
 
@@ -66,7 +65,7 @@ export default class CustomSelectorFilter extends Vue {
         return {
             filterType: 'text',
             type: 'contains',
-            filter: this.selectedOption
+            filter: this.selectedOption,
         };
     }
 }

@@ -1,8 +1,6 @@
 <template>
     <panel-screen :panel="panel">
-        <template #header>
-            Gazebo/Panel 1/Screen B
-        </template>
+        <template #header> Gazebo/Panel 1/Screen B </template>
 
         <template #controls>
             <!-- this is fine, but the name of the panel is hardcoded there, so you wouldn't need to update it if it ever changes -->
@@ -23,13 +21,12 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
+import { Vue } from 'vue-property-decorator';
 import { Get, Sync, Call } from 'vuex-pathify';
 import { PanelInstance } from '../../api';
 
-@Component({})
 export default class P1Scree2V extends Vue {
-    url: string = 'https://i2.wp.com/freepngimages.com/wp-content/uploads/2016/02/garden-shed-transparent-image-2.png?w=693';
+    url = 'https://i2.wp.com/freepngimages.com/wp-content/uploads/2016/02/garden-shed-transparent-image-2.png?w=693';
 
     // ❌ this is bad because it's tappnig directly into the store circumventing the API
     // this will work, but if the store changes strcture, it might break 👇

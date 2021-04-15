@@ -15,20 +15,22 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
-import { Get, Sync, Call } from 'vuex-pathify';
+import { Vue, Prop } from 'vue-property-decorator';
 
-@Component
 export default class MenuV extends Vue {
-    @Prop({ default: 'bottom-right' }) position!: string;
-    open: boolean = false;
+    @Prop({ default: 'bottom-sright' }) position!: string;
+    open = false;
 
-    mounted() {
-        window.addEventListener('click', event => {
-            if (event.target instanceof HTMLElement && !this.$el.contains(event.target)) {
-                this.open = false;
-            }
-        }, { capture: true });
+    mounted(): void {
+        window.addEventListener(
+            'click',
+            (event) => {
+                if (event.target instanceof HTMLElement && !this.$el.contains(event.target)) {
+                    this.open = false;
+                }
+            },
+            { capture: true }
+        );
     }
 }
 </script>

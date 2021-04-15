@@ -6,16 +6,16 @@ import messages from './lang/lang.csv';
 
 class MetadataFixture extends MetadataAPI {
     async added() {
-        this.$iApi.panel.register(
+        this.$iApi.panelAPI.register(
             {
                 'metadata-panel': {
                     screens: {
-                        'metadata-screen-content': ScreenV
+                        'metadata-screen-content': ScreenV,
                     },
                     style: {
-                        width: '350px'
-                    }
-                }
+                        width: '350px',
+                    },
+                },
             },
             { i18n: { messages } }
         );
@@ -32,8 +32,7 @@ class MetadataFixture extends MetadataAPI {
         this.$iApi.event.emit('metadata/open', {
             type: 'html',
             layer: 'Sample Layer Name',
-            url:
-                'https://ryan-coulson.com/RAMPMetadataDemo.html'
+            url: 'https://ryan-coulson.com/RAMPMetadataDemo.html',
         });
     }
 }

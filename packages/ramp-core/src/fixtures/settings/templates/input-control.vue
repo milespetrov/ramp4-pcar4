@@ -7,16 +7,15 @@
             <input class="rv-input text-md w-full" type="number" :value="config.value" min="0" max="100" />
         </div>
         <div class="text-xs pt-10 text-gray-600 mb-20">
-            {{ $t('settings.label.refreshOff')}}
+            {{ $t('settings.label.refreshOff') }}
         </div>
     </div>
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { Vue, Prop } from 'vue-property-decorator';
 import { Get, Sync, Call } from 'vuex-pathify';
 
-@Component
 export default class SliderControl extends Vue {
     @Prop() config!: any;
     @Prop() name!: string;

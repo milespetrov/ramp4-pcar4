@@ -1,7 +1,11 @@
 <template>
     <div class="ag-custom-header flex flex-1 items-center h-full w-full">
-        <div v-if="sortable"  class="flex flex-1 items-center min-w-0">
-            <button @click="onSortRequested('asc', $event)" class="customHeaderLabel truncate hover:bg-gray-300 font-bold p-8" role="columnheader">
+        <div v-if="sortable" class="flex flex-1 items-center min-w-0">
+            <button
+                @click="onSortRequested('asc', $event)"
+                class="customHeaderLabel truncate hover:bg-gray-300 font-bold p-8"
+                role="columnheader"
+            >
                 {{ params.displayName }}
             </button>
             <span v-if="params.enableSorting && sort === 1" class="customSortDownLabel">
@@ -43,9 +47,7 @@
 <script lang="ts">
 import { Vue, Watch, Component, Prop } from 'vue-property-decorator';
 
-@Component
 export default class CustomHeader extends Vue {
-
     sort: number = 0;
     sortable: boolean = false;
 

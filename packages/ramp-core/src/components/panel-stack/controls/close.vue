@@ -12,15 +12,13 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
-import { Get, Sync, Call } from 'vuex-pathify';
-
+import { Vue, Options, Prop } from 'vue-property-decorator';
 import TooltipV from '@/components/util/tooltip.vue';
 
-@Component({
+@Options({
     components: {
-        tooltip: TooltipV
-    }
+        tooltip: TooltipV,
+    },
 })
 export default class CloseV extends Vue {
     @Prop() active!: boolean;

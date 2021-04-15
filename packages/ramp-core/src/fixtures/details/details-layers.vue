@@ -25,7 +25,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { Vue, Prop } from 'vue-property-decorator';
 import { Get, Sync, Call } from 'vuex-pathify';
 import { DetailsStore } from './store';
 
@@ -33,7 +33,6 @@ import { PanelInstance } from '@/api';
 import { IdentifyResult } from 'ramp-geoapi';
 import BaseLayer from 'ramp-geoapi/dist/layer/BaseLayer';
 
-@Component({})
 export default class DetailsLayersV extends Vue {
     @Prop() panel!: PanelInstance;
     @Get(DetailsStore.payload) payload!: IdentifyResult[];
@@ -46,7 +45,7 @@ export default class DetailsLayersV extends Vue {
     openResult(index: number) {
         if (this.getLayerByUid(this.payload[index].uid)!.layerType === 'ogcWms') {
             // skip results screen for wms layers
-            this.panel.show({ screen: 'details-screen-item', props: { resultIndex: index, layerType: 'ogcWms' , itemIndex: 0} });
+            this.panel.show({ screen: 'details-screen-item', props: { resultIndex: index, layerType: 'ogcWms', itemIndex: 0 } });
         } else {
             this.panel.show({ screen: 'details-screen-result', props: { resultIndex: index } });
         }
@@ -57,7 +56,7 @@ export default class DetailsLayersV extends Vue {
 
         // Check to see if there is a custom template defined for the selected layer.
         let item: BaseLayer | undefined = this.layers
-            .map(layer => {
+            .map((layer) => {
                 let layerNode = layer.getLayerTree();
 
                 if (!layerNode) return;
@@ -67,7 +66,7 @@ export default class DetailsLayersV extends Vue {
                     return layer;
                 }
             })
-            .filter(node => node !== undefined)[0];
+            .filter((node) => node !== undefined)[0];
 
         if (!item) return;
 
@@ -78,7 +77,7 @@ export default class DetailsLayersV extends Vue {
      * Calculates the total number of results received by identify.
      */
     get payloadResults(): number {
-        return this.payload.map(r => r.items.length).reduce((a, b) => a + b, 0);
+        return this.payload.map((r) => r.items.length).reduce((a, b) => a + b, 0);
     }
 }
 </script>

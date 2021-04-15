@@ -31,13 +31,12 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { Vue, Prop } from 'vue-property-decorator';
 import { Get, Sync, Call } from 'vuex-pathify';
 
 import { LegendItem } from '../store/legend-defs';
 import BaseLayer from 'ramp-geoapi/dist/layer/BaseLayer';
 
-@Component
 export default class SymbologyStack extends Vue {
     @Prop() visible!: boolean;
     @Prop() layer!: BaseLayer;

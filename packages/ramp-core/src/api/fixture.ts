@@ -1,7 +1,8 @@
-import Vue, { VueConstructor, ComponentOptions } from 'vue';
+import Vue, { ComponentOptions, createApp } from 'vue';
 
 import { APIScope, InstanceAPI } from './internal';
 import { FixtureBase, FixtureMutation, FixtureBaseSet } from '@/store/modules/fixture';
+import { AppbarFixtureConfig } from '@/fixtures/appbar/store';
 
 // TODO: implement the same `internal.ts` pattern in store, so can import from a single place;
 
@@ -107,7 +108,7 @@ export class FixtureAPI extends APIScope {
             ids.push(item.id);
         }
 
-        const fixtures = ids.map(id => {
+        const fixtures = ids.map((id) => {
             const fixture = this.$vApp.$store.get<T>(`fixture/items@${id}`);
             if (!fixture) {
                 throw new Error("fixture doesn't exist");
@@ -133,13 +134,27 @@ export class FixtureAPI extends APIScope {
      */
     addDefaultFixtures(fixtureNames?: Array<string>): Promise<Array<FixtureBase>> {
         if (!Array.isArray(fixtureNames) || fixtureNames.length === 0) {
-            fixtureNames = ['appbar', 'basemap', 'crosshairs', 'details', 'geosearch', 'grid', 'help', 'legend', 'mapnav', 'metadata', 'northarrow', 'overviewmap', 'settings'];
+            fixtureNames = [
+                'appbar',
+                'basemap',
+                'crosshairs',
+                'details',
+                'geosearch',
+                'grid',
+                'help',
+                'legend',
+                'mapnav',
+                'metadata',
+                'northarrow',
+                'overviewmap',
+                'settings',
+            ];
         }
 
         // add all the requested default promises.
         // return the promise-all of all the add fixture promises
         // TODO alterately, don't do a promise.all, and just return the array of promises. not sure which is more useful.
-        return Promise.all(fixtureNames.map(fn => this.add(fn)));
+        return Promise.all(fixtureNames.map((fn) => this.add(fn)));
     }
 }
 
@@ -172,17 +187,17 @@ export class FixtureInstance extends APIScope implements FixtureBase {
             id: { value: id },
             $iApi: { value: $iApi },
             $vApp: {
-                get(): Vue {
+                get() {
                     return instance.$vApp;
-                }
+                },
             },
             remove: { value: instance.remove },
             extend: { value: instance.extend },
             config: {
-                get(): any {
+                get() {
                     return instance.config;
-                }
-            }
+                },
+            },
         });
 
         return value as FixtureInstance;
@@ -230,17 +245,19 @@ export class FixtureInstance extends APIScope implements FixtureBase {
      * @returns {Vue}
      * @memberof FixtureInstance
      */
-    extend(vueConstructor: VueConstructor<Vue>, options: ComponentOptions<Vue> = {}, mount: boolean = true): Vue {
-        const component = new (Vue.extend(vueConstructor))({
+    extend(vueConstructor: Record<string, any>, options: ComponentOptions = {}) {
+        const c = Object.assign(vueConstructor, {
             iApi: this.$iApi,
             ...options,
             propsData: {
                 ...options.propsData,
-                fixture: this
-            }
+                fixture: this,
+            },
         });
 
-        component.$mount();
+        const component = createApp(c);
+
+        //component.$mount();
 
         return component;
     }
@@ -257,7 +274,7 @@ export class FixtureInstance extends APIScope implements FixtureBase {
      * @type {*}
      * @memberof FixtureInstance
      */
-    get config(): any {
+    get config(): AppbarFixtureConfig | undefined {
         return this.$vApp.$store.get('config/getFixtureConfig', this.id);
     }
 }

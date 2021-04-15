@@ -5,23 +5,14 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
-
+import { Options, Vue } from 'vue-class-component';
 import Shell from '@/components/shell.vue';
-
 import ro from '@/scripts/resize-observer.js';
 
-import { FocusList, FocusItem } from '@/directives/focus-list';
-Vue.directive('focus-list', FocusList);
-Vue.directive('focus-item', FocusItem);
-
-import TooltipV from '@/components/util/tooltip.vue';
-Vue.component('tooltip', TooltipV);
-
-@Component({
+@Options({
     components: {
-        Shell
-    }
+        Shell,
+    },
 })
 export default class App extends Vue {
     mounted() {
@@ -39,7 +30,7 @@ export default class App extends Vue {
     height: 700px;
 }
 .symbologyIcon {
-    @apply bg-white inline-flex justify-center items-center overflow-hidden;
+    //@apply bg-white inline-flex justify-center items-center overflow-hidden;
     box-shadow: 0px 1px 3px 0px rgba(0, 0, 0, 0.2), 0px 1px 1px 0px rgba(0, 0, 0, 0.14), 0px 2px 1px -1px rgba(0, 0, 0, 0.12);
 }
 </style>

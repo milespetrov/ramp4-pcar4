@@ -5,7 +5,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { Vue, Prop } from 'vue-property-decorator';
 import { Get, Sync, Call } from 'vuex-pathify';
 import { NortharrowStore } from './store';
 import { GlobalEvents } from '../../api/internal';
@@ -14,7 +14,6 @@ import BaseLayer from 'ramp-geoapi/dist/layer/BaseLayer';
 import flag from './flag.json';
 import { debounce } from 'debounce';
 
-@Component({})
 export default class NortharrowV extends Vue {
     @Get(NortharrowStore.arrowIcon) arrowIcon!: string;
     @Get(NortharrowStore.poleIcon) poleIcon!: string;
@@ -38,9 +37,9 @@ export default class NortharrowV extends Vue {
         if (this.arrowIcon) {
             this.arrow = `<img width='25' src='${this.arrowIcon}'>`;
         }
-        // don't think this condition should be needed but sometimes errors at startup without it 
+        // don't think this condition should be needed but sometimes errors at startup without it
         if (this.$iApi.map._innerView.ready) {
-            this.updateNortharrow(this.$iApi.map.getExtent())
+            this.updateNortharrow(this.$iApi.map.getExtent());
         }
         this.$iApi.event.on(GlobalEvents.MAP_EXTENTCHANGE, debounce(this.updateNortharrow, 300));
     }
@@ -52,24 +51,30 @@ export default class NortharrowV extends Vue {
         const sr = newExtent.sr;
         const mercator = [900913, 3587, 54004, 41001, 102113, 102100, 3785];
         if (mercator.includes(sr.wkid) || mercator.includes(sr.latestWkid)) {
-            // mercator projection, always in center of viewer with no rotation 
+            // mercator projection, always in center of viewer with no rotation
             this.displayArrow = true;
             this.angle = 0;
             this.arrowLeft = appbarWidth + (innerShell.clientWidth - appbarWidth - arrowWidth) / 2;
         } else {
             // north value (set longitude to be half of Canada extent (141° W, 52° W))
-            const pole: ApiBundle.Point = new ApiBundle.Point("pole", { x: -96, y: 90 });   
-            const projPole = await RAMP.geoapi.utils.proj.projectGeometry(sr, pole) as ApiBundle.Point;
+            const pole: ApiBundle.Point = new ApiBundle.Point('pole', { x: -96, y: 90 });
+            const projPole = (await RAMP.geoapi.utils.proj.projectGeometry(sr, pole)) as ApiBundle.Point;
             const poleScreenPos = this.$iApi.map.mapPointToScreenPoint(projPole);
             if (poleScreenPos.screenY < 0) {
                 // draw arrow if pole not visibile
                 this.displayArrow = true;
                 // get angle from bottom centre
                 const bcScreenPos = { screenX: innerShell.clientWidth / 2, screenY: innerShell.clientHeight };
-                this.angle = Math.atan((poleScreenPos.screenX - bcScreenPos.screenX) / (bcScreenPos.screenY - poleScreenPos.screenY)) * 180 / Math.PI;
-                this.arrowLeft = innerShell.clientWidth / 2 + innerShell.clientHeight * Math.tan(this.angle * Math.PI / 180) - arrowWidth / 2;
+                this.angle =
+                    (Math.atan((poleScreenPos.screenX - bcScreenPos.screenX) / (bcScreenPos.screenY - poleScreenPos.screenY)) * 180) /
+                    Math.PI;
+                this.arrowLeft =
+                    innerShell.clientWidth / 2 + innerShell.clientHeight * Math.tan((this.angle * Math.PI) / 180) - arrowWidth / 2;
                 // make sure arrow is within visible part of map
-                this.arrowLeft = Math.max(appbarWidth - arrowWidth / 2, Math.min(this.$iApi.map.getPixelWidth() - arrowWidth / 2, this.arrowLeft))
+                this.arrowLeft = Math.max(
+                    appbarWidth - arrowWidth / 2,
+                    Math.min(this.$iApi.map.getPixelWidth() - arrowWidth / 2, this.arrowLeft)
+                );
             } else {
                 // add pole marker if visible
                 this.displayArrow = false;
@@ -83,15 +88,15 @@ export default class NortharrowV extends Vue {
                         markerSymbol = {
                             width: 16.5,
                             height: 16.5,
-                            type: "esriPMS",
+                            type: 'esriPMS',
                             contentType: contentType,
-                            imageData: imageData
-                        } 
+                            imageData: imageData,
+                        };
                     }
                     // add pole marker to a highlight layer
                     const esriP = RAMP.geoapi.utils.geom.convPointToEsri(projPole);
-                    const poleLayer = RAMP.geoapi.layers.createHighlightLayer({ layerId: "PoleMarker", markerSymbol: markerSymbol });
-                    poleLayer.addMarker(esriP)
+                    const poleLayer = RAMP.geoapi.layers.createHighlightLayer({ layerId: 'PoleMarker', markerSymbol: markerSymbol });
+                    poleLayer.addMarker(esriP);
                     this.$iApi.map.addHighlightLayer(poleLayer);
                 }
             }
@@ -99,15 +104,14 @@ export default class NortharrowV extends Vue {
     }
 
     get arrowStyle() {
-        return { 
+        return {
             'transform-origin': `top center`,
-            transform: `rotate(${this.angle}deg)`, 
-            left: `${this.arrowLeft}px`,  
-            visibility: this.displayArrow ? `visible` : `hidden`
-        }
+            transform: `rotate(${this.angle}deg)`,
+            left: `${this.arrowLeft}px`,
+            visibility: this.displayArrow ? `visible` : `hidden`,
+        };
     }
 }
-
 </script>
 
 <style lang="scss" scoped></style>

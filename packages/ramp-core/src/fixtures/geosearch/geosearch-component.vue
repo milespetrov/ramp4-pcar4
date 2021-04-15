@@ -53,7 +53,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { Vue, Options, Prop } from 'vue-property-decorator';
 import { Get, Sync, Call } from 'vuex-pathify';
 import { PanelInstance } from '@/api';
 
@@ -65,13 +65,13 @@ import GeosearchTopFilters from './geosearch-top-filters.vue';
 import GeosearchBottomFilters from './geosearch-bottom-filters.vue';
 import LoadingBar from './loading-bar.vue';
 
-@Component({
+@Options({
     components: {
         GeosearchBar,
         GeosearchTopFilters,
         GeosearchBottomFilters,
-        LoadingBar
-    }
+        LoadingBar,
+    },
 })
 export default class GeosearchComponent extends Vue {
     @Prop() panel!: PanelInstance;
@@ -86,7 +86,7 @@ export default class GeosearchComponent extends Vue {
 
     // zoom in to a clicked result
     zoomIn(result: any): void {
-        let zoomPoint = new RAMP.GEO.Point('zoomies', result.position);
+        let zoomPoint = new window.RAMP.GEO.Point('zoomies', result.position);
         this.$iApi.map.zoomMapTo(zoomPoint, 50000);
     }
 
@@ -95,7 +95,7 @@ export default class GeosearchComponent extends Vue {
         // wrap matched search term in results inside span with styling
         const highlightedResult = name.replace(
             new RegExp(`${this.searchVal}`, 'gi'),
-            match => '<span class="font-bold text-blue-600">' + match + '</span>'
+            (match) => '<span class="font-bold text-blue-600">' + match + '</span>'
         );
         // add comma to new highlighted result if a province/location is provided
         return province ? highlightedResult + ',' : highlightedResult;

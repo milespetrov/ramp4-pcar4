@@ -21,7 +21,6 @@ import { GlobalEvents } from '../../api/internal';
 import { GeosearchStore } from './store';
 import { debounce } from 'debounce';
 
-@Component
 export default class GeosearchBottomFilters extends Vue {
     @Get(GeosearchStore.resultsVisible) resultsVisible!: any;
 
@@ -48,7 +47,7 @@ export default class GeosearchBottomFilters extends Vue {
     updateMapExtent(visible: boolean): void {
         this.setMapExtent({
             extent: this.$iApi.map.getExtent(),
-            visible: visible
+            visible: visible,
         });
     }
 
@@ -56,7 +55,7 @@ export default class GeosearchBottomFilters extends Vue {
     onMapExtentChange = debounce((newExtent: GeoApiBundle.Extent) => {
         this.setMapExtent({
             extent: newExtent,
-            visible: this.resultsVisible
+            visible: this.resultsVisible,
         });
     }, 300);
 }

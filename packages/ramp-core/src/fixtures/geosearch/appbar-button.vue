@@ -13,14 +13,13 @@
     </appbar-button>
 </template>
 <script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
+import { Vue } from 'vue-property-decorator';
 
 import GeosearchComponent from './geosearch-component.vue';
 
-@Component
 export default class GeosearchAppbarButtonV extends Vue {
     onClick() {
-        this.$iApi.panel.toggle('geosearch-panel');
+        this.$iApi.panelAPI.toggle('geosearch-panel');
     }
 }
 </script>

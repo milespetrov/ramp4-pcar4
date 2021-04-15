@@ -9,13 +9,13 @@ export class HelpAPI extends FixtureInstance {
      * @memberof HelpAPI
      */
     toggleHelp(open?: boolean) {
-        const panel = this.$iApi.panel.get('help-panel');
+        const panel = this.$iApi.panelAPI.get('help-panel');
         if (open === undefined) {
-            this.$iApi.panel.toggle(panel);
+            this.$iApi.panelAPI.toggle(panel);
         } else if (open && !panel.isOpen) {
-            this.$iApi.panel.open(panel);
+            this.$iApi.panelAPI.open(panel);
         } else if (!open && panel.isOpen) {
-            this.$iApi.panel.close(panel);
+            this.$iApi.panelAPI.close(panel);
         }
     }
 
@@ -40,8 +40,8 @@ export class HelpAPI extends FixtureInstance {
         if (!helpConfig) return;
         this.$vApp.$store.set(HelpStore.folderName, helpConfig.folderName);
         if (helpConfig.panelWidth) {
-            const panel = this.$iApi.panel.get('help-panel');
-            this.$iApi.panel.setStyle(panel, { width: `${helpConfig.panelWidth}px` }, true);
+            const panel = this.$iApi.panelAPI.get('help-panel');
+            this.$iApi.panelAPI.setStyle(panel, { width: `${helpConfig.panelWidth}px` }, true);
         }
     }
 }

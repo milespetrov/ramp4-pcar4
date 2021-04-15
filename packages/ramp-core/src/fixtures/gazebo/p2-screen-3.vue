@@ -40,19 +40,19 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { Vue, Options, Prop } from 'vue-property-decorator';
 import { Get, Sync, Call } from 'vuex-pathify';
 
 import { PanelInstance } from '@/api';
 
-@Component({
+@Options({
     i18n: {
         messages: {
             en: {
-                who: '[me cat]'
-            }
-        }
-    }
+                who: '[me cat]',
+            },
+        },
+    },
 })
 export default class P2Screen3V extends Vue {
     // ✔ this prop is always present and it's set by the panel-container component

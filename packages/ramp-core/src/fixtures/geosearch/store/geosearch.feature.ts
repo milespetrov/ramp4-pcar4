@@ -27,7 +27,7 @@ const CODE_TO_ABBR = {
     61: 'NT',
     62: 'NU',
     72: 'UF',
-    73: 'IW'
+    73: 'IW',
 };
 
 /**
@@ -69,7 +69,7 @@ export class GeoSearchUI {
             categories,
             sortOrder,
             maxResults,
-            officialOnly
+            officialOnly,
         };
         // remove any types to be excluded from config
         this.config.types.filterValidTypes(uConfig.excludeTypes);
@@ -80,14 +80,14 @@ export class GeoSearchUI {
     get provinceList() {
         return (<any>this)._provinceList;
     }
-    get typeList() {
-        return (<any>this)._typeList;
-    }
     set provinceList(val) {
         (<any>this)._provinceList = val;
     }
     set typeList(val) {
         (<any>this)._typeList = val;
+    }
+    get typeList() {
+        return (<any>this)._typeList;
     }
 
     /**
@@ -124,16 +124,16 @@ export class GeoSearchUI {
                                 q.featureResults.LatLon.lon + bboxRange,
                                 q.featureResults.LatLon.lat - bboxRange,
                                 q.featureResults.LatLon.lon - bboxRange,
-                                q.featureResults.LatLon.lat + bboxRange
+                                q.featureResults.LatLon.lat + bboxRange,
                             ],
                             type: q.featureResults.desc,
                             position: [q.featureResults.LatLon.lon, q.featureResults.LatLon.lat],
                             location: {
                                 latitude: q.featureResults.LatLon.lat,
                                 longitude: q.featureResults.LatLon.lon,
-                                province: this.findProvinceObj(q.featureResults.province)
-                            }
-                        }
+                                province: this.findProvinceObj(q.featureResults.province),
+                            },
+                        },
                     ];
                 } else if (q.featureResults.nts) {
                     // add first geosearch result as location of NTS map number
@@ -146,9 +146,9 @@ export class GeoSearchUI {
                             location: {
                                 city: q.featureResults.location,
                                 latitude: q.featureResults.LatLon.lat,
-                                longitude: q.featureResults.LatLon.lon
-                            }
-                        }
+                                longitude: q.featureResults.LatLon.lon,
+                            },
+                        },
                     ];
                 }
             } else if (q.latLongResult !== undefined) {
@@ -158,7 +158,7 @@ export class GeoSearchUI {
             // console.log("first feature result: ", featureResult);
 
             // format returned query results appropriately to support zoom/extent functionality
-            let queryResult = q.results.map((item: any) => ({
+            const queryResult = q.results.map((item: any) => ({
                 name: item.name,
                 bbox: item.bbox,
                 type: item.type,
@@ -167,8 +167,8 @@ export class GeoSearchUI {
                     city: item.location,
                     latitude: item.LatLon.lat,
                     longitude: item.LatLon.lon,
-                    province: this.findProvinceObj(item.province)
-                }
+                    province: this.findProvinceObj(item.province),
+                },
             }));
             // console.log("remaining query results: ", queryResult);
             return featureResult.concat(queryResult);
@@ -181,22 +181,22 @@ export class GeoSearchUI {
      * @return {Array} list of formatted province objects
      */
     fetchProvinces() {
-        let provinceList = [];
+        const provinceList = [];
         // add a '...' option as a way to clear province filter
         const reset = {
             code: -1,
             abbr: '...',
-            name: '...'
+            name: '...',
         };
         provinceList.push(reset);
 
         // obtain province filters stored in config
-        let rawProvinces = this.config.provinces.list;
-        for (let code in rawProvinces) {
+        const rawProvinces = this.config.provinces.list;
+        for (const code in rawProvinces) {
             provinceList.push({
                 code: code,
                 abbr: (<any>CODE_TO_ABBR)[code],
-                name: rawProvinces[code]
+                name: rawProvinces[code],
             });
         }
         this.provinceList = provinceList;
@@ -209,21 +209,21 @@ export class GeoSearchUI {
      * @return {Array} a list of a formatted type objects
      */
     fetchTypes() {
-        let typeList = [];
+        const typeList = [];
         // add a '...' option as a way to clear province filter
         const reset = {
             code: -1,
-            name: '...'
+            name: '...',
         };
         typeList.push(reset);
 
         // obtain the type filters stored in config
-        let rawTypes = this.config.types.allTypes;
-        for (let type in rawTypes) {
+        const rawTypes = this.config.types.allTypes;
+        for (const type in rawTypes) {
             if (!(<any>this)._excludedTypes.includes(type)) {
                 typeList.push({
                     code: type,
-                    name: rawTypes[type]
+                    name: rawTypes[type],
                 });
             }
         }
@@ -234,5 +234,5 @@ export class GeoSearchUI {
 
 export default {
     feature: 'geoSearch',
-    GeoSearchUI
+    GeoSearchUI,
 };

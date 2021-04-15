@@ -12,13 +12,13 @@ export class GeosearchState {
 
     constructor() {
         // initialize geosearch feature service that contains all key geosearch functionality - running queries, fetch initial filters, update filters, etc.
-        let language = 'en';
+        const language = 'en';
         this.GSservice = new GeoSearchUI({ language });
         // query params contains filter types
-        let queryParams: QueryParams = {
+        const queryParams: QueryParams = {
             type: '',
             province: '',
-            extent: ''
+            extent: '',
         };
         this.queryParams = queryParams;
         this.resultsVisible = false;

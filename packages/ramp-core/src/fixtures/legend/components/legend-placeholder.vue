@@ -27,7 +27,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+import { Vue, Options, Prop, Watch } from 'vue-property-decorator';
 import { Get, Sync, Call } from 'vuex-pathify';
 
 import { LayerStore, layer } from '@/store/modules/layer';
@@ -39,11 +39,11 @@ import { LegendEntry, LegendTypes } from '../store/legend-defs';
 import CheckboxV from './checkbox.vue';
 import SymbologyStack from './symbology-stack.vue';
 
-@Component({
+@Options({
     components: {
         checkbox: CheckboxV,
-        'symbology-stack': SymbologyStack
-    }
+        'symbology-stack': SymbologyStack,
+    },
 })
 export default class LegendPlaceholderV extends Vue {
     @Prop() legendItem!: LegendEntry;
@@ -57,7 +57,7 @@ export default class LegendPlaceholderV extends Vue {
         this.layer = newValue.find((layer: BaseLayer) => layer.id === this.legendItem.id);
 
         if (this.layer !== undefined) {
-            this.layer.isLayerLoaded().then(r => {
+            this.layer.isLayerLoaded().then((r) => {
                 this.legendItem._layer = this.layer;
                 this.legendItem._type = LegendTypes.Entry;
                 this.legendItem._uid = this.layer!.getLayerTree().findChildByIdx(this.legendItem._layerIndex!)?.uid || this.layer!.uid;

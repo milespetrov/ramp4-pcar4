@@ -13,30 +13,29 @@ class HelpFixture extends HelpAPI {
 
         this.$vApp.$store.registerModule('help', help());
 
-        this.$iApi.panel.register(
+        this.$iApi.panelAPI.register(
             {
                 'help-panel': {
                     screens: {
-                        'help-screen': HelpV
+                        'help-screen': HelpV,
                     },
                     style: {
-                        width: '350px'
-                    }
-                }
+                        width: '350px',
+                    },
+                },
             },
             {
-                i18n: { messages }
+                i18n: { messages },
             }
         );
-        this.$iApi.panel.open('help-panel');
+        this.$iApi.panelAPI.open('help-panel');
 
         // parse help section of config and store information in help store
         this._parseConfig(this.config);
         this.$vApp.$watch(
             () => this.config,
-            value => this._parseConfig(value)
+            (value) => this._parseConfig(value)
         );
-
     }
 
     removed() {

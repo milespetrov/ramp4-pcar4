@@ -6,9 +6,9 @@ class CrosshairsFixture extends FixtureInstance {
     added(): void {
         console.log(`[fixture] ${this.id} added`);
 
-        const innerShell = this.$vApp.$el.getElementsByClassName('inner-shell')[0];
+        const innerShell = this.$vm.$el.getElementsByClassName('inner-shell')[0];
         const crosshairs = this.extend(CrosshairsV);
-        innerShell.append(crosshairs.$el);
+        innerShell.append(crosshairs.$vm.$el);
     }
 
     removed(): void {

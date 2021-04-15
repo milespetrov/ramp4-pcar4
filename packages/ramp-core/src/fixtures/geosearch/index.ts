@@ -14,17 +14,17 @@ class GeosearchFixture extends GeosearchAPI {
 
         this.$vApp.$store.registerModule('geosearch', geosearch());
 
-        this.$iApi.panel.register(
+        this.$iApi.panelAPI.register(
             {
                 id: 'geosearch-panel',
                 config: {
-                    screens: { 'geosearch-component': GeosearchComponent }
-                }
+                    screens: { 'geosearch-component': GeosearchComponent },
+                },
             },
             { i18n: { messages } }
         );
 
-        this.$iApi.panel.open('geosearch-panel');
+        this.$iApi.panelAPI.open('geosearch-panel');
     }
 
     removed() {

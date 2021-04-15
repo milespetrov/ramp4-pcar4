@@ -8,9 +8,8 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { Vue, Prop } from 'vue-property-decorator';
 
-@Component
 export default class TooltipV extends Vue {
     @Prop({ default: 'top' }) position!: string;
     @Prop() tooltipfor!: HTMLElement | null;
@@ -21,11 +20,11 @@ export default class TooltipV extends Vue {
         this.$el.previousElementSibling!.setAttribute('aria-labelledby', this.$el.id);
 
         // Handle hovering through events so that we can stop propogation
-        (this.$el.previousElementSibling! as HTMLElement).addEventListener('mouseover', function(event: MouseEvent) {
+        (this.$el.previousElementSibling! as HTMLElement).addEventListener('mouseover', function (event: MouseEvent) {
             event.stopPropagation();
             this.classList.add('show-tooltip');
         });
-        (this.$el.previousElementSibling! as HTMLElement).addEventListener('mouseout', function(event: MouseEvent) {
+        (this.$el.previousElementSibling! as HTMLElement).addEventListener('mouseout', function (event: MouseEvent) {
             if (this.classList.contains('show-tooltip')) {
                 this.classList.remove('show-tooltip');
             }
@@ -35,11 +34,7 @@ export default class TooltipV extends Vue {
     generateID(): string {
         let newID;
         do {
-            newID =
-                'tooltip-' +
-                Math.random()
-                    .toString(36)
-                    .substring(2, 9);
+            newID = 'tooltip-' + Math.random().toString(36).substring(2, 9);
         } while (document.getElementById(newID) !== null);
 
         return newID;

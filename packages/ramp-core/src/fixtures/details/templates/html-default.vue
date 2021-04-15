@@ -4,13 +4,12 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { Vue, Prop } from 'vue-property-decorator';
 import { Get, Sync, Call } from 'vuex-pathify';
 
 import { PanelInstance } from '@/api';
 import { IdentifyItem } from 'ramp-geoapi';
 
-@Component({})
 export default class HTMLDefaultV extends Vue {
     @Prop() identifyData!: IdentifyItem;
 }

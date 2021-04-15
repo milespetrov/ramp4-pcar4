@@ -1,9 +1,9 @@
-import Vue from 'vue';
+import Mitt, { Handler } from 'mitt';
 import { APIScope, InstanceAPI } from './internal';
 import { DetailsAPI } from '@/fixtures/details/api/details';
-import { SettingsAPI} from '@/fixtures/settings/api/settings'
-import { HelpAPI } from '@/fixtures/help/api/help'
-import { GridAPI } from '@/fixtures/grid/api/grid'
+import { SettingsAPI } from '@/fixtures/settings/api/settings';
+import { HelpAPI } from '@/fixtures/help/api/help';
+import { GridAPI } from '@/fixtures/grid/api/grid';
 import { IdentifyResult, IdentifyResultSet, MapClick } from 'ramp-geoapi';
 
 export enum GlobalEvents {
@@ -35,7 +35,7 @@ export enum GlobalEvents {
     SETTINGS_TOGGLE = 'settings/toggle',
     DETAILS_OPEN = 'details/open',
     HELP_TOGGLE = 'help/toggle',
-    GRID_TOGGLE = 'grid/toggle'
+    GRID_TOGGLE = 'grid/toggle',
 }
 
 // TODO export this enum?
@@ -54,7 +54,7 @@ enum DefEH {
     TOGGLE_SETTINGS = 'ramp_settings_toggles_panel',
     OPEN_DETAILS = 'opens_feature_details',
     TOGGLE_HELP = 'toggles_help_panel',
-    TOGGLE_GRID = 'toggles_grid_panel'
+    TOGGLE_GRID = 'toggles_grid_panel',
 }
 
 // private for EventBus internals, so don't export
@@ -63,9 +63,9 @@ enum DefEH {
 class EventHandler {
     eventName: string;
     handlerName: string;
-    handlerFunc: Function;
+    handlerFunc: Handler;
 
-    constructor (eName: string, hName: string, handler: Function) {
+    constructor(eName: string, hName: string, handler: Handler) {
         this.eventName = eName;
         this.handlerName = hName;
         this.handlerFunc = handler;
@@ -73,7 +73,6 @@ class EventHandler {
 }
 
 export class EventAPI extends APIScope {
-
     /**
      * A vue instance that provides an event bus for all events.
      *
@@ -81,7 +80,7 @@ export class EventAPI extends APIScope {
      * @type {Vue}
      * @memberof EventAPI
      */
-    private readonly _eventBus: Vue;
+    private readonly _eventBus;
 
     // tracks active event handlers: event name, handler name, and the actual handler function
     private readonly _eventRegister: Array<EventHandler>;
@@ -95,15 +94,14 @@ export class EventAPI extends APIScope {
 
     constructor(iApi: InstanceAPI) {
         super(iApi);
-        this._eventBus = new Vue();
+        this._eventBus = Mitt();
         this._eventRegister = [];
         this._funCounter = 1;
 
         // add the public enum items here, as they will always exist.
         // getting enum values is a mess. this code does it but assumes
         // all event names in global events use the slash format
-        this._nameRegister = Object.values(GlobalEvents)
-            .filter(e => (typeof e === 'string') && (e.indexOf('/') > -1));
+        this._nameRegister = Object.values(GlobalEvents).filter((e) => typeof e === 'string' && e.indexOf('/') > -1);
     }
 
     /**
@@ -115,7 +113,7 @@ export class EventAPI extends APIScope {
      * @private
      */
     private findHandler(handlerName: string): EventHandler | undefined {
-        return this._eventRegister.find(eh => eh.handlerName === handlerName);
+        return this._eventRegister.find((eh) => eh.handlerName === handlerName);
     }
 
     /**
@@ -139,12 +137,12 @@ export class EventAPI extends APIScope {
      */
     registerEventName(names: string | Array<string>): void {
         const arrr = Array.isArray(names) ? names : [names];
-        arrr.forEach(n => {
+        arrr.forEach((n) => {
             // don't add if name is already registered
             if (this._nameRegister.indexOf(n) === -1) {
                 this._nameRegister.push(n);
             }
-        })
+        });
     }
 
     /**
@@ -168,7 +166,7 @@ export class EventAPI extends APIScope {
      * @returns {string} the handler name
      * @memberof EventAPI
      */
-    on(event: string, callback: Function, handlerName: string = ''): string {
+    on(event: string, callback: Handler, handlerName = ''): string {
         // check if name already registered
         if (this.findHandler(handlerName)) {
             // TODO decide if we are replacing, erroring, do nothing + console warn?
@@ -182,7 +180,7 @@ export class EventAPI extends APIScope {
         // track the event, register with main event bus
         const eh = new EventHandler(event, handlerName, callback);
         this._eventRegister.push(eh);
-        this._eventBus.$on(event, callback);
+        this._eventBus.on(event, callback);
 
         return handlerName;
     }
@@ -206,7 +204,7 @@ export class EventAPI extends APIScope {
         if (eh) {
             // remove from event bus and the registry
             this._eventRegister.splice(this._eventRegister.indexOf(eh), 1);
-            this._eventBus.$off(eh.eventName, eh.handlerFunc);
+            this._eventBus.off(eh.eventName, eh.handlerFunc);
         }
 
         // TODO case where no handler was found. do nothing? console warn? error?
@@ -222,7 +220,7 @@ export class EventAPI extends APIScope {
      */
     emit(event: string, ...args: any[]): void {
         // TODO any checking that event exists? or we just agree it is global bus fun
-        this._eventBus.$emit(event, ...args);
+        this._eventBus.emit(event, ...args);
     }
 
     /**
@@ -235,8 +233,7 @@ export class EventAPI extends APIScope {
      * @returns {string} the handler name
      * @memberof EventAPI
      */
-    once(event: string, callback: Function, handlerName: string = ''): string {
-
+    once(event: string, callback: Handler, handlerName = ''): string {
         // need to do this here and upfront, so we have the name for the unregistration.
         // otherwise we would let the .on() call do its naming thing
         if (!handlerName) {
@@ -259,13 +256,13 @@ export class EventAPI extends APIScope {
      * @returns {Array} list of handler names
      * @memberof EventAPI
      */
-    activeHandlers(event: string = ''): Array<string> {
+    activeHandlers(event = ''): Array<string> {
         // TODO add a filter if we implement disabled events
 
         if (event === '') {
-            return this._eventRegister.map(eh => eh.handlerName);
+            return this._eventRegister.map((eh) => eh.handlerName);
         }
-        return this._eventRegister.filter(eh => eh.eventName === event).map(eh => eh.handlerName);
+        return this._eventRegister.filter((eh) => eh.eventName === event).map((eh) => eh.handlerName);
     }
 
     /**
@@ -286,11 +283,21 @@ export class EventAPI extends APIScope {
             // TODO the enum-values-to-array logic we use in the event names list
             //      fails a bit here. we could make it work if we force every default
             //      handler name to being with a specific prefix. Alternately use object, not enum.
-            eventHandlerNames = [DefEH.MAP_IDENTIFY, DefEH.MAP_KEYDOWN, DefEH.MAP_KEYUP, DefEH.MAP_BLUR, DefEH.IDENTIFY_DETAILS, DefEH.TOGGLE_SETTINGS, DefEH.OPEN_DETAILS, DefEH.TOGGLE_HELP, DefEH.TOGGLE_GRID];
+            eventHandlerNames = [
+                DefEH.MAP_IDENTIFY,
+                DefEH.MAP_KEYDOWN,
+                DefEH.MAP_KEYUP,
+                DefEH.MAP_BLUR,
+                DefEH.IDENTIFY_DETAILS,
+                DefEH.TOGGLE_SETTINGS,
+                DefEH.OPEN_DETAILS,
+                DefEH.TOGGLE_HELP,
+                DefEH.TOGGLE_GRID,
+            ];
         }
 
         // add all the requested default event handlers.
-        return eventHandlerNames.map(hn => this.defaultHandlerFactory(hn));
+        return eventHandlerNames.map((hn) => this.defaultHandlerFactory(hn));
     }
 
     /**
@@ -302,7 +309,7 @@ export class EventAPI extends APIScope {
      * @private
      */
     private defaultHandlerFactory(handlerName: string): string {
-        let zeHandler: Function;
+        let zeHandler: Handler;
 
         switch (handlerName) {
             case DefEH.MAP_IDENTIFY:
@@ -319,7 +326,7 @@ export class EventAPI extends APIScope {
                 zeHandler = (identifyParam: any) => {
                     const detailFix: DetailsAPI = this.$iApi.fixture.get('details');
                     if (detailFix) {
-                        detailFix.openDetails(identifyParam.results)
+                        detailFix.openDetails(identifyParam.results);
                     }
                 };
                 this.on(GlobalEvents.MAP_IDENTIFY, zeHandler, handlerName);
@@ -385,7 +392,5 @@ export class EventAPI extends APIScope {
         }
 
         return handlerName;
-
     }
-
 }

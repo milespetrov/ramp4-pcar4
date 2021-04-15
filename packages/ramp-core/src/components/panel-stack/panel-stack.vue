@@ -5,9 +5,9 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
-import { Get, Sync, Call } from 'vuex-pathify';
-
+import { Vue, Options } from 'vue-property-decorator';
+import { Get, Sync } from 'vuex-pathify';
+import { Handler } from 'mitt';
 import anime from 'animejs';
 
 import { PanelInstance } from '@/api';
@@ -15,16 +15,16 @@ import { PanelInstance } from '@/api';
 import PanelV from './panel-container.vue';
 
 declare class ResizeObserver {
-    constructor(callback: Function);
+    constructor(callback: Handler);
     observe(target: Element): void;
     unobserve(target: Element): void;
     disconnect(): void;
 }
 
-@Component({
+@Options({
     components: {
-        'panel-container': PanelV
-    }
+        'panel-container': PanelV,
+    },
 })
 export default class PanelStackV extends Vue {
     @Get('panel/getVisible!') visible!: (extraSmallScreen: boolean) => PanelInstance[];
@@ -42,11 +42,11 @@ export default class PanelStackV extends Vue {
     enter(el: HTMLElement, done: () => void): void {
         this.animateTransition(el, done, [
             [6, 0],
-            [0, 1]
+            [0, 1],
         ]);
     }
 
-    leave(el: HTMLElement, done: () => {}): void {
+    leave(el: HTMLElement, done: () => Record<string, never>): void {
         const [bbox, pbbox] = [el.getBoundingClientRect(), el.parentElement!.getBoundingClientRect()];
 
         // the panel will be positioned `absolute` and it will screw up its dimensions
@@ -60,7 +60,7 @@ export default class PanelStackV extends Vue {
 
         this.animateTransition(el, done, [
             [0, -6],
-            [1, 0]
+            [1, 0],
         ]);
     }
 
@@ -73,14 +73,14 @@ export default class PanelStackV extends Vue {
             duration: 300,
             translateY: {
                 value: values[0],
-                easing: 'cubicBezier(.5, .05, .1, .3)'
+                easing: 'cubicBezier(.5, .05, .1, .3)',
             },
             opacity: {
                 value: values[1],
                 duration: 250,
-                easing: 'cubicBezier(.5, .05, .1, .3)'
+                easing: 'cubicBezier(.5, .05, .1, .3)',
             },
-            complete: done
+            complete: done,
         });
     }
 }

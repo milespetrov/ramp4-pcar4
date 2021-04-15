@@ -79,7 +79,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { Vue, Options, Prop } from 'vue-property-decorator';
 import { Get, Sync, Call } from 'vuex-pathify';
 
 import { PanelInstance } from '@/api';
@@ -87,10 +87,10 @@ import BaseLayer from 'ramp-geoapi/dist/layer/BaseLayer';
 
 import SettingsComponent from './SettingsComponentV.vue';
 
-@Component({
+@Options({
     components: {
-        'settings-component': SettingsComponent
-    }
+        'settings-component': SettingsComponent,
+    },
 })
 export default class SettingsV extends Vue {
     @Prop() panel!: PanelInstance;
@@ -100,11 +100,11 @@ export default class SettingsV extends Vue {
     // Models.
     visibilityModel: boolean = this.layer.getVisibility(this.uid);
     opacityModel: number = this.layer.getOpacity(this.uid) * 100;
-    snapshotToggle: boolean = false;
+    snapshotToggle = false;
 
     mounted() {
         // Listen for a layer load event. Some of these values may change when the layer fully loads.
-        this.layer.stateChanged.listen(payload => {
+        this.layer.stateChanged.listen((payload) => {
             this.visibilityModel = this.layer.getVisibility(this.uid);
             this.opacityModel = this.layer.getOpacity(this.uid) * 100;
         });

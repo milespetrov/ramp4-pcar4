@@ -37,7 +37,7 @@ export interface AppbarItemConfig {
      * @type {object}
      * @memberof AppbarItemConfig
      */
-    options?: object;
+    options?: Record<string, unknown>;
 }
 
 export class AppbarItemInstance implements AppbarItemConfig {
@@ -49,7 +49,7 @@ export class AppbarItemInstance implements AppbarItemConfig {
      * @type {object}
      * @memberof AppbarItemInstance
      */
-    options: object;
+    options: Record<string, unknown>;
 
     /**
      * An actual id of the appbar Vue component to use when rendering in the template.

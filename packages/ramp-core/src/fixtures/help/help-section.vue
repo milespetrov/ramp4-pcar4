@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div >
+        <div>
             <div class="help-section-header flex items-center p-15 hover:bg-gray-200 cursor-pointer select-none" @click="toggleExpanded()">
                 <!-- name -->
                 <span class="text-lg flex-grow">{{ helpSection.header }}</span>
@@ -19,11 +19,10 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { Vue, Prop } from 'vue-property-decorator';
 import { Get, Sync, Call } from 'vuex-pathify';
 import { PanelInstance } from '@/api';
 
-@Component({})
 export default class HelpSectionV extends Vue {
     @Prop() helpSection!: any;
 

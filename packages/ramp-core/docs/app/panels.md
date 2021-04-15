@@ -30,7 +30,7 @@ Pass locale messages as part of the `PanelRegistrationOptions` when registering 
 // fixture.ts
 
 // with a single panel
-this.$iApi.panel.register({
+this.$iApi.panelAPI.register({
         id: 'panel-one',
         config: {
             screens: <...>
@@ -42,7 +42,7 @@ this.$iApi.panel.register({
 );
 
 // or several panels
-this.$iApi.panel.register({
+this.$iApi.panelAPI.register({
         'panel-one': {
             screens: <...>
         },
@@ -85,7 +85,7 @@ Additionally, it's possible to provide locale messages directly to the screen co
 
 ```ts
 // screen-component.vue
-@Component({
+@Options({
     i18n: {
         messages: {
             en: {
@@ -102,7 +102,7 @@ The above requires hardcoding locale string into the component file. If using a 
 // screen-component.vue
 import messages from './lang.csv'
 
-@Component({
+@Options({
     i18n: {
         messages
     }

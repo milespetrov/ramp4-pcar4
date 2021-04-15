@@ -45,13 +45,12 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { Vue, Prop } from 'vue-property-decorator';
 import { Get, Sync, Call } from 'vuex-pathify';
 
 import { GeosearchStore } from './store';
 import { ConfigStore } from '@/store/modules/config';
 
-@Component
 export default class GeosearchTopFilters extends Vue {
     // fetch defined province/type filters + filter params from store
     @Get(GeosearchStore.getProvinces) provinces!: Array<any>;
