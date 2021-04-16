@@ -34,7 +34,7 @@ export class LegendItem {
                       Controls.Remove,
                       Controls.Datatable,
                       Controls.Settings,
-                      Controls.Symbology
+                      Controls.Symbology,
                   ];
         this._hidden = legendItem.hidden !== undefined ? legendItem.hidden : false;
         this._itemConfig = legendItem;
@@ -145,7 +145,9 @@ export class LegendEntry extends LegendItem {
 
             // toggle off visibility if entry is part of a visibility set with a set entry already toggled on
             if (this._parent instanceof LegendGroup && this._parent.type === LegendTypes.Set) {
-                this._parent.children.some(entry => entry.visibility && entry.id !== this._id) ? this._layer?.setVisibility(false, this.uid) : null;
+                this._parent.children.some((entry) => entry.visibility && entry.id !== this._id)
+                    ? this._layer?.setVisibility(false, this.uid)
+                    : null;
             }
         });
     }
@@ -179,20 +181,22 @@ export class LegendEntry extends LegendItem {
      * Sets visibility of the Legend Entry - needs to verify parent visibility is updated.
      * @param visibility - true if visible, false if invisible, undefined means toggle visibility
      */
-    toggleVisibility(visibility: boolean | undefined = undefined, updateParent: boolean = true): void {
+    toggleVisibility(visibility: boolean | undefined = undefined, updateParent = true): void {
         if (this._controls.includes(Controls.Visibility)) {
             // do nothing if visibility of entry is already equal to the argument value
             if (this.visibility === visibility) {
                 return;
             }
-            visibility !== undefined ? this._layer?.setVisibility(visibility, this.uid) : this._layer?.setVisibility(!this.visibility, this.uid);
+            visibility !== undefined
+                ? this._layer?.setVisibility(visibility, this.uid)
+                : this._layer?.setVisibility(!this.visibility, this.uid);
             // update parent visibility if current legend entry is part of a group or set
             if (this._parent instanceof LegendGroup && updateParent) {
                 this._parent.checkVisibility(this);
 
                 // if its a set turn off the visibility of all other children
                 if (this.parent instanceof LegendSet) {
-                    this.parent.children.forEach(child => {
+                    this.parent.children.forEach((child) => {
                         if (child !== this && child.visibility) child.toggleVisibility(false);
                     });
                 }
@@ -292,17 +296,17 @@ export class LegendGroup extends LegendItem {
     checkVisibility(toggledChild: LegendEntry | LegendGroup): void {
         if (this._type === LegendTypes.Group) {
             // if any children entries are toggled on group must be toggled on, else if all children entries are toggled off, group must be toggled off
-            if (this._children.some(entry => entry.visibility)) {
+            if (this._children.some((entry) => entry.visibility)) {
                 this._visibility = true;
                 // save all entries with visibility on
-                this._visibleEntries = this._children.filter(entry => entry.visibility);
-            } else if (this._children.every(entry => !entry.visibility)) {
+                this._visibleEntries = this._children.filter((entry) => entry.visibility);
+            } else if (this._children.every((entry) => !entry.visibility)) {
                 this._visibility = false;
                 this._visibleEntries = [];
             }
         } else if (toggledChild.visibility) {
             // turn off all child entries except for the last one toggled on, mark that as the last visible entry in the set
-            this.children.forEach(entry => {
+            this.children.forEach((entry) => {
                 if (entry.visibility && entry.id !== toggledChild.id) {
                     entry instanceof LegendEntry ? entry.layer?.setVisibility(false) : entry.toggleVisibility(false, false);
                 }
@@ -323,7 +327,7 @@ export class LegendGroup extends LegendItem {
      * Toggles group visibility to show/hide children.
      * @param visible true if group should have visibility toggled on, false if group visibility should be toggled off, or undefined if group visibility should be toggled
      */
-    toggleVisibility(visible: boolean | undefined = undefined, updateParent: boolean = true): void {
+    toggleVisibility(visible: boolean | undefined = undefined, updateParent = true): void {
         const oldVal = this._visibility;
         visible !== undefined ? (this._visibility = visible) : (this._visibility = !this._visibility);
         // check if visibility value changes
@@ -335,11 +339,11 @@ export class LegendGroup extends LegendItem {
             // for legend groups, if group is toggled on turn on visibility for all children that are saved, and all children if none are saved
             if (this._visibility) {
                 this._visibleEntries.length > 0
-                    ? this._visibleEntries.forEach(entry => entry.toggleVisibility(this._visibility, false))
-                    : this._children.forEach(entry => entry.toggleVisibility(this.visibility, false));
+                    ? this._visibleEntries.forEach((entry) => entry.toggleVisibility(this._visibility, false))
+                    : this._children.forEach((entry) => entry.toggleVisibility(this.visibility, false));
             } else {
                 // otherewise turn off visibility for all children
-                this._children.forEach(entry => entry.toggleVisibility(this._visibility, false));
+                this._children.forEach((entry) => entry.toggleVisibility(this._visibility, false));
             }
         } else {
             // otherwise for visibility sets ensure that there is only one child entry visible
@@ -348,7 +352,7 @@ export class LegendGroup extends LegendItem {
                 this._lastVisible !== undefined ? this._lastVisible.toggleVisibility(true) : this._children[0].toggleVisibility(true);
             } else {
                 // turn off visibility for all child entries and save/update the last legend entry
-                this._lastVisible = this._children.find(entry => entry.visibility);
+                this._lastVisible = this._children.find((entry) => entry.visibility);
                 this._lastVisible?.toggleVisibility(false);
             }
         }
@@ -359,7 +363,7 @@ export class LegendGroup extends LegendItem {
 
             // if its a set turn off the visibility of all other children
             if (this.parent instanceof LegendSet) {
-                this.parent.children.forEach(child => {
+                this.parent.children.forEach((child) => {
                     if (child !== this && child.visibility) child.toggleVisibility(false);
                 });
             }
@@ -377,7 +381,7 @@ export enum LegendTypes {
     Set = 'VisibilitySet',
     Entry = 'LegendEntry',
     Info = 'InfoSection',
-    Placeholder = 'Placeholder'
+    Placeholder = 'Placeholder',
 }
 
 export enum Controls {
@@ -392,5 +396,5 @@ export enum Controls {
     Remove = 'remove',
     Settings = 'settings',
     Datatable = 'datatable',
-    Symbology = 'symbology'
+    Symbology = 'symbology',
 }

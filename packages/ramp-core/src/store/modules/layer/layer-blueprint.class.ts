@@ -1,3 +1,7 @@
+/* eslint-disable prettier/prettier */
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
 import to from 'await-to-js';
 import deepmerge from 'deepmerge';
 import axios from 'axios';
@@ -16,8 +20,8 @@ const GEO = {
             ESRI_TILE: 'esriTile',
             ESRI_RASTER: 'esriRaster', // Note this type can only exist as a child of a map image layer. Can be used to check types via child proxy objects.
             OGC_WMS: 'ogcWms',
-            OGC_WFS: 'ogcWfs'
-        }
+            OGC_WFS: 'ogcWfs',
+        },
     },
     Service: {
         Types: {
@@ -37,9 +41,9 @@ const GEO = {
             WMS: 'wms',
             WFS: 'wfs',
             Unknown: 'unknown',
-            Error: 'error'
-        }
-    }
+            Error: 'error',
+        },
+    },
 };
 
 // TODO: move mixin constructors into the util file
@@ -72,8 +76,8 @@ function mixins<A, B, C, D, E>(
 function mixins<T>(...Ctors: Constructor<T>[]): Constructor<T> {
     class Class {}
 
-    Ctors.forEach(Ctor => {
-        Object.getOwnPropertyNames(Ctor.prototype).forEach(name => {
+    Ctors.forEach((Ctor) => {
+        Object.getOwnPropertyNames(Ctor.prototype).forEach((name) => {
             (<any>Class).prototype[name] = Ctor.prototype[name];
         });
     });
@@ -149,7 +153,7 @@ class ClientSideData extends LayerBlueprintMixin {
         // TODO: change type 'any' here if possible
         const [error, response] = await to<any>(
             axios.get(this.config.url, {
-                responseType: 'blob'
+                responseType: 'blob',
             })
         );
 
@@ -161,7 +165,7 @@ class ClientSideData extends LayerBlueprintMixin {
         const reader = new FileReader();
 
         return new Promise((resolve: any, reject: any) => {
-            reader.onerror = error => {
+            reader.onerror = (error) => {
                 console.error(`File data failed to load for "${this.config.id}"`, error);
                 reject({ reason: 'error', message: 'Failed to read file' });
             };
@@ -209,7 +213,7 @@ class ClientSideData extends LayerBlueprintMixin {
      * @returns {Promise<any>}
      * @memberof ClientSideData
      */
-    async _returnFormattedData(force: boolean = false): Promise<any> {
+    async _returnFormattedData(force = false): Promise<any> {
         if (this._rawData && !force) {
             return this._rawData;
         }
@@ -293,7 +297,7 @@ class BlueprintBase extends LayerBlueprintMixin {
      * @memberof BlueprintBase
      */
     // TODO modify type signature as required after other functions are created (csv and shapefile)
-    makeLayer(force: boolean = false, geojson: any = null, systemOptions: any = null): Promise<BaseLayer> {
+    makeLayer(force = false, geojson: any = null, systemOptions: any = null): Promise<BaseLayer> {
         // if the layer was previously generated (and force is false), just return that
         if (this._layer && !force) {
             return Promise.resolve(this._layer);
@@ -329,7 +333,7 @@ class FeatureServiceSource extends mixins(BlueprintBase, ServerSideData) {
     }
 
     get layerRecordFactory(): LayerRecordFactory {
-        return config => api.geoapi.layers.createFeatureLayer(config); // TODO: gapiService.gapi.layer.createFeatureRecord;
+        return (config) => api.geoapi.layers.createFeatureLayer(config); // TODO: gapiService.gapi.layer.createFeatureRecord;
     }
 
     /**
@@ -338,6 +342,7 @@ class FeatureServiceSource extends mixins(BlueprintBase, ServerSideData) {
      * @readonly
      * @memberof FeatureServiceSource
      */
+    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
     get type() {
         return GEO.Service.Types.FeatureLayer;
     }
@@ -359,7 +364,7 @@ class MapImageServiceSource extends mixins(BlueprintBase, ServerSideData) {
     }
 
     get layerRecordFactory(): LayerRecordFactory {
-        return config => api.geoapi.layers.createMapImageLayer(config); // TODO: gapiService.gapi.layer.createMapImageRecord;
+        return (config) => api.geoapi.layers.createMapImageLayer(config); // TODO: gapiService.gapi.layer.createMapImageRecord;
     }
 
     get type() {
@@ -384,7 +389,7 @@ class WMSServiceSource extends mixins(BlueprintBase, ServerSideData) {
 
     // TODO uncomment
     get layerRecordFactory(): LayerRecordFactory {
-        return config => api.geoapi.layers.createWmsLayer(config);
+        return (config) => api.geoapi.layers.createWmsLayer(config);
     }
 
     get type() {
@@ -466,7 +471,7 @@ class WFSServiceSource extends mixins(BlueprintBase, ClientSideData) {
      * @returns {Promise<any>}
      * @memberof WFSServiceSource
      */
-    async makeLayer(force: boolean = false): Promise<BaseLayer> {
+    async makeLayer(force = false): Promise<BaseLayer> {
         // TODO make this return type `WFSLayer` when implemented
         const formattedData = await super._returnFormattedData(force);
         return super.makeLayer(force, formattedData, { mapSR: { wkid: 102100 } }); // TODO remove hard coded value after
@@ -509,12 +514,12 @@ class WFSServiceSource extends mixins(BlueprintBase, ClientSideData) {
      * @memberof WFSServiceSource
      */
     async _getWFSData(
-        totalCount: number = -1,
-        startindex: number = 0,
-        limit: number = 1000,
+        totalCount = -1,
+        startindex = 0,
+        limit = 1000,
         wfsData: WFSData = {
             type: 'FeatureCollection',
-            features: []
+            features: [],
         }
     ): Promise<any> {
         let newQueryMap: QueryMap = { startindex: startindex.toString(), limit: limit.toString() };
@@ -526,7 +531,7 @@ class WFSServiceSource extends mixins(BlueprintBase, ClientSideData) {
             newQueryMap = {
                 request: 'GetFeature',
                 resultType: 'hits',
-                limit: '0'
+                limit: '0',
             };
         }
 
@@ -562,7 +567,7 @@ class WFSServiceSource extends mixins(BlueprintBase, ClientSideData) {
                 // suggest porting this block to geoApi.
                 // for now, easier to modify as early as possible in the transformation
 
-                wfsData.features.forEach(f => {
+                wfsData.features.forEach((f) => {
                     const p = f.geometry.coordinates;
                     f.properties.rvInternalCoordX = p[0];
                     f.properties.rvInternalCoordY = p[1];
@@ -599,7 +604,7 @@ class CSVSource extends mixins(BlueprintBase, ClientSideData) {
      * @returns {Promise<any>}
      * @memberof CSVSource
      */
-    async makeLayer(force: boolean = false): Promise<BaseLayer> {
+    async makeLayer(force = false): Promise<BaseLayer> {
         // TODO make this return type `CSVLayer` when implemented
         const formattedData = await super._returnFormattedData(force);
         return super.makeLayer(force, formattedData, { mapSR: { wkid: 102100 } }); // TODO remove hard coded value after
@@ -631,7 +636,7 @@ class GeoJSONSource extends mixins(BlueprintBase, ClientSideData) {
      * @returns {Promise<any>}
      * @memberof GeoJSONSource
      */
-    async makeLayer(force: boolean = false): Promise<BaseLayer> {
+    async makeLayer(force = false): Promise<BaseLayer> {
         // TODO make this return type `GeoJsonLayer` when implemented
         const formattedData = await super._returnFormattedData(force);
         return super.makeLayer(force, formattedData, { mapSR: { wkid: 102100 } }); // TODO remove hard coded value after
@@ -662,7 +667,7 @@ class ShapefileSource extends mixins(BlueprintBase, ClientSideData) {
      * @returns {Promise<any>}
      * @memberof ShapefileSource
      */
-    async makeLayer(force: boolean = false): Promise<BaseLayer> {
+    async makeLayer(force = false): Promise<BaseLayer> {
         // TODO make this return type `ShapefileLayer` when implemented
         const formattedData = await super._returnFormattedData(force);
         return super.makeLayer(force, formattedData, { mapSR: { wkid: 102100 } }); // TODO remove hard coded value after
@@ -760,7 +765,7 @@ function makeBlueprint(rawConfig: any): BlueprintBase {
         // service types used for loading file-layers through config
         [GEO.Service.Types.CSV]: CSVSource,
         [GEO.Service.Types.GeoJSON]: GeoJSONSource,
-        [GEO.Service.Types.Shapefile]: ShapefileSource
+        [GEO.Service.Types.Shapefile]: ShapefileSource,
     };
 
     // if 'fileType' is a property, then we know we are dealing with a file based layer.
@@ -783,7 +788,7 @@ const service = {
 
     makeBlueprint,
 
-    UrlWrapper
+    UrlWrapper,
 };
 
 export default service;

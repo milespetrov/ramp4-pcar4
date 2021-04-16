@@ -20,15 +20,13 @@
 
 <script lang="ts">
 import { Vue, Prop } from 'vue-property-decorator';
-import { Get, Sync, Call } from 'vuex-pathify';
-import { PanelInstance } from '@/api';
 
 export default class HelpSectionV extends Vue {
     @Prop() helpSection!: any;
 
-    expanded: boolean = false;
+    expanded = false;
 
-    toggleExpanded() {
+    toggleExpanded(): void {
         this.expanded = !this.expanded;
     }
 }

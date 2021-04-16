@@ -18,7 +18,7 @@ const getters = {
     },
     getLayerById: (state: LayerState) => (id: string): BaseLayer | undefined => {
         return state.layers.find((layer: BaseLayer) => layer.id === id);
-    }
+    },
 };
 
 const actions = {
@@ -27,10 +27,12 @@ const actions = {
         //      undefined layerConfigs. kicking out for now to make demos work.
         //      possibly this is evil in vue state land. if so, then someone figure out
         //      the root cause and fix that.
-        if (!Array.isArray(layerConfigs)) { return; }
+        if (!Array.isArray(layerConfigs)) {
+            return;
+        }
 
         const blueprints: any = [];
-        layerConfigs.forEach(layerConfig => {
+        layerConfigs.forEach((layerConfig) => {
             blueprints.push(LayerBlueprint.makeBlueprint(layerConfig));
         });
         blueprints.forEach((blueprint: any) => {
@@ -38,14 +40,14 @@ const actions = {
                 context.commit('ADD_LAYER', layer);
             });
         });
-    }
+    },
 };
 
 const mutations = {
     ADD_LAYER: (state: LayerState, value: BaseLayer) => {
         // copy to new array so watchers will have a reference to the old value
-        state.layers = [...state.layers, value]
-    }
+        state.layers = [...state.layers, value];
+    },
 };
 
 export enum LayerStore {
@@ -64,7 +66,7 @@ export enum LayerStore {
     /**
      * (Action) addLayers: (layerConfigs: RampLayerConfig[])
      */
-    addLayers = 'layer/addLayers!'
+    addLayers = 'layer/addLayers!',
 }
 
 export function layer() {
@@ -75,6 +77,6 @@ export function layer() {
         state,
         getters: { ...getters },
         actions: { ...actions, ...make.actions(state) },
-        mutations: { ...mutations, ...make.mutations(state) }
+        mutations: { ...mutations, ...make.mutations(state) },
     };
 }

@@ -20,7 +20,7 @@ class MetadataFixture extends MetadataAPI {
             { i18n: { messages } }
         );
 
-        let handler = (payload: any) => {
+        const handler = (payload: any) => {
             const metadataFixture: MetadataAPI = this.$iApi.fixture.get('metadata');
             metadataFixture.openMetadata(payload);
         };

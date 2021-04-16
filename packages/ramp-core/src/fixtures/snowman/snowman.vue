@@ -5,17 +5,19 @@
 </template>
 
 <script lang="ts">
-import { Vue, Prop } from 'vue-property-decorator';
+import { Vue, Prop, Options } from 'vue-property-decorator';
 import { Get, Sync, Call } from 'vuex-pathify';
 import { FixtureInstance } from '@/api';
 
 // this is an example of a on-map component (doesn't use panels)
-
+@Options({
+    props: {
+        fixture: FixtureInstance,
+        message: String,
+    },
+})
 export default class SnowmanV extends Vue {
-    @Prop() fixture!: FixtureInstance; // this prop is passed to this component by its fixture main class
-    @Prop() message!: string;
-
-    url: string = 'https://i.ya-webdesign.com/images/evil-snowman-png-1.png';
+    url = 'https://i.ya-webdesign.com/images/evil-snowman-png-1.png';
 
     mounted(): void {
         // this is the proper way of accessing the API instance of the R4MP map the fixture is running in,
@@ -23,16 +25,16 @@ export default class SnowmanV extends Vue {
         this.$iApi;
         this.fixture;
 
-        console.log(this.message);
+        //console.log(this.message);
 
         setTimeout(() => {
-            console.log(`[fixture] ${this.fixture.id} self-terminates`);
+            //console.log(`[fixture] ${this.fixture.id} self-terminates`);
 
             // NOTE: only on-map components need this relatively complicated removal process; panels are closed much easier
 
             // removes the snowman from DOM and destroys the instance
             // TODO: this should be called in the `terminated` life hook; it's called in the timeout just for display
-            this.$destroy(); // destroy Vue component
+            //this.$destroy(); // destroy Vue component
             this.$el.parentNode!.removeChild(this.$el); // remove DOM nodes
             // you can also do it like this 👉 this.$iApi.$vApp.$el.removeChild(this.$el);
 
@@ -41,7 +43,7 @@ export default class SnowmanV extends Vue {
             // 👉 this.$iApi.$vApp.$store.set('fixture/REMOVE_FIXTURE!', { value: this }); ❌
 
             // 👇 this is the correct way ✔
-            this.fixture.remove(); // or // this.$iApi.fixture.remove(this.fixture);
+            //this.fixture.remove(); // or // this.$iApi.fixture.remove(this.fixture);
         }, 6000);
     }
 }

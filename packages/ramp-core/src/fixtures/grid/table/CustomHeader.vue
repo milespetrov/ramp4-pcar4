@@ -45,11 +45,11 @@
 </template>
 
 <script lang="ts">
-import { Vue, Watch, Component, Prop } from 'vue-property-decorator';
+import { Vue } from 'vue-property-decorator';
 
 export default class CustomHeader extends Vue {
-    sort: number = 0;
-    sortable: boolean = false;
+    sort = 0;
+    sortable = false;
 
     mounted(): void {
         this.gridApi = this.params.api;
@@ -102,6 +102,7 @@ export default class CustomHeader extends Vue {
     }
 }
 
+// eslint-disable-next-line no-redeclare
 export default interface CustomHeader {
     sort: number;
     sortable: boolean;

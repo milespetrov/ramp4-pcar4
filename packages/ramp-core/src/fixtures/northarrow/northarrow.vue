@@ -5,12 +5,11 @@
 </template>
 
 <script lang="ts">
-import { Vue, Prop } from 'vue-property-decorator';
-import { Get, Sync, Call } from 'vuex-pathify';
+import { Vue } from 'vue-property-decorator';
+import { Get } from 'vuex-pathify';
 import { NortharrowStore } from './store';
 import { GlobalEvents } from '../../api/internal';
-import { ApiBundle, HighlightLayer } from 'ramp-geoapi';
-import BaseLayer from 'ramp-geoapi/dist/layer/BaseLayer';
+import { ApiBundle } from 'ramp-geoapi';
 import flag from './flag.json';
 import { debounce } from 'debounce';
 
@@ -18,10 +17,10 @@ export default class NortharrowV extends Vue {
     @Get(NortharrowStore.arrowIcon) arrowIcon!: string;
     @Get(NortharrowStore.poleIcon) poleIcon!: string;
 
-    angle: number = 0;
-    arrowLeft: number = 0;
-    displayArrow: boolean = false;
-    arrow: string = `<svg xmlns="http://www.w3.org/2000/svg" fit=""  width="25" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24" focusable="false">
+    angle = 0;
+    arrowLeft = 0;
+    displayArrow = false;
+    arrow = `<svg xmlns="http://www.w3.org/2000/svg" fit=""  width="25" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24" focusable="false">
             <g id="northarrow" transform="translate(-285.24 -142.234)">
                 <path id="path3770-7" d="M305.91 156.648a8.652 8.652 0 0 1-8.654 8.653 8.652 8.652 0 0 1-8.653-8.653 8.653 8.653 0 0 1 8.653-8.653 8.653 8.653 0 0 1 8.653 8.653z" fill="#fff" stroke="#fff" stroke-width=".895"/>
                 <path id="path3770" d="M304.982 156.648a7.725 7.725 0 0 1-7.726 7.726 7.725 7.725 0 0 1-7.726-7.726 7.725 7.725 0 0 1 7.726-7.726 7.725 7.725 0 0 1 7.726 7.726z" fill="none" stroke="#6d6d6d" stroke-width=".799"/>
@@ -31,7 +30,7 @@ export default class NortharrowV extends Vue {
                 <path id="path6038" d="M297.256 144.666l-7.726 19.568 7.726-7.726" fill="#6d6d6d" stroke-width=".296" stroke-linecap="square"/>
             </g>
         </svg>`;
-    poleMarkerAdded: boolean = false;
+    poleMarkerAdded = false;
 
     mounted() {
         if (this.arrowIcon) {
@@ -58,7 +57,7 @@ export default class NortharrowV extends Vue {
         } else {
             // north value (set longitude to be half of Canada extent (141° W, 52° W))
             const pole: ApiBundle.Point = new ApiBundle.Point('pole', { x: -96, y: 90 });
-            const projPole = (await RAMP.geoapi.utils.proj.projectGeometry(sr, pole)) as ApiBundle.Point;
+            const projPole = (await window.RAMP.geoapi.utils.proj.projectGeometry(sr, pole)) as ApiBundle.Point;
             const poleScreenPos = this.$iApi.map.mapPointToScreenPoint(projPole);
             if (poleScreenPos.screenY < 0) {
                 // draw arrow if pole not visibile
@@ -94,8 +93,8 @@ export default class NortharrowV extends Vue {
                         };
                     }
                     // add pole marker to a highlight layer
-                    const esriP = RAMP.geoapi.utils.geom.convPointToEsri(projPole);
-                    const poleLayer = RAMP.geoapi.layers.createHighlightLayer({ layerId: 'PoleMarker', markerSymbol: markerSymbol });
+                    const esriP = window.RAMP.geoapi.utils.geom.convPointToEsri(projPole);
+                    const poleLayer = window.RAMP.geoapi.layers.createHighlightLayer({ layerId: 'PoleMarker', markerSymbol: markerSymbol });
                     poleLayer.addMarker(esriP);
                     this.$iApi.map.addHighlightLayer(poleLayer);
                 }

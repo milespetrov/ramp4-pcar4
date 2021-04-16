@@ -34,10 +34,9 @@
 </template>
 
 <script lang="ts">
-import { Vue, Prop } from 'vue-property-decorator';
-import { Get, Sync, Call } from 'vuex-pathify';
+import { Vue } from 'vue-property-decorator';
+import { Get } from 'vuex-pathify';
 import { RampMap, ApiBundle, RampMapConfig } from 'ramp-geoapi';
-import { ConfigStore } from '@/store/modules/config';
 import { GlobalEvents } from '../../api/internal';
 import { OverviewmapStore } from './store';
 import defaultConfig from './default-config';
@@ -48,11 +47,11 @@ export default class OverviewmapV extends Vue {
     @Get(OverviewmapStore.startMinimized) startMinimized!: boolean;
 
     overviewMap!: RampMap;
-    minimized: boolean = true;
+    minimized = true;
 
     mounted() {
         let config = this.mapConfig || defaultConfig;
-        this.overviewMap = RAMP.geoapi.maps.createMap(config, this.$el.querySelector('.overviewmap') as HTMLDivElement);
+        this.overviewMap = window.RAMP.geoapi.maps.createMap(config, this.$el.querySelector('.overviewmap') as HTMLDivElement);
         this.overviewMap._innerView.ui.components = [];
         this.minimized = this.startMinimized;
 
@@ -62,7 +61,7 @@ export default class OverviewmapV extends Vue {
             color: [0, 0, 0, 0.5],
             outline: null,
         };
-        let g = new RAMP.geoapi.esriBundle.Graphic({ symbol: symbol, visible: true });
+        let g = new window.RAMP.geoapi.esriBundle.Graphic({ symbol: symbol, visible: true });
         this.overviewMap._innerView.graphics.add(g);
 
         if (this.$iApi.map._innerView.ready) {

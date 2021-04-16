@@ -26,16 +26,16 @@ const getters = {
 
     getFixtureConfig: (state: ConfigState) => (key: string): any => {
         return state.config.fixtures[key];
-    }
+    },
 };
 
 const actions = {
-    newConfig: function(this: any, context: ConfigContext, config: RampConfig): void {
+    newConfig: function (this: any, context: ConfigContext, config: RampConfig): void {
         const newConfig = merge(context.state.config, config);
         context.commit('SET_CONFIG', newConfig);
         this.set(LayerStore.addLayers, newConfig.layers);
     },
-    registerConfig: function(this: any, context: ConfigContext, configInfo: any): void {
+    registerConfig: function (this: any, context: ConfigContext, configInfo: any): void {
         const langs = configInfo.langs;
         const config = configInfo.config;
         if (langs !== undefined && langs.length > 0) {
@@ -43,30 +43,30 @@ const actions = {
             langs.forEach((lang: string) => (context.state.registeredConfigs[lang] = config));
         } else {
             // register config for all available languages
-            for (const lang in i18n.messages) {
+            for (const lang in i18n.global.messages) {
                 context.state.registeredConfigs[lang] = config;
             }
         }
     },
-    overrideConfig: function(this: any, context: ConfigContext, newConfig: RampConfig): void {
+    overrideConfig: function (this: any, context: ConfigContext, newConfig: RampConfig): void {
         this.set(LayerStore.addLayers, newConfig.layers);
         // save and override registered and main config
         context.dispatch('registerConfig', newConfig);
         context.commit('SET_CONFIG', newConfig);
         // TODO: trigger map reload?
     },
-    updateConfig: function(this: any, context: ConfigContext, fixtureConfig: any): void {
+    updateConfig: function (this: any, context: ConfigContext, fixtureConfig: any): void {
         // TODO: verify config snippet to be applied over config is valid
         // shallow merge to override any identical existing fixtures properties
         const newFixtureConfig = {
-            fixtures: { ...context.state.config.fixtures, ...fixtureConfig }
+            fixtures: { ...context.state.config.fixtures, ...fixtureConfig },
         };
 
         // shallow merge to override fixtures section of config
         const newConfig = { ...context.state.config, ...newFixtureConfig };
         context.dispatch('registerConfig', newConfig);
         context.commit('SET_CONFIG', newConfig);
-    }
+    },
 };
 
 const mutations = {};
@@ -142,7 +142,7 @@ export enum ConfigStore {
      *
      * `@returns` <any> A particular fixture config
      */
-    getFixtureConfig = 'config/getFixtureConfig'
+    getFixtureConfig = 'config/getFixtureConfig',
 }
 
 export function config() {
@@ -155,13 +155,13 @@ export function config() {
                     xmax: 0,
                     ymin: 0,
                     ymax: 0,
-                    spatialReference: {}
+                    spatialReference: {},
                 },
                 basemaps: [],
-                initialBasemapId: ''
+                initialBasemapId: '',
             },
-            layers: []
-        }
+            layers: [],
+        },
     });
 
     return {
@@ -169,6 +169,6 @@ export function config() {
         state,
         getters: { ...getters },
         actions: { ...actions, ...make.actions(state) },
-        mutations: { ...mutations, ...make.mutations(state) }
+        mutations: { ...mutations, ...make.mutations(state) },
     };
 }

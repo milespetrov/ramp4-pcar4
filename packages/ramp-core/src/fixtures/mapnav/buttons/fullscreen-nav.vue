@@ -18,7 +18,6 @@
 
 <script lang="ts">
 import { Vue } from 'vue-property-decorator';
-import screenfull from 'screenfull';
 
 export default class FullscreenNavV extends Vue {
     onClick() {

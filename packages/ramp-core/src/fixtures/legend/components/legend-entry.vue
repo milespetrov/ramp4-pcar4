@@ -132,9 +132,6 @@
 
 <script lang="ts">
 import { Vue, Options, Prop } from 'vue-property-decorator';
-import { Get, Sync, Call } from 'vuex-pathify';
-
-import { LegendStore } from '../store';
 import { LegendEntry, Controls } from '../store/legend-defs';
 
 import CheckboxV from './checkbox.vue';

@@ -30,6 +30,6 @@ export function legend() {
         state,
         getters: { ...getters },
         actions: { ...actions, ...make.actions(state) },
-        mutations: { ...mutations, ...make.mutations(state) }
+        mutations: { ...mutations, ...make.mutations(state) },
     };
 }

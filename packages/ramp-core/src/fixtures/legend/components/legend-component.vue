@@ -4,9 +4,6 @@
 
 <script lang="ts">
 import { Vue, Prop } from 'vue-property-decorator';
-import { Get, Sync, Call } from 'vuex-pathify';
-
-import { LegendStore } from '../store';
 import { LegendItem } from '../store/legend-defs';
 
 import LayerEntryV from './legend-entry.vue';

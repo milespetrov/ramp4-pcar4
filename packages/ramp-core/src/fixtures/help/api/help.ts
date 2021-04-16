@@ -8,7 +8,7 @@ export class HelpAPI extends FixtureInstance {
      * @param {boolean} [open] force panel open or closed
      * @memberof HelpAPI
      */
-    toggleHelp(open?: boolean) {
+    toggleHelp(open?: boolean): void {
         const panel = this.$iApi.panelAPI.get('help-panel');
         if (open === undefined) {
             this.$iApi.panelAPI.toggle(panel);
@@ -26,7 +26,7 @@ export class HelpAPI extends FixtureInstance {
      * @type {HelpConfig}
      * @memberof HelpAPI
      */
-    get config(): HelpConfig | undefined {
+    get config(): HelpConfig | undefined | any {
         return super.config;
     }
 
@@ -36,7 +36,7 @@ export class HelpAPI extends FixtureInstance {
      * @param {HelpConfig} [helpConfig]
      * @memberof HelpAPI
      */
-    _parseConfig(helpConfig?: HelpConfig) {
+    _parseConfig(helpConfig?: HelpConfig): void {
         if (!helpConfig) return;
         this.$vApp.$store.set(HelpStore.folderName, helpConfig.folderName);
         if (helpConfig.panelWidth) {

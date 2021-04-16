@@ -14,8 +14,6 @@
 
 <script lang="ts">
 import { Vue, Prop } from 'vue-property-decorator';
-import { Get, Sync, Call } from 'vuex-pathify';
-import { ToggleButton } from 'vue-js-toggle-button';
 
 export default class ToggleButtonControl extends Vue {
     @Prop() config: any;

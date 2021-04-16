@@ -1,12 +1,12 @@
 import { HelpAPI } from './api/help';
-import { help } from './store/index';
+import { help, HelpConfig } from './store/index';
 import HelpV from './help.vue';
 import HelpNavV from './nav-button.vue';
 
 import messages from './lang/lang.csv';
 
 class HelpFixture extends HelpAPI {
-    added() {
+    added(): void {
         console.log(`[fixture] ${this.id} added`);
 
         this.$iApi.component('help-nav-button', HelpNavV);
@@ -32,13 +32,13 @@ class HelpFixture extends HelpAPI {
 
         // parse help section of config and store information in help store
         this._parseConfig(this.config);
-        this.$vApp.$watch(
+        this.$vm.$watch(
             () => this.config,
-            (value) => this._parseConfig(value)
+            (value: HelpConfig | undefined) => this._parseConfig(value)
         );
     }
 
-    removed() {
+    removed(): void {
         this.$vApp.$store.unregisterModule('help');
     }
 }

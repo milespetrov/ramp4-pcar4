@@ -34,7 +34,6 @@
 
 <script lang="ts">
 import { Vue, Prop } from 'vue-property-decorator';
-import { Get, Sync, Call } from 'vuex-pathify';
 
 import { PanelInstance } from '@/api';
 import { MetadataPayload, MetadataResult, MetadataState } from './definitions';
@@ -121,6 +120,7 @@ export default class MetadataV extends Vue {
                 params.forEach((p) => xsltProc.setParameter('', p.key, p.value || ''));
             }
             output = xsltProc.transformToFragment(xmlDoc, document);
+            // eslint-disable-next-line no-prototype-builtins
         } else if (window.hasOwnProperty('ActiveXObject')) {
             // IE11 (╯°□°）╯︵ ┻━┻
             const xslt = new window.ActiveXObject('Msxml2.XSLTemplate');
@@ -142,7 +142,7 @@ export default class MetadataV extends Vue {
      * Sends a GET request to the provided URL. Returns a promise containing information received from the webpage.
      * */
     requestContent(url: string) {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             const xobj = new XMLHttpRequest();
             xobj.open('GET', url, true);
             xobj.responseType = 'text';

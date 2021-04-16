@@ -14,7 +14,7 @@ class SnowmanFixture extends FixtureInstance {
         // the component will be auto-mounted as well unless you pass `false` to the `extend` function
         const snowman = this.extend(SnowmanV, { propsData: { message: "I'm snowman prop." } });
 
-        this.$vApp.$el.appendChild(snowman.$el);
+        this.$vm.$el.appendChild(snowman.$vm.$el);
 
         // snowman self-terminates from its own component
 

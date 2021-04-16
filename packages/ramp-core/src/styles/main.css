@@ -33,13 +33,13 @@
 }
 
 .ramp-app .esri-zoom-box__overlay-background {
-    fill: rgba(0,0,0,.1);
+    fill: rgba(0, 0, 0, 0.1);
 }
 
 .ramp-app .esri-zoom-box__outline {
     fill: transparent;
     stroke: #1e90ff;
-    stroke-dasharray: 1,1;
+    stroke-dasharray: 1, 1;
     stroke-width: 2px;
 }
 

@@ -15,9 +15,7 @@
 
 <script lang="ts">
 import { Vue, Options, Watch } from 'vue-property-decorator';
-import { Get, Call } from 'vuex-pathify';
-
-import { GlobalEvents } from '@/api';
+import { Get } from 'vuex-pathify';
 
 import ZoomNavV from './buttons/zoom-nav.vue';
 import DividerNavV from './buttons/divider-nav.vue';

@@ -17,8 +17,8 @@ const getters = {
      * @returns {MapnavItemInstance[]}
      */
     visible(state: MapnavState): MapnavItemInstance[] {
-        return state.order.map<MapnavItemInstance>(id => state.items[id]).filter(item => item.componentId);
-    }
+        return state.order.map<MapnavItemInstance>((id) => state.items[id]).filter((item) => item.componentId);
+    },
 };
 
 const actions = {};
@@ -33,6 +33,6 @@ export function mapnav() {
         state,
         getters: { ...getters },
         actions: { ...actions },
-        mutations: { ...mutations, ...make.mutations(['items', 'order']) }
+        mutations: { ...mutations, ...make.mutations(['items', 'order']) },
     };
 }

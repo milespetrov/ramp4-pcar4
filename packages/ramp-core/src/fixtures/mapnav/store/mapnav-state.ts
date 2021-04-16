@@ -37,7 +37,7 @@ export interface MapnavItemConfig {
      * @type {object}
      * @memberof MapnavItemConfig
      */
-    options?: object;
+    options?: Record<string, unknown>;
 }
 
 export class MapnavItemInstance implements MapnavItemConfig {
@@ -49,7 +49,7 @@ export class MapnavItemInstance implements MapnavItemConfig {
      * @type {object}
      * @memberof MapnavItemInstance
      */
-    options: object;
+    options: Record<string, unknown>;
 
     /**
      * An actual id of the appbar Vue component to use when rendering in the template.

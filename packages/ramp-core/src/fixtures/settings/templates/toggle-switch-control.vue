@@ -19,7 +19,6 @@
 
 <script lang="ts">
 import { Vue, Options, Prop } from 'vue-property-decorator';
-import { Get, Sync, Call } from 'vuex-pathify';
 import { ToggleButton } from 'vue-js-toggle-button';
 
 @Options({

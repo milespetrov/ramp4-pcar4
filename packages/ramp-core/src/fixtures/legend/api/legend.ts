@@ -13,7 +13,7 @@ export class LegendAPI extends FixtureInstance {
      * @type {LegendConfig}
      * @memberof LegendFixture
      */
-    get config(): LegendConfig | undefined {
+    get config(): LegendConfig | undefined | any {
         return super.config;
     }
 
@@ -30,11 +30,11 @@ export class LegendAPI extends FixtureInstance {
         }
 
         const layers: BaseLayer[] | undefined = this.$vApp.$store.get(LayerStore.layers);
-        let legendEntries: Array<LegendItem> = [];
-        let stack: Array<any> = [];
+        const legendEntries: Array<LegendItem> = [];
+        const stack: Array<any> = [];
         // initialize stack with all legend elements listed in config
 
-        legendConfig.root.children.forEach(legendItem => stack.push(legendItem));
+        legendConfig.root.children.forEach((legendItem) => stack.push(legendItem));
 
         // parse children from legend root structure through traversal
         while (stack.length > 0) {

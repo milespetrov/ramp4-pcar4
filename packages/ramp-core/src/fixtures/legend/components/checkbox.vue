@@ -17,7 +17,6 @@
 
 <script lang="ts">
 import { Vue, Prop } from 'vue-property-decorator';
-import { Get, Sync, Call } from 'vuex-pathify';
 
 import { LegendEntry } from '../store/legend-defs';
 

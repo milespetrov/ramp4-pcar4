@@ -1,6 +1,4 @@
 import { ActionContext, Action, Mutation } from 'vuex';
-import { make } from 'vuex-pathify';
-
 import { FixtureState, FixtureBase } from './fixture-state';
 import { RootState } from '@/store/state';
 
@@ -15,7 +13,7 @@ export enum FixtureAction {}
 
 export enum FixtureMutation {
     ADD_FIXTURE = 'ADD_FIXTURE',
-    REMOVE_FIXTURE = 'REMOVE_FIXTURE'
+    REMOVE_FIXTURE = 'REMOVE_FIXTURE',
 }
 
 const getters = {};
@@ -53,7 +51,7 @@ const mutations: StoreMutations = {
         if (typeof value.removed === 'function') {
             value.removed();
         }
-    }
+    },
 };
 
 export function fixture() {
@@ -64,6 +62,6 @@ export function fixture() {
         state,
         getters: { ...getters },
         actions: { ...actions },
-        mutations: { ...mutations }
+        mutations: { ...mutations },
     };
 }

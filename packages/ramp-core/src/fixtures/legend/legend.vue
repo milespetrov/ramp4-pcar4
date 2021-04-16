@@ -20,7 +20,7 @@
 
 <script lang="ts">
 import { Vue, Options, Prop } from 'vue-property-decorator';
-import { Get, Sync, Call } from 'vuex-pathify';
+import { Get } from 'vuex-pathify';
 import { PanelInstance } from '@/api';
 
 import { LegendStore } from './store';

@@ -15,7 +15,7 @@ export enum PanelAction {
     closePanel = 'removePanel',
     setWidth = 'setWidth',
     updateVisible = 'updateVisible',
-    setStackWidth = 'setStackWidth'
+    setStackWidth = 'setStackWidth',
 }
 
 export enum PanelMutation {
@@ -28,7 +28,7 @@ export enum PanelMutation {
     SET_ORDERED_ITEMS = 'SET_ORDERED_ITEMS',
     SET_PRIORITY = 'SET_PRIORITY',
     SET_VISIBLE = 'SET_VISIBLE',
-    SET_WIDTH = 'SET_WIDTH'
+    SET_WIDTH = 'SET_WIDTH',
 }
 
 const getters = {
@@ -44,7 +44,7 @@ const getters = {
         }
 
         return state.visible;
-    }
+    },
 };
 
 const actions = {
@@ -82,7 +82,7 @@ const actions = {
     [PanelAction.updateVisible](context: PanelContext): void {
         //TODO: update when panel width system is in place
         let remainingWidth = context.state.stackWidth;
-        let nowVisible: PanelInstance[] = [];
+        const nowVisible: PanelInstance[] = [];
 
         // add panels until theres no space in the stack
         for (let i = context.state.orderedItems.length - 1; i >= 0 && remainingWidth >= (context.state.orderedItems[i].width || 350); i--) {
@@ -126,7 +126,7 @@ const actions = {
         }
 
         context.commit(PanelMutation.SET_VISIBLE, nowVisible);
-    }
+    },
 };
 
 const mutations = {
@@ -141,7 +141,7 @@ const mutations = {
     [PanelMutation.CLOSE_PANEL](state: PanelState, { panel }: { panel: PanelInstance }): void {
         const index = state.orderedItems.indexOf(panel);
         state.orderedItems = [...state.orderedItems.slice(0, index), ...state.orderedItems.slice(index + 1)];
-    }
+    },
 };
 
 export function panel() {
@@ -152,6 +152,6 @@ export function panel() {
         state,
         getters: { ...getters },
         actions: { ...actions },
-        mutations: { ...mutations, ...make.mutations(state) }
+        mutations: { ...mutations, ...make.mutations(state) },
     };
 }

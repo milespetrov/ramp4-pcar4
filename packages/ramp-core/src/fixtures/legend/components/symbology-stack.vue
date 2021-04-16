@@ -32,9 +32,7 @@
 
 <script lang="ts">
 import { Vue, Prop } from 'vue-property-decorator';
-import { Get, Sync, Call } from 'vuex-pathify';
 
-import { LegendItem } from '../store/legend-defs';
 import BaseLayer from 'ramp-geoapi/dist/layer/BaseLayer';
 
 export default class SymbologyStack extends Vue {

@@ -10,7 +10,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Watch, Component, Prop } from 'vue-property-decorator';
+import { Vue } from 'vue-property-decorator';
 
 export default class CustomNumberFilter extends Vue {
     beforeMount() {
@@ -45,11 +45,11 @@ export default class CustomNumberFilter extends Vue {
 
     setFilterModel(instance: any) {
         // This is the furthest date supported by JavaScript.
-        let maxPossibleDate: Date | String = new Date(8640000000000000);
+        let maxPossibleDate: Date | string = new Date(8640000000000000);
         maxPossibleDate = `${maxPossibleDate.getFullYear()}-${maxPossibleDate.getMonth() + 1}-${maxPossibleDate.getDate()}`;
 
         // This is the earliest date supported by JavaScript.
-        let minPossibleDate: Date | String = new Date(0);
+        let minPossibleDate: Date | string = new Date(0);
         minPossibleDate = `${minPossibleDate.getFullYear()}-${minPossibleDate.getMonth() + 1}-${minPossibleDate.getDate()}`;
 
         if (this.maxVal !== '' && this.minVal !== '') {
@@ -100,6 +100,7 @@ export default class CustomNumberFilter extends Vue {
     }
 }
 
+// eslint-disable-next-line no-redeclare
 export default interface CustomNumberFilter {
     minVal: any;
     maxVal: any;

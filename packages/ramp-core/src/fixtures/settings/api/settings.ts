@@ -1,5 +1,4 @@
 import { FixtureInstance } from '@/api';
-import BaseLayer from 'ramp-geoapi/dist/layer/BaseLayer';
 
 export class SettingsAPI extends FixtureInstance {
     /**

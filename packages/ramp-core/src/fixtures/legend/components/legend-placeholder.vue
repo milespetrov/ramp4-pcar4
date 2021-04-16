@@ -28,12 +28,11 @@
 
 <script lang="ts">
 import { Vue, Options, Prop, Watch } from 'vue-property-decorator';
-import { Get, Sync, Call } from 'vuex-pathify';
+import { Get } from 'vuex-pathify';
 
-import { LayerStore, layer } from '@/store/modules/layer';
+import { LayerStore } from '@/store/modules/layer';
 import BaseLayer from 'ramp-geoapi/dist/layer/BaseLayer';
 
-import { LegendStore } from '../store';
 import { LegendEntry, LegendTypes } from '../store/legend-defs';
 
 import CheckboxV from './checkbox.vue';

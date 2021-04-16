@@ -16,13 +16,11 @@
 </template>
 
 <script lang="ts">
-import { Vue, Watch, Options, Prop } from 'vue-property-decorator';
-import { Get, Sync, Call } from 'vuex-pathify';
+import { Vue, Options, Prop } from 'vue-property-decorator';
+import { Get } from 'vuex-pathify';
 
 import { PanelInstance } from '@/api';
-import { RampConfig } from '@/types';
 import { HelpStore } from './store';
-import { ConfigStore } from '@/store/modules/config';
 import HelpSectionV from './help-section.vue';
 
 import axios from 'axios';

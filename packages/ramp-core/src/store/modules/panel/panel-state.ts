@@ -1,4 +1,4 @@
-import { Component, VueConstructor, ComponentOptions } from 'vue';
+import { Component, ComponentOptions, ComponentPublicInstance } from 'vue';
 
 import { PanelInstance } from '@/api';
 
@@ -52,7 +52,7 @@ export class PanelState {
      * @type {number}
      * @memberof PanelState
      */
-    stackWidth: number = 0;
+    stackWidth = 0;
 }
 
 // this should have been `AsyncComponentPromise` type, but something is off there
@@ -60,7 +60,7 @@ export class PanelState {
 // according to the definitions, `component` should be a function returning a Promise returning a Component object
 // while the official documentation (https://vuejs.org/v2/guide/components-dynamic-async.html#Handling-Loading-State) states that `component` property should be a Promise, not a function
 // hence the need to `EnHanced` types
-export type AsyncComponentEh = typeof import('*.vue') | VueConstructor;
+export type AsyncComponentEh = typeof import('*.vue') | ComponentPublicInstance;
 
 export type AsyncComponentFunctionEh = () => Promise<AsyncComponentEh>;
 
@@ -77,8 +77,10 @@ export type AsyncComponentFactoryEh = () => {
  * - `VueConstructor`: a regular Vue constructor function
  * - `AsyncComponentFunction`: a function returning a promise which resolves into a Vue component
  */
-export type PanelConfigScreens = { [key: string]: string | ComponentOptions<Vue> | VueConstructor | AsyncComponentFunctionEh };
-export type PanelConfigRoute = { screen: string; props?: object };
+export type PanelConfigScreens = {
+    [key: string]: string | ComponentOptions<ComponentPublicInstance> | ComponentPublicInstance | AsyncComponentFunctionEh;
+};
+export type PanelConfigRoute = { screen: string; props?: Record<string, unknown> };
 export type PanelConfigStyle = { [key: string]: string };
 
 export interface PanelConfig {

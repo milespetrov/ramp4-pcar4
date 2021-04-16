@@ -1,8 +1,8 @@
-import { RampMapConfig, RampLodConfig, RampBasemapConfig, RampSpatialReference } from 'ramp-geoapi'
+import { RampMapConfig, RampLodConfig, RampBasemapConfig, RampSpatialReference } from 'ramp-geoapi';
 
 export class OverviewmapState {
     mapConfig: RampMapConfig | undefined = undefined;
-    startMinimized: boolean = true;
+    startMinimized = true;
 }
 
 export interface OverviewmapConfig {
@@ -10,6 +10,6 @@ export interface OverviewmapConfig {
         lods: RampLodConfig;
         basemap: RampBasemapConfig;
         spatialReference: RampSpatialReference;
-    },
+    };
     startMinimized: boolean;
 }

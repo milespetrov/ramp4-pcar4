@@ -43,11 +43,10 @@
 </template>
 
 <script lang="ts">
-import { Vue, Watch, Component, Prop } from 'vue-property-decorator';
-import { Get, Sync, Call } from 'vuex-pathify';
+import { Vue, Prop } from 'vue-property-decorator';
 
 export default class ColumnDropdown extends Vue {
-    @Prop() columnDefs!: Array<Object>;
-    @Prop() columnApi!: Object;
+    @Prop() columnDefs!: Array<Record<string, unknown>>;
+    @Prop() columnApi!: Record<string, unknown>;
 }
 </script>

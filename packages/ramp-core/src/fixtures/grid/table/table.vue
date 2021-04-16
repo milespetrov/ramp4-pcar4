@@ -59,19 +59,18 @@
 </template>
 
 <script lang="ts">
-import { Vue, Watch, Options, Prop } from 'vue-property-decorator';
-import { Get, Sync, Call } from 'vuex-pathify';
+import { Vue, Options, Prop } from 'vue-property-decorator';
+import { Get, Sync } from 'vuex-pathify';
 import { GlobalEvents } from '../../../api/internal';
 import deepmerge from 'deepmerge';
 
-import { LayerStore, layer } from '@/store/modules/layer';
 import BaseLayer from 'ramp-geoapi/dist/layer/BaseLayer';
 
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-material.css';
 import { AgGridVue } from 'ag-grid-vue';
 import ColumnDropdown from '../column-dropdown.vue';
-import { GridStore, GridConfig, GridState } from '../store';
+import { GridConfig } from '../store';
 import TableStateManager from '../store/table-state-manager';
 
 // custom filter templates

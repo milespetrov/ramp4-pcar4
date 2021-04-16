@@ -11,7 +11,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Watch, Component, Prop } from 'vue-property-decorator';
+import { Vue } from 'vue-property-decorator';
 
 export default class CustomTextFilter extends Vue {
     beforeMount() {
@@ -55,6 +55,7 @@ export default class CustomTextFilter extends Vue {
     }
 }
 
+// eslint-disable-next-line no-redeclare
 export default interface CustomTextFilter {
     filterValue: string;
     colDef: any;

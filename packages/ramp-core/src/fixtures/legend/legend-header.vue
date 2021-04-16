@@ -31,8 +31,8 @@
 </template>
 
 <script lang="ts">
-import { Vue, Prop } from 'vue-property-decorator';
-import { Get, Sync, Call } from 'vuex-pathify';
+import { Vue } from 'vue-property-decorator';
+import { Call } from 'vuex-pathify';
 
 import { LegendStore } from './store';
 
@@ -42,8 +42,8 @@ export default class LegendHeaderV extends Vue {
     @Call(LegendStore.expandGroups) expand!: () => void;
     @Call(LegendStore.collapseGroups) collapse!: () => void;
 
-    showGroup: Boolean = false;
-    showVisible: Boolean = false;
+    showGroup = false;
+    showVisible = false;
 
     // toggle dropdown menu for expand/collapse button
     toggleGroups(): void {

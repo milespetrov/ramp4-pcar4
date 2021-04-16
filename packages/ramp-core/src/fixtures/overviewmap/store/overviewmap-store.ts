@@ -10,7 +10,7 @@ const actions = {};
 
 export enum OverviewmapStore {
     mapConfig = 'overviewmap/mapConfig',
-    startMinimized = 'overviewmap/startMinimized'
+    startMinimized = 'overviewmap/startMinimized',
 }
 
 export function overviewmap() {
@@ -21,6 +21,6 @@ export function overviewmap() {
         state,
         getters: { ...getters },
         actions: { ...actions, ...make.actions(state) },
-        mutations: { ...mutations, ...make.mutations(state) }
+        mutations: { ...mutations, ...make.mutations(state) },
     };
 }

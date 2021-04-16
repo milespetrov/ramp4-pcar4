@@ -13,7 +13,6 @@
 
 <script lang="ts">
 import { Vue, Options, Prop } from 'vue-property-decorator';
-import { Get, Sync, Call } from 'vuex-pathify';
 
 import VueSlider from 'vue-slider-component';
 import 'vue-slider-component/theme/default.css';

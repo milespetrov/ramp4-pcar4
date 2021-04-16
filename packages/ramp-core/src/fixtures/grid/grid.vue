@@ -51,12 +51,12 @@
 
 <script lang="ts">
 import { Vue, Options, Prop } from 'vue-property-decorator';
-import { Get, Sync, Call } from 'vuex-pathify';
+import { Get } from 'vuex-pathify';
 
 import { PanelInstance } from '@/api';
 import TableComponent from '@/fixtures/grid/table/table.vue';
 
-import { LayerStore, layer } from '@/store/modules/layer';
+import { LayerStore } from '@/store/modules/layer';
 import BaseLayer from 'ramp-geoapi/dist/layer/BaseLayer';
 
 @Options({

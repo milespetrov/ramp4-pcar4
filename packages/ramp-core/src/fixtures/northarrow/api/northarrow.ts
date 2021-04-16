@@ -14,7 +14,7 @@ export class NortharrowAPI extends FixtureInstance {
         this.$vApp.$store.set(NortharrowStore.poleIcon, northarrowConfig.poleIcon);
     }
 
-    get config(): NortharrowConfig {
+    get config(): NortharrowConfig | any {
         return super.config;
     }
 }

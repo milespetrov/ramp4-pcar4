@@ -15,38 +15,38 @@ const getters = {
     getAllExpanded: (state: LegendState, expanded: boolean): boolean => {
         return state.children.every((entry: LegendItem) => !(entry instanceof LegendGroup) || checkExpanded(entry, expanded));
     },
-    getAllVisibility: function(state: LegendState, visible: boolean): boolean {
+    getAllVisibility: function (state: LegendState, visible: boolean): boolean {
         return state.children.every((entry: LegendEntry | LegendGroup) => checkVisibility(entry, visible));
-    }
+    },
 };
 
 const mutations = {};
 
 const actions = {
     /** Expand all legend groups */
-    expandGroups: function(context: LegendContext): void {
+    expandGroups: function (context: LegendContext): void {
         context.state.children.forEach((entry: LegendEntry | LegendGroup) => {
             toggle(entry, { expand: true });
         });
     },
     /** Collapse all legend groups */
-    collapseGroups: function(context: LegendContext): void {
+    collapseGroups: function (context: LegendContext): void {
         context.state.children.forEach((entry: LegendEntry | LegendGroup) => {
             toggle(entry, { expand: false });
         });
     },
     /** Turn visibility on for all legend entries */
-    showAll: function(context: LegendContext): void {
+    showAll: function (context: LegendContext): void {
         context.state.children.forEach((entry: LegendEntry | LegendGroup) => {
             toggle(entry, { visibility: true });
         });
     },
     /** Turn visibility off for all legend entries */
-    hideAll: function(context: LegendContext): void {
+    hideAll: function (context: LegendContext): void {
         context.state.children.forEach((entry: LegendEntry | LegendGroup) => {
             toggle(entry, { visibility: false });
         });
-    }
+    },
 };
 
 /**
@@ -59,7 +59,7 @@ const actions = {
 function checkVisibility(child: LegendEntry | LegendGroup, visible: boolean): boolean {
     // traverse tree to check if all legend items have visibility toggled on/off
     if (child.children && child.children.length > 0) {
-        child.children.forEach(ch => {
+        child.children.forEach((ch) => {
             if (!checkVisibility(ch, visible)) {
                 return false;
             }
@@ -84,7 +84,7 @@ function checkVisibility(child: LegendEntry | LegendGroup, visible: boolean): bo
 function checkExpanded(child: LegendItem, expanded: boolean): boolean {
     // traverse tree to check if all legend groups are expanded/collapsed
     if (child.children && child.children.length > 0) {
-        child.children.forEach(ch => {
+        child.children.forEach((ch) => {
             if (!checkExpanded(ch, expanded)) {
                 return false;
             }
@@ -118,7 +118,7 @@ function toggle(child: LegendEntry | LegendGroup, options: any) {
     }
     // traverse the tree and make recursive calls
     if (child.children && child.children.length > 0) {
-        child.children.forEach(ch => {
+        child.children.forEach((ch) => {
             // level order traversal
             toggle(ch, options);
         });
@@ -145,7 +145,7 @@ export enum LegendStore {
     /**
      * (Action) hideAll - turn off visibility for all legend entries
      */
-    hideAll = 'legend/hideAll'
+    hideAll = 'legend/hideAll',
 }
 
 export function legend() {
@@ -156,6 +156,6 @@ export function legend() {
         state,
         getters: { ...getters },
         actions: { ...actions, ...make.actions(state) },
-        mutations: { ...mutations, ...make.mutations(state) }
+        mutations: { ...mutations, ...make.mutations(state) },
     };
 }

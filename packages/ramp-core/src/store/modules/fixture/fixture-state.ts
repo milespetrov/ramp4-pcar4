@@ -1,6 +1,3 @@
-import Vue from 'vue';
-import { InstanceAPI } from '@/api/internal';
-
 export class FixtureState {
     items: { [name: string]: FixtureBase } = {};
 }
@@ -99,4 +96,3 @@ export interface FixtureBase {
 //    initialized?(): void;
 //    terminated?(): void;
 //}
-

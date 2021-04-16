@@ -10,23 +10,23 @@ export class OverviewmapAPI extends FixtureInstance {
      */
     _parseConfig(overviewmapConfig?: OverviewmapConfig) {
         if (!overviewmapConfig) return;
-        let mapConfig = {
+        const mapConfig = {
             extent: {
                 xmax: 1,
                 xmin: 0,
                 ymax: 1,
                 ymin: 0,
-                spatialReference: overviewmapConfig.map.spatialReference
+                spatialReference: overviewmapConfig.map.spatialReference,
             },
             lods: overviewmapConfig.map.lods,
             basemaps: [overviewmapConfig.map.basemap],
-            initialBasemapId: overviewmapConfig.map.basemap.id
-        }
+            initialBasemapId: overviewmapConfig.map.basemap.id,
+        };
         this.$vApp.$store.set(OverviewmapStore.mapConfig, mapConfig);
         this.$vApp.$store.set(OverviewmapStore.startMinimized, overviewmapConfig.startMinimized);
     }
 
-    get config(): OverviewmapConfig {
+    get config(): OverviewmapConfig | any {
         return super.config;
     }
 }
