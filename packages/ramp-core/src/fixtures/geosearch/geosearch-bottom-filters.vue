@@ -14,8 +14,8 @@
 </template>
 
 <script lang="ts">
-import { Vue, Watch, Component, Prop } from 'vue-property-decorator';
-import { Get, Sync, Call } from 'vuex-pathify';
+import { Vue } from 'vue-property-decorator';
+import { Get, Call } from 'vuex-pathify';
 import { ApiBundle as GeoApiBundle } from 'ramp-geoapi';
 import { GlobalEvents } from '../../api/internal';
 import { GeosearchStore } from './store';

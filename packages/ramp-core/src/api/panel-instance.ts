@@ -1,4 +1,4 @@
-import Vue, { Component } from 'vue';
+import { Component } from 'vue';
 
 import { APIScope, InstanceAPI, isVueConstructor, isComponentOptions, isTypeofImportVue } from './internal';
 
@@ -79,7 +79,8 @@ export class PanelInstance extends APIScope {
             if (typeof screen === 'string') {
                 asyncComponent = import(/* webpackChunkName: "[request]" */ `./../../src/fixtures/${screen}`);
             } else {
-                asyncComponent = screen(); // execute the async component function to get the promise
+                // TODO Vue3: This is no longer callable
+                //asyncComponent = screen(); // execute the async component function to get the promise
             }
 
             // for async components, wait until they are resolved and patch in panel's i18n messages

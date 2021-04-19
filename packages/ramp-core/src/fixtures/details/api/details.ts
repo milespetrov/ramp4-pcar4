@@ -3,7 +3,7 @@ import { IdentifyResult, IdentifyItem } from 'ramp-geoapi';
 import { DetailsConfig, DetailsItemSet, DetailsItemInstance } from '../store';
 
 export class DetailsAPI extends FixtureInstance {
-    get config() {
+    get config(): DetailsConfig | undefined | any {
         return super.config;
     }
 

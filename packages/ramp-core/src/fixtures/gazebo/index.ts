@@ -46,7 +46,7 @@ class GazeboFixture extends FixtureInstance {
                                 setTimeout(
                                     () =>
                                         import(/* webpackChunkName: "p-2-screen-1" */ `./p2-screen-1.vue`).then((data) => {
-                                            resolve(data);
+                                            resolve(<any>data);
                                         }),
                                     2000
                                 )

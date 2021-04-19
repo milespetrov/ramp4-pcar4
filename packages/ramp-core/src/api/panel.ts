@@ -14,6 +14,8 @@ export class PanelAPI extends APIScope {
      * @memberof PanelAPI
      */
     register(value: PanelConfigPair, options?: PanelRegistrationOptions): PanelInstance;
+    // TODO Vue3: Find out why this is needed for build
+    register(value: any, options?: any): PanelInstance;
     /**
      * Registers a set of provided panel objects and returns the resulting `PanelInstance` object set.
      * When the panel is registered, all its screens are added to the Vue as components right away.

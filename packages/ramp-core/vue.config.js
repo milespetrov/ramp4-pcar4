@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 const webpack = require('webpack');
 const WrapperPlugin = require('wrapper-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');

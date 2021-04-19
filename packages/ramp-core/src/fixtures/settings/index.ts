@@ -5,7 +5,7 @@ import ScreenV from './SettingsV.vue';
 import messages from './lang/lang.csv';
 
 class SettingsFixture extends SettingsAPI {
-    async added() {
+    async added(): Promise<void> {
         this.$iApi.panelAPI.register(
             {
                 'settings-panel': {

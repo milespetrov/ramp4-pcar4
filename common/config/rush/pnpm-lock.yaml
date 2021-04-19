@@ -15,7 +15,7 @@ importers:
       '@types/jest': ^24.0.19
       '@types/lodash': ^4.14.149
       '@types/marked': ^1.1.0
-      '@types/node': ~13.11.0
+      '@types/node': ~14.14.41
       '@typescript-eslint/eslint-plugin': ^4.18.0
       '@typescript-eslint/parser': ^4.18.0
       '@vue/cli-plugin-babel': ~4.5.0
@@ -30,8 +30,8 @@ importers:
       '@vue/eslint-config-typescript': ^7.0.0
       '@vue/runtime-core': ^3.0.11
       '@vue/test-utils': ^2.0.0-rc.4
-      ag-grid-community: ^22.1.1
-      ag-grid-vue: ^22.1.1
+      ag-grid-community: ^25.1.0
+      ag-grid-vue3: ^25.1.0
       animejs: ~3.2.0
       autoprefixer: ^9.8.6
       await-to-js: ^2.1.1
@@ -72,8 +72,8 @@ importers:
       vuex-pathify: ~1.4.1
       wrapper-webpack-plugin: 2.1.0
     dependencies:
-      ag-grid-community: 22.1.1
-      ag-grid-vue: 22.1.1_f75a4c0dbe65e5b07b08117392718225
+      ag-grid-community: 25.1.0
+      ag-grid-vue3: 25.1.0_3e5085f227070d261212cb689f5e7a99
       animejs: 3.2.1
       await-to-js: 2.1.1
       axios: 0.19.2
@@ -103,7 +103,7 @@ importers:
       '@types/jest': 24.9.1
       '@types/lodash': 4.14.168
       '@types/marked': 1.2.2
-      '@types/node': 13.11.1
+      '@types/node': 14.14.41
       '@typescript-eslint/eslint-plugin': 4.22.0_6ea6cb17fff6a72c121b67a1e5b91ce9
       '@typescript-eslint/parser': 4.22.0_eslint@6.8.0+typescript@4.1.5
       '@vue/cli-plugin-babel': 4.5.12_7079174cafb36c998790f3f5de1ee124
@@ -1919,6 +1919,10 @@ packages:
     resolution: {integrity: sha512-eWQGP3qtxwL8FGneRrC5DwrJLGN4/dH1clNTuLfN81HCrxVtxRjygDTUoZJ5ASlDEeo0ppYFQjQIlXhtXpOn6g==}
     dev: true
 
+  /@types/node/14.14.41:
+    resolution: {integrity: sha512-dueRKfaJL4RTtSa7bWeTK1M+VH+Gns73oCgzvYfHZywRCoPSd8EkXBL0mZ9unPTveBn+D9phZBaxuzpwjWkW0g==}
+    dev: true
+
   /@types/node/7.0.0:
     resolution: {integrity: sha1-wIEUexCdpfnFevcFcXcb6XzpwLo=}
     dev: true
@@ -3181,20 +3185,20 @@ packages:
     engines: {node: '>= 0.12.0'}
     dev: true
 
-  /ag-grid-community/22.1.1:
-    resolution: {integrity: sha512-FNyv9e9JIuuR8NNi/r3NjIjUVy2/K5GgPjwQ63g9/Z4U8EudQZLINGMVKI6OwtZfWyyNSd0hQDCNsdvx0OR1WQ==}
+  /ag-grid-community/25.1.0:
+    resolution: {integrity: sha512-sKJp6SZG8J50OlOeECtrLFSp/iwdx1mcG0+BmIkHsXmWoyXv5ZaTJyVg1/hMk6s3JVTm1ipg6LepbTaigWEL2A==}
     dev: false
 
-  /ag-grid-vue/22.1.1_f75a4c0dbe65e5b07b08117392718225:
-    resolution: {integrity: sha512-Vz3ZArEgbH4ptzW7nYdb2X/yF/1aO3Cqehf983oUTIgE7B5YomUQRRJxA7bnk8xll8Bdbq4384Xb4LkO7ZEarg==}
+  /ag-grid-vue3/25.1.0_3e5085f227070d261212cb689f5e7a99:
+    resolution: {integrity: sha512-J/G/HYmfPgPiKEWJxodMhwknzlGicm/TJrsOvvQuDo0k9uX2ddIGQWTy50jujSGuxCtsIEtT820OJkSLiqkNeQ==}
     peerDependencies:
-      ag-grid-community: ~22.1.1
-      vue: '>= 2.2 <= 2.5.17 || >= 2.5.20'
-      vue-property-decorator: ^7.2.0 || ^8.0.0
+      ag-grid-community: ~25.1.0
+      vue: ^3.0.0
+      vue-class-component: '>= ^8.0.0-beta.3'
     dependencies:
-      ag-grid-community: 22.1.1
+      ag-grid-community: 25.1.0
       vue: 3.0.11
-      vue-property-decorator: 10.0.0-rc.3_741db85c74946da939a88893c533854c
+      vue-class-component: 8.0.0-rc.1_vue@3.0.11
     dev: false
 
   /agentkeepalive/2.2.0:

@@ -77,9 +77,9 @@ export class InstanceAPI {
 
     constructor(element: HTMLElement, configs?: RampConfigs, options?: RampOptions) {
         this.event = new EventAPI(this);
-
-        this.$vApp = createRamp(element, this).app;
-        this.$vm = createRamp(element, this).vm;
+        const create = createRamp(element, this);
+        this.$vApp = create.app;
+        this.$vm = create.vm;
 
         this.fixture = new FixtureAPI(this); // pass the iApi reference to the FixtureAPI
         this.panelAPI = new PanelAPI(this);
@@ -89,7 +89,7 @@ export class InstanceAPI {
         // TODO: store a reference to the even bus in the global store [?]
         if (configs !== undefined) {
             const defaultConfig = configs[Object.keys(configs)[0]];
-            this.$vApp.$store.set(ConfigStore.newConfig, defaultConfig !== undefined ? defaultConfig : undefined);
+            this.$vm.$store.set(ConfigStore.newConfig, defaultConfig !== undefined ? defaultConfig : undefined);
 
             // register first config for all available languages and then overwrite configs per language as needed
             this.$vApp.$store.set(ConfigStore.registerConfig, { config: defaultConfig });

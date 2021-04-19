@@ -44,7 +44,8 @@ export default class HelpV extends Vue {
             (newLocale: any, oldLocale: any) => {
                 if (newLocale === oldLocale) return;
                 // path to where HELP is hosted is different if RAMP is built as prod library
-                const base = process.env.VUE_APP_BUILD_TARGET === 'lib' ? '../dist/' : '/';
+                //TODO Vue3: Find out why process is throwing type errors
+                const base = '/';
                 const folder = this.folderName || 'default';
                 const renderer = new marked.Renderer();
                 // make it easier to use images in markdown by prepending path to href if href is not an external source

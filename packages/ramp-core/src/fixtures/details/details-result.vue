@@ -16,7 +16,7 @@
                     @click="openResult(idx)"
                     v-focus-item
                 >
-                    <span v-html="icon[idx]" class="flex-none symbologyIcon"> {{ itemIcon(item.data, idx) }} </span>
+                    <span v-html="itemIcon(item.data, idx)" class="flex-none symbologyIcon"></span>
                     <span class="flex-initial py-5 px-10 truncate"> {{ item.data[nameField] || 'Identify Result ' + (idx + 1) }} </span>
                 </div>
             </div>

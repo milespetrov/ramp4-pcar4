@@ -1,4 +1,4 @@
-import VueI18n from 'vue-i18n';
+import VueI18n, { createI18n } from 'vue-i18n';
 import messages from './lang.csv';
 
 export type I18nComponentOptions = {
@@ -13,7 +13,7 @@ const fallbackLocale = 'en';
 // get the language of the page from the root `html` node
 const locale: string = document.documentElement.getAttribute('lang') || fallbackLocale;
 
-export const i18n = VueI18n.createI18n({
+export const i18n = createI18n({
     locale,
     fallbackLocale,
     messages,

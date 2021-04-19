@@ -68,7 +68,7 @@ import BaseLayer from 'ramp-geoapi/dist/layer/BaseLayer';
 
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-material.css';
-import { AgGridVue } from 'ag-grid-vue';
+import { AgGridVue } from 'ag-grid-vue3';
 import ColumnDropdown from '../column-dropdown.vue';
 import { GridConfig } from '../store';
 import TableStateManager from '../store/table-state-manager';
