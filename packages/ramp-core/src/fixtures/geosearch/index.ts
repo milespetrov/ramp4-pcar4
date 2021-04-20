@@ -12,7 +12,7 @@ class GeosearchFixture extends GeosearchAPI {
         // TODO: this appbar registration also seems like a common action; maybe automate
         this.$iApi.component('geosearch-appbar-button', GeosearchAppbarButtonV);
 
-        this.$vApp.$store.registerModule('geosearch', geosearch());
+        this.$vm.$store.registerModule('geosearch', geosearch());
 
         this.$iApi.panelAPI.register(
             {
@@ -28,7 +28,7 @@ class GeosearchFixture extends GeosearchAPI {
     }
 
     removed() {
-        this.$vApp.$store.unregisterModule('geosearch');
+        this.$vm.$store.unregisterModule('geosearch');
     }
 }
 

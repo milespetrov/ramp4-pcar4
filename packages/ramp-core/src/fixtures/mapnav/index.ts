@@ -9,18 +9,19 @@ class MapnavFixture extends MapnavAPI {
         console.log(`[fixture] ${this.id} added`);
 
         // TODO: registering a fixture store module seems like a common action almost every fixture needs; check if this can be automated somehow
-        this.$vApp.$store.registerModule('mapnav', mapnav());
+        this.$vm.$store.registerModule('mapnav', mapnav());
 
         // since this has no panel we need to merge in translations ourselves
         // TODO?: see if giving fixtures a nicer way to merge translations w/o panel makes sense
-        Object.entries(messages).forEach((value) => this.$vApp.$i18n.global.mergeLocaleMessage(...value));
+        Object.entries(messages).forEach((value) => (<any>this.$vm.$i18n).mergeLocaleMessage(...value));
 
-        const mapnavInstance = this.extend(MapnavV, { store: this.$vApp.$store, i18n: <any>this.$vApp.$i18n });
+        this.$vApp.component('MapnavV', MapnavV);
+        //const mapnavInstance = this.extend(MapnavV, { store: this.$vm.$store, i18n: <any>this.$vApp.$i18n });
 
         // TODO: the `innerShell` reference will probably get used more than once; consider creating a dedicated ref on `$iApi`;
-        const innerShell = this.$vm.$el.getElementsByClassName('inner-shell')[0];
-        innerShell.append(mapnavInstance.$vm.$el); /**, innerShell.children[0]);*/
-        console.log(innerShell);
+        //const innerShell = this.$vm.$el.getElementsByClassName('inner-shell')[0];
+        //innerShell.append(mapnavInstance.$vm.$el); /**, innerShell.children[0]);*/
+        //console.log(innerShell);
 
         this._parseConfig(this.config);
         this.$vm.$watch(
@@ -34,7 +35,7 @@ class MapnavFixture extends MapnavAPI {
     }
 
     removed() {
-        this.$vApp.$store.unregisterModule('mapnav');
+        this.$vm.$store.unregisterModule('mapnav');
     }
 }
 

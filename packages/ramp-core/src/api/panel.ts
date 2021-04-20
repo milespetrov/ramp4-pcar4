@@ -31,13 +31,12 @@ export class PanelAPI extends APIScope {
 
         if (options) {
             const i18n = options.i18n || {};
-            const $i18n = this.$vApp.$i18n;
-
+            const $i18n = this.$vm.$i18n;
             // merge `messages`, `dateTimeFormats` and  `numberFormats` into the global locale
             // ignore `sharedMessages` prop as it makes no sense to use it here
-            Object.entries(i18n.messages || {}).forEach((value) => $i18n.global.mergeLocaleMessage(...value));
-            Object.entries(i18n.dateTimeFormats || {}).forEach((value) => $i18n.global.mergeDateTimeFormat(...value));
-            Object.entries(i18n.numberFormats || {}).forEach((value) => $i18n.global.mergeNumberFormat(...value));
+            Object.entries(i18n.messages || {}).forEach((value) => (<any>$i18n).mergeLocaleMessage(...value));
+            Object.entries(i18n.dateTimeFormats || {}).forEach((value) => (<any>$i18n).mergeDateTimeFormat(...value));
+            Object.entries(i18n.numberFormats || {}).forEach((value) => (<any>$i18n).mergeNumberFormat(...value));
         }
 
         // TODO: check if the panel with the same id already exist and don't create a new one
@@ -48,7 +47,7 @@ export class PanelAPI extends APIScope {
         }, []);
 
         // register all the panels with the store
-        panels.forEach((panel) => this.$vApp.$store.set(`panel/${PanelMutation.REGISTER_PANEL}!`, { panel }));
+        panels.forEach((panel) => this.$vm.$store.set(`panel/${PanelMutation.REGISTER_PANEL}!`, { panel }));
 
         // return either a single panel or a set of panels, depending on the function input
         if (panels.length === 1) {
@@ -71,7 +70,7 @@ export class PanelAPI extends APIScope {
     // TODO: implement overload to get a list of panels, similar to `feature.get([...])`
     get(value: string | PanelInstance): PanelInstance {
         const id = typeof value === 'string' ? value : value.id;
-        const panel = this.$vApp.$store.get<PanelInstance>(`panel/items@${id}`);
+        const panel = this.$vm.$store.get<PanelInstance>(`panel/items@${id}`);
 
         if (!panel) {
             throw new Error("panel doesn't exist");
@@ -110,7 +109,7 @@ export class PanelAPI extends APIScope {
 
         this.show(panel, { screen, props });
 
-        this.$vApp.$store.set(`panel/${PanelAction.openPanel}!`, { panel });
+        this.$vm.$store.set(`panel/${PanelAction.openPanel}!`, { panel });
 
         return panel;
     }
@@ -123,7 +122,7 @@ export class PanelAPI extends APIScope {
      * @memberof PanelAPI
      */
     get opened(): PanelInstance[] {
-        return this.$vApp.$store.get<PanelInstance[]>('panel/orderedItems')!;
+        return this.$vm.$store.get<PanelInstance[]>('panel/orderedItems')!;
     }
 
     /**
@@ -141,7 +140,7 @@ export class PanelAPI extends APIScope {
             panel.pin(false);
         }
 
-        this.$vApp.$store.set(`panel/${PanelAction.closePanel}!`, { panel });
+        this.$vm.$store.set(`panel/${PanelAction.closePanel}!`, { panel });
 
         return panel;
     }
@@ -195,7 +194,7 @@ export class PanelAPI extends APIScope {
         }
 
         // NOTE: we store `pinned` in the store as a reference to a panel instance object
-        this.$vApp.$store.set('panel/pinned', pin ? panel : null);
+        this.$vm.$store.set('panel/pinned', pin ? panel : null);
 
         return panel;
     }
@@ -208,7 +207,7 @@ export class PanelAPI extends APIScope {
      * @memberof PanelAPI
      */
     get pinned(): PanelInstance | null {
-        return this.$vApp.$store.get<PanelInstance>('panel/pinned') || null;
+        return this.$vm.$store.get<PanelInstance>('panel/pinned') || null;
     }
 
     /**
@@ -225,11 +224,11 @@ export class PanelAPI extends APIScope {
 
         // register all the panel screen components globally
         // only register if it hasn't been registered before
-        if (!(route.screen in this.$vApp.$options.components!)) {
-            panel.registerScreen(route.screen);
-        }
+        //if (!(route.screen in this.$vm.$options.components!)) {
+        panel.registerScreen(route.screen);
+        //}
 
-        this.$vApp.$store.set(`panel/items@${panel.id}.route`, route);
+        this.$vm.$store.set(`panel/items@${panel.id}.route`, route);
 
         return panel;
     }
@@ -246,7 +245,7 @@ export class PanelAPI extends APIScope {
     setStyle(value: string | PanelInstance, style: Record<string, unknown>, replace = false): PanelInstance | null {
         const panel = this.get(value);
 
-        this.$vApp.$store.set(`panel/items@${panel.id}.style`, replace ? style : { ...panel.style, ...style });
+        this.$vm.$store.set(`panel/items@${panel.id}.style`, replace ? style : { ...panel.style, ...style });
 
         return panel;
     }

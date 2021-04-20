@@ -23,7 +23,7 @@ class DetailsFixture extends DetailsAPI {
             { i18n: { messages } }
         );
 
-        this.$vApp.$store.registerModule('details', details());
+        this.$vm.$store.registerModule('details', details());
 
         // Parse the details portion of the configuration file and save any custom
         // template bindings in the details store.
@@ -35,7 +35,7 @@ class DetailsFixture extends DetailsAPI {
     }
 
     removed() {
-        this.$vApp.$store.unregisterModule('details');
+        this.$vm.$store.unregisterModule('details');
     }
 }
 

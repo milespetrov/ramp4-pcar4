@@ -28,7 +28,7 @@ class LegendFixture extends LegendAPI {
 
         // TODO: register legend panel
         this.$iApi.component('legend-appbar-button', LegendAppbarButtonV);
-        this.$vApp.$store.registerModule('legend', <any>legend());
+        this.$vm.$store.registerModule('legend', <any>legend());
 
         // parse legend section of config and store information in legend store
         this._parseConfig(this.config);
@@ -39,7 +39,7 @@ class LegendFixture extends LegendAPI {
     }
 
     removed() {
-        this.$vApp.$store.unregisterModule('legend');
+        this.$vm.$store.unregisterModule('legend');
     }
 }
 

@@ -10,8 +10,8 @@ export class NortharrowAPI extends FixtureInstance {
      */
     _parseConfig(northarrowConfig?: NortharrowConfig) {
         if (!northarrowConfig) return;
-        this.$vApp.$store.set(NortharrowStore.arrowIcon, northarrowConfig.arrowIcon);
-        this.$vApp.$store.set(NortharrowStore.poleIcon, northarrowConfig.poleIcon);
+        this.$vm.$store.set(NortharrowStore.arrowIcon, northarrowConfig.arrowIcon);
+        this.$vm.$store.set(NortharrowStore.poleIcon, northarrowConfig.poleIcon);
     }
 
     get config(): NortharrowConfig | any {

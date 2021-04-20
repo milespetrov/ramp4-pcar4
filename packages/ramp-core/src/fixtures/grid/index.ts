@@ -21,11 +21,11 @@ class GridFixture extends GridAPI {
             { i18n: { messages } }
         );
 
-        this.$vApp.$store.registerModule('grid', <any>grid());
+        this.$vm.$store.registerModule('grid', <any>grid());
     }
 
     removed() {
-        this.$vApp.$store.unregisterModule('grid');
+        this.$vm.$store.unregisterModule('grid');
     }
 }
 

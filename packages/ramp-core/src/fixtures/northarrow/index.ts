@@ -6,7 +6,7 @@ class NortharrowFixture extends NortharrowAPI {
     async added() {
         console.log(`[fixture] ${this.id} added`);
 
-        this.$vApp.$store.registerModule('northarrow', northarrow());
+        this.$vm.$store.registerModule('northarrow', northarrow());
 
         this._parseConfig(this.config);
         this.$vm.$watch(
@@ -14,14 +14,15 @@ class NortharrowFixture extends NortharrowAPI {
             (value: NortharrowConfig | undefined) => this._parseConfig(value)
         );
 
-        const innerShell = this.$vm.$el.getElementsByClassName('inner-shell')[0];
-        const northarrowInstance = this.extend(NortharrowV, { store: this.$vApp.$store });
-        innerShell.append(northarrowInstance.$vm.$el);
+        this.$vApp.component('NortharrowV', NortharrowV);
+        //const innerShell = this.$vm.$el.getElementsByClassName('inner-shell')[0];
+        //const northarrowInstance = this.extend(NortharrowV, { store: this.$vm.$store });
+        //innerShell.append(northarrowInstance.$vm.$el);
     }
 
     removed(): void {
         console.log(`[fixture] ${this.id} removed`);
-        this.$vApp.$store.unregisterModule('northarrow');
+        this.$vm.$store.unregisterModule('northarrow');
     }
 }
 

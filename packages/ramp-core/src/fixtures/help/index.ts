@@ -11,7 +11,7 @@ class HelpFixture extends HelpAPI {
 
         this.$iApi.component('help-nav-button', HelpNavV);
 
-        this.$vApp.$store.registerModule('help', help());
+        this.$vm.$store.registerModule('help', help());
 
         this.$iApi.panelAPI.register(
             {
@@ -39,7 +39,7 @@ class HelpFixture extends HelpAPI {
     }
 
     removed(): void {
-        this.$vApp.$store.unregisterModule('help');
+        this.$vm.$store.unregisterModule('help');
     }
 }
 

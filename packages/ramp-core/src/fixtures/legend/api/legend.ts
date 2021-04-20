@@ -29,7 +29,7 @@ export class LegendAPI extends FixtureInstance {
             return;
         }
 
-        const layers: BaseLayer[] | undefined = this.$vApp.$store.get(LayerStore.layers);
+        const layers: BaseLayer[] | undefined = this.$vm.$store.get(LayerStore.layers);
         const legendEntries: Array<LegendItem> = [];
         const stack: Array<any> = [];
         // initialize stack with all legend elements listed in config
@@ -75,7 +75,7 @@ export class LegendAPI extends FixtureInstance {
         }
 
         // console.log('all legend entries: ', legendEntries);
-        this.$vApp.$store.set(LegendStore.children, legendEntries);
+        this.$vm.$store.set(LegendStore.children, legendEntries);
         // TODO: validate legend items?
     }
 }

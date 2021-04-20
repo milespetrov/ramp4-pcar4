@@ -7,9 +7,9 @@ class OverviewmapFixture extends OverviewmapAPI {
     added() {
         console.log(`[fixture] ${this.id} added`);
 
-        this.$vApp.$store.registerModule('overviewmap', overviewmap());
+        this.$vm.$store.registerModule('overviewmap', overviewmap());
 
-        Object.entries(messages).forEach((value) => this.$vApp.$i18n.global.mergeLocaleMessage(...value));
+        Object.entries(messages).forEach((value) => (<any>this.$vm.$i18n).mergeLocaleMessage(...value));
 
         this._parseConfig(this.config);
         this.$vm.$watch(
@@ -17,14 +17,15 @@ class OverviewmapFixture extends OverviewmapAPI {
             (value: OverviewmapConfig | undefined) => this._parseConfig(value)
         );
 
-        const innerShell = this.$vm.$el.getElementsByClassName('inner-shell')[0];
-        const overviewInstance = this.extend(OverviewmapV, { store: this.$vApp.$store, i18n: <any>this.$vApp.$i18n });
-        innerShell.append(overviewInstance.$vm.$el);
+        this.$vApp.component('OverviewmapV', OverviewmapV);
+        //const innerShell = this.$vm.$el.getElementsByClassName('inner-shell')[0];
+        //const overviewInstance = this.extend(OverviewmapV, { store: this.$vm.$store, i18n: <any>this.$vApp.$i18n });
+        //innerShell.append(overviewInstance.$vm.$el);
     }
 
     removed() {
         console.log(`[fixture] ${this.id} removed`);
-        this.$vApp.$store.unregisterModule('overviewmap');
+        this.$vm.$store.unregisterModule('overviewmap');
     }
 }
 

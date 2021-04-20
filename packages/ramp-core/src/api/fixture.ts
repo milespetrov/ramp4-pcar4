@@ -30,7 +30,7 @@ export class FixtureAPI extends APIScope {
         let fixture: FixtureBase;
 
         // if the fixture already exist, do nothing and just return it
-        if (id in this.$vApp.$store.get<FixtureBaseSet>(`fixture/items`)!) {
+        if (id in this.$vm.$store.get<FixtureBaseSet>(`fixture/items`)!) {
             return this.get(id);
         }
 
@@ -53,7 +53,7 @@ export class FixtureAPI extends APIScope {
         // TODO: calling `ADD_FIXTURE` mutation directly here; might want to switch to calling the action `addFixture`
         // TODO: using this horrible concatenated mixture `fixture/${FixtureMutation.ADD_FIXTURE}!` all the time doesn't seem like a good idea;
         // fixtures are always stored as objects implementing `FixtureBase` interfaces;
-        this.$vApp.$store.set(`fixture/${FixtureMutation.ADD_FIXTURE}!`, { value: fixture });
+        this.$vm.$store.set(`fixture/${FixtureMutation.ADD_FIXTURE}!`, { value: fixture });
 
         return fixture;
     }
@@ -69,7 +69,7 @@ export class FixtureAPI extends APIScope {
     remove<T extends FixtureBase = FixtureBase>(fixtureOrId: FixtureBase | string): T {
         const fixture = this.get<T>(fixtureOrId);
 
-        this.$vApp.$store.set(`fixture/${FixtureMutation.REMOVE_FIXTURE}!`, { value: fixture });
+        this.$vm.$store.set(`fixture/${FixtureMutation.REMOVE_FIXTURE}!`, { value: fixture });
 
         return fixture;
     }
@@ -109,7 +109,7 @@ export class FixtureAPI extends APIScope {
         }
 
         const fixtures = ids.map((id) => {
-            const fixture = this.$vApp.$store.get<T>(`fixture/items@${id}`);
+            const fixture = this.$vm.$store.get<T>(`fixture/items@${id}`);
             if (!fixture) {
                 throw new Error("fixture doesn't exist");
             }
@@ -275,6 +275,6 @@ export class FixtureInstance extends APIScope implements FixtureBase {
      * @memberof FixtureInstance
      */
     get config(): AppbarFixtureConfig | undefined {
-        return this.$vApp.$store.get('config/getFixtureConfig', this.id);
+        return this.$vm.$store.get('config/getFixtureConfig', this.id);
     }
 }

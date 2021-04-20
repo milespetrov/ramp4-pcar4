@@ -13,7 +13,7 @@ class BasemapFixture extends BasemapAPI {
         this.$iApi.component('basemap-appbar-button', BasemapAppbarButtonV);
         this.$iApi.component('basemap-nav-button', BasemapNavButtonV);
 
-        this.$vApp.$store.registerModule('basemap', basemap());
+        this.$vm.$store.registerModule('basemap', basemap());
 
         this.$iApi.panelAPI.register(
             {
@@ -29,7 +29,7 @@ class BasemapFixture extends BasemapAPI {
     }
 
     removed() {
-        this.$vApp.$store.unregisterModule('basemap');
+        this.$vm.$store.unregisterModule('basemap');
     }
 }
 

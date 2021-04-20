@@ -1,6 +1,8 @@
 import { createApp, ComponentPublicInstance, DefineComponent } from 'vue';
 import { RampMap } from 'ramp-geoapi';
 import { RampConfigs } from '@/types';
+import { VueI18n } from 'vue-i18n';
+
 import { i18n } from '@/lang';
 import screenfull from 'screenfull';
 
@@ -39,7 +41,7 @@ declare module '@vue/runtime-core' {
 
     interface App extends InstanceAPI {
         $store: Store;
-        $i18n: typeof i18n;
+        $i18n: VueI18n;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         $options: { [key: string]: any };
         $iApi: InstanceAPI;
@@ -92,9 +94,9 @@ export class InstanceAPI {
             this.$vm.$store.set(ConfigStore.newConfig, defaultConfig !== undefined ? defaultConfig : undefined);
 
             // register first config for all available languages and then overwrite configs per language as needed
-            this.$vApp.$store.set(ConfigStore.registerConfig, { config: defaultConfig });
+            this.$vm.$store.set(ConfigStore.registerConfig, { config: defaultConfig });
             for (const lang in configs) {
-                this.$vApp.$store.set(ConfigStore.registerConfig, { config: configs[lang], langs: [lang] });
+                this.$vm.$store.set(ConfigStore.registerConfig, { config: configs[lang], langs: [lang] });
             }
         }
 
@@ -180,8 +182,8 @@ export class InstanceAPI {
      * @memberof InstanceAPI
      */
     getConfig(): void {
-        const language = this.$vApp.$i18n.global.locale;
-        return this.$vApp.$store.get(ConfigStore.getActiveConfig, language);
+        const language = this.$vm.$i18n.locale;
+        return this.$vm.$store.get(ConfigStore.getActiveConfig, language);
     }
 
     /**
@@ -191,7 +193,7 @@ export class InstanceAPI {
      * @memberof InstanceAPI
      */
     setLanguage(language: string): void {
-        this.$vApp.$i18n.global.locale = language;
+        this.$vm.$i18n.locale = language;
         const activeConfig = this.getConfig();
         console.log('active config: ', activeConfig);
         // TODO: do something with active config - reload map?
@@ -205,7 +207,7 @@ export class InstanceAPI {
      * @memberof InstanceAPI
      */
     get language(): string {
-        return this.$vApp.$i18n.global.locale;
+        return this.$vm.$i18n.locale;
     }
 
     /**

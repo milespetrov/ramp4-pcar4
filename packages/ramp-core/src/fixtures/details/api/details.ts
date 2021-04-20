@@ -15,7 +15,7 @@ export class DetailsAPI extends FixtureInstance {
      */
     openDetails(payload: IdentifyResult[]): void {
         // Save the provided identify result in the store.
-        this.$vApp.$store.set('details/setPayload!', payload);
+        this.$vm.$store.set('details/setPayload!', payload);
 
         const panel = this.$iApi.panelAPI.get('details-panel');
 
@@ -43,7 +43,7 @@ export class DetailsAPI extends FixtureInstance {
         };
 
         // Save the provided identify result in the store.
-        this.$vApp.$store.set('details/setPayload!', [identifyResult]);
+        this.$vm.$store.set('details/setPayload!', [identifyResult]);
         // Open the details panel.
         const panel = this.$iApi.panelAPI.get('details-panel');
         if (panel.isOpen) {
@@ -68,7 +68,7 @@ export class DetailsAPI extends FixtureInstance {
         const detailsItems = config.items.map((item: any) => new DetailsItemInstance(item));
 
         // save the items in the store
-        this.$vApp.$store.set(
+        this.$vm.$store.set(
             'details/items',
             detailsItems.reduce<DetailsItemSet>((map, item) => {
                 map[item.id] = item;
@@ -85,10 +85,10 @@ export class DetailsAPI extends FixtureInstance {
      * @memberof DetailsAPI
      */
     _validateItems() {
-        Object.values(this.$vApp.$store.get<DetailsItemInstance[]>('details/items')!).forEach((item) => {
-            if (item.template in this.$vApp.$options.components!) {
-                this.$vApp.$store.set(`details/items@${item.id}.componentId`, item.template);
-            }
+        Object.values(this.$vm.$store.get<DetailsItemInstance[]>('details/items')!).forEach((item) => {
+            //if (item.template in this.$vm.$options.components!) {
+            this.$vm.$store.set(`details/items@${item.id}.componentId`, item.template);
+            //}
         });
     }
 }

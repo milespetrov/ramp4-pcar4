@@ -30,7 +30,7 @@ export class MapnavAPI extends FixtureInstance {
 
         // save mapnav items as a collection to the store
         // they are saves as a set for easy by-id access
-        this.$vApp.$store.set(
+        this.$vm.$store.set(
             'mapnav/items',
             mapnavItems.reduce<MapnavItemSet>((map: any, item: any) => {
                 map[item.id] = item;
@@ -39,7 +39,7 @@ export class MapnavAPI extends FixtureInstance {
         );
 
         // save an ordered list of item ids to use when rendering components
-        this.$vApp.$store.set(
+        this.$vm.$store.set(
             'mapnav/order',
             mapnavItems.map((item: any) => item.id)
         );
@@ -55,13 +55,13 @@ export class MapnavAPI extends FixtureInstance {
      */
     _validateItems() {
         // get the ordered list of items and see if any of them are registered
-        this.$vApp.$store.get<string[]>('mapnav/order')!.forEach((id) => {
+        this.$vm.$store.get<string[]>('mapnav/order')!.forEach((id) => {
             // check components with the literal id and with a `-nav-button` suffix;
             [`${id}-nav-button`, id].some((v) => {
-                if (v in this.$vApp.$options.components!) {
-                    // if an item is registered globally, save the name of the registered component
-                    this.$vApp.$store.set(`mapnav/items@${id}.componentId`, v);
-                }
+                //if (v in this.$vm.$options.components!) {
+                // if an item is registered globally, save the name of the registered component
+                this.$vm.$store.set(`mapnav/items@${id}.componentId`, v);
+                //}
             });
         });
     }

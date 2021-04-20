@@ -31,7 +31,7 @@ export class MapAPI extends APIScope {
      * @memberof DetailsFixture
      */
     identify(payload: MapClick | ApiBundle.Point) {
-        const layers: BaseLayer[] | undefined = this.$vApp.$store.get(LayerStore.layers);
+        const layers: BaseLayer[] | undefined = this.$vm.$store.get(LayerStore.layers);
 
         // Don't perform an identify request if the layers array hasn't been established yet.
         if (layers === undefined) return;
