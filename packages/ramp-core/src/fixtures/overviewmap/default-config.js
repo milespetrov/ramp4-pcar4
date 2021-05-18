@@ -119,7 +119,7 @@ const lods = [
         resolution: 0.01866138385297604,
         scale: 70.5310735
     }
-]
+];
 
 const defaultConfig = {
     extent: {

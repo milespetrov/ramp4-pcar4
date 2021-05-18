@@ -3,7 +3,6 @@
 import { BaseGeometry, GeometryType, Point, Polygon, SrDef, IdDef } from '@/geo/api';
 
 export class Extent extends BaseGeometry {
-
     // doing things a bit different for Extents.
     // tried array of arrays to be consistent with other geometeries, but
     // was more extra coding and overhead of unrequired array
@@ -19,10 +18,10 @@ export class Extent extends BaseGeometry {
      * @param {SpatialReference | number | string} [sr] A spatial reference for the geometry. Defaults to Lat/Long if not provided
      */
     // from two things that can be interpreted as points
-    constructor(id: IdDef, minPoint: Point, maxPoint: Point, sr?: SrDef)
-    constructor(id: IdDef, minCoords: Array<number>, maxCoords: Array<number>, sr?: SrDef)
-    constructor(id: IdDef, minXY: object, maxXY: object, sr?: SrDef)
-    constructor(id: IdDef, minAnyFormat: any, maxAnyFormat: any, sr?: SrDef)
+    constructor(id: IdDef, minPoint: Point, maxPoint: Point, sr?: SrDef);
+    constructor(id: IdDef, minCoords: Array<number>, maxCoords: Array<number>, sr?: SrDef);
+    constructor(id: IdDef, minXY: object, maxXY: object, sr?: SrDef);
+    constructor(id: IdDef, minAnyFormat: any, maxAnyFormat: any, sr?: SrDef);
     constructor(id: IdDef, minGeometry: any, maxGeometry: any, sr?: SrDef) {
         super(id, minGeometry.sr || sr);
 
@@ -54,9 +53,12 @@ export class Extent extends BaseGeometry {
     }
 
     center(): Point {
-        return new Point(this.id + '_centerPoint',
-            [((this.xmax - this.xmin) / 2.0) + this.xmin, ((this.ymax - this.ymin) / 2.0) + this.ymin],
-            this.sr, true);
+        return new Point(
+            this.id + '_centerPoint',
+            [(this.xmax - this.xmin) / 2.0 + this.xmin, (this.ymax - this.ymin) / 2.0 + this.ymin],
+            this.sr,
+            true
+        );
     }
 
     clone(): Extent {
@@ -78,12 +80,14 @@ export class Extent extends BaseGeometry {
         return new Polygon(this.id, this.toPolygonArray(), this.sr, true);
     }
 
-    static fromParams(id: IdDef,
+    static fromParams(
+        id: IdDef,
         xmin: string | number,
         ymin: string | number,
         xmax: string | number,
         ymax: string | number,
-        sr?: SrDef): Extent {
+        sr?: SrDef
+    ): Extent {
         return new Extent(id, [xmin, ymin], [xmax, ymax], sr);
     }
 
@@ -96,5 +100,4 @@ export class Extent extends BaseGeometry {
         }
         return this.xmin === e.xmin && this.ymin === e.ymin && this.xmax === e.xmax && this.ymax === e.ymax;
     }
-
 }
