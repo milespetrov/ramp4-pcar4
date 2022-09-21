@@ -1,6 +1,6 @@
 ![](https://byob.yarr.is/milespetrov/ramp4-pcar4/tsbadge)
 
-# R4MP  a
+# R4MP
 
 <p align="center"><img src="./assets/logo.svg"></p>
 
