@@ -1,0 +1,43 @@
+{
+    "extends": "@vue/tsconfig/tsconfig.dom.json",
+    "include": ["env.d.ts", "src/**/*", "src/**/*.vue"],
+    "exclude": ["src/**/__tests__/*"],
+    "compilerOptions": {
+        "composite": true,
+        "noEmit": false,
+        "declarationDir": "./dist/types",
+        "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["./src/*"],
+            "vue-slider-component": ["./scripts/vue-slider-component.d.ts"]
+        }
+    },
+    "typedocOptions": {
+        "entryPoints": [
+            "./src/main.ts",
+            "./src/api",
+            "./src/fixtures",
+            "./src/directives",
+            "./src/geo",
+            "./src/lang"
+        ],
+        "out": "ts-docs",
+        "customCss": "./docs/.typedoc/theme/custom.css",
+        "entryPointStrategy": "expand",
+        "readme": "./docs/typedoc-README.md",
+        "name": "RAMP4",
+        "includeVersion": true,
+        "githubPages": true,
+        "cleanOutputDir": true,
+        "exclude": [
+            "**/*/stores/*.ts",
+            "**/*/index.ts",
+            "**/tests",
+            "**/api/internal.ts",
+            "**/fixtures/geosearch/definitions.ts",
+            "**/fixtures/grid/accessibility.ts",
+            "**/geo/esri.ts"
+        ]
+    }
+}

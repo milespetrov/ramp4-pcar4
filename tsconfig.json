@@ -1,49 +1,11 @@
 {
-    "extends": "@vue/tsconfig/tsconfig.web.json",
-    "include": ["env.d.ts", "src/**/*", "src/**/*.vue"],
-    "compilerOptions": {
-        "baseUrl": ".",
-        "paths": {
-            "@/*": ["./src/*"],
-            "vue-slider-component": ["./scripts/vue-slider-component.d.ts"]
-        },
-        "lib": ["DOM", "DOM.Iterable", "ES2020"],
-        "pretty": true,
-        "declaration": true,
-        "declarationDir": "./dist/ts"
-    },
-
-    "typedocOptions": {
-        "entryPoints": [
-            "./src/main.ts",
-            "./src/api",
-            "./src/fixtures",
-            "./src/directives",
-            "./src/geo",
-            "./src/lang"
-        ],
-        "out": "ts-docs",
-        "customCss": "./docs/.typedoc/theme/custom.css",
-        "entryPointStrategy": "expand",
-        "readme": "./docs/typedoc-README.md",
-        "name": "RAMP4",
-        "includeVersion": true,
-        "githubPages": true,
-        "cleanOutputDir": true,
-        "exclude": [
-            "**/*/store/*.ts",
-            "**/*/index.ts",
-            "**/tests",
-            "**/api/internal.ts",
-            "**/fixtures/geosearch/definitions.ts",
-            "**/fixtures/grid/accessibility.ts",
-            "**/geo/esri.ts"
-        ]
-    },
-
+    "files": [],
     "references": [
         {
-            "path": "./tsconfig.vite-config.json"
+            "path": "./tsconfig.node.json"
+        },
+        {
+            "path": "./tsconfig.app.json"
         }
     ]
 }
