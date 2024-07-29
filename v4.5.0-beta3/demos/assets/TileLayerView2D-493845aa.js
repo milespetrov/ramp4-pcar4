@@ -1,0 +1,72 @@
+import { bl as i$1, bm as h, bn as y, bo as r, bp as l$1, ar as E$1, bq as j$1, av as e, p as s$1, e as e$1, y as y$1, k as a$1 } from './main-5614000d.js';
+import './MagnifierPrograms-a84ca94b.js';
+import './Container-23d4bfc5.js';
+import './BufferPool-4cf2b7e9.js';
+import './color-8720a063.js';
+import './WGLContainer-e7d95734.js';
+import './enums-1f7f0b0a.js';
+import './Texture-854bd2b8.js';
+import './ProgramTemplate-d21071ca.js';
+import './MaterialKey-8df5eb1c.js';
+import './utils-6af0b3ef.js';
+import './VertexArrayObject-d4656bba.js';
+import './StyleDefinition-1998cf52.js';
+import './enums-6436e7c1.js';
+import './OrderIndependentTransparency-639df392.js';
+import './floatRGBA-47b1b9ba.js';
+import './webgl-debug-e97fec6d.js';
+import { a as ae } from './GraphicsView2D-30339c0a.js';
+import './AttributeStoreView-d896f0d9.js';
+import './earcut-336027d9.js';
+import './vec3f32-b6e01a26.js';
+import { t, o, n as n$1 } from './imageUtils-ea266cef.js';
+import { f as f$1, u } from './LayerView-2967ceea.js';
+import { n } from './HighlightGraphicContainer-d0a7e86c.js';
+import { i } from './RefreshableLayerView-ff11c913.js';
+import { P, S, a } from './drapedUtils-39217903.js';
+import './preload-helper-a4975f27.js';
+import './_commonjsHelpers-1f64d0d1.js';
+import './ExpandedCIM-ff9a48d2.js';
+import './BidiEngine-7b4fd637.js';
+import './GeometryUtils-69e79e12.js';
+import './enums-9c1aeae9.js';
+import './definitions-281daf3f.js';
+import './Rect-e55bfbac.js';
+import './quantizationUtils-60e2767d.js';
+import './rasterizingUtils-3b72cb70.js';
+import './GeometryUtils-7c55c6d6.js';
+import './imageutils-f3d3c189.js';
+import './Matcher-60da119b.js';
+import './visualVariablesUtils-c3a75a09.js';
+import './visualVariablesUtils-34ddb96d.js';
+import './tileUtils-f6baf24c.js';
+import './TurboLine-28d582a3.js';
+import './devEnvironmentUtils-d73295e7.js';
+import './CircularArray-10e97c16.js';
+import './ComputedAttributeStorage-c85e2f0d.js';
+import './arcadeTimeUtils-2c7d45b1.js';
+import './executionError-ed2c63c0.js';
+import './centroid-6cad3311.js';
+import './VertexElementDescriptor-a439aa9a.js';
+import './config-c354710d.js';
+import './basicInterfaces-9de11baf.js';
+import './normalizeUtilsSync-1b9a2935.js';
+import './projectionSupport-000d69d0.js';
+import './json-ce6e5728.js';
+import './schemaUtils-455a6f11.js';
+import './util-cc8f2171.js';
+import './TiledDisplayObject-41c78ed4.js';
+import './BitmapTileContainer-20357c9e.js';
+import './Bitmap-94db49a0.js';
+import './TileContainer-8d68ba86.js';
+import './BaseGraphicContainer-598081da.js';
+import './FeatureContainer-81bf5213.js';
+import './popupUtils-324654ef.js';
+
+/*
+All material copyright ESRI, All Rights Reserved, unless otherwise specified.
+See https://js.arcgis.com/4.26/esri/copyright.txt for details.
+*/
+const T=[0,0];let v=class extends(i(t(f$1(u)))){constructor(){super(...arguments),this._fetchQueue=null,this._highlightGraphics=new i$1,this._highlightView=null,this._popupHighlightHelper=null,this._tileStrategy=null,this.layer=null;}get resampling(){return !("resampling"in this.layer)||!1!==this.layer.resampling}update(e){this._fetchQueue.pause(),this._fetchQueue.state=e.state,this._tileStrategy.update(e),this._fetchQueue.resume(),this._highlightView?.processUpdate(e);}attach(){const e="tileServers"in this.layer?this.layer.tileServers:null;if(this._tileInfoView=new h(this.layer.tileInfo,this.layer.fullExtent),this._fetchQueue=new y({tileInfoView:this._tileInfoView,concurrency:e&&10*e.length||10,process:(e,i)=>this.fetchTile(e,i)}),this._tileStrategy=new r({cachePolicy:"keep",resampling:this.resampling,acquireTile:e=>this.acquireTile(e),releaseTile:e=>this.releaseTile(e),tileInfoView:this._tileInfoView}),P(this,this.layer)){const e=this._highlightView=new ae({view:this.view,graphics:this._highlightGraphics,requestUpdateCallback:()=>this.requestUpdate(),container:new n(this.view.featuresTilingScheme),defaultPointSymbolEnabled:!1});this.container.addChild(this._highlightView.container),this._popupHighlightHelper=new S({createFetchPopupFeaturesQueryGeometry:(e,i)=>a(e,i,this.view),highlightGraphics:this._highlightGraphics,highlightGraphicUpdated:(i,t)=>{e.graphicUpdateHandler({graphic:i,property:t});},layerView:this,updatingHandles:this.updatingHandles});}this.requestUpdate(),this.addAttachHandles(l$1((()=>this.resampling),(()=>{this.doRefresh();}))),super.attach();}detach(){super.detach(),this._tileStrategy.destroy(),this._fetchQueue.clear(),this.container.removeAllChildren(),this._popupHighlightHelper?.destroy(),this._fetchQueue=this._tileStrategy=this._tileInfoView=this._popupHighlightHelper=null;}async fetchPopupFeatures(e,i){return this._popupHighlightHelper?this._popupHighlightHelper.fetchPopupFeatures(e,i):[]}highlight(e){return this._popupHighlightHelper?this._popupHighlightHelper.highlight(e):{remove(){}}}moveStart(){this.requestUpdate();}viewChange(){this.requestUpdate();}moveEnd(){this.requestUpdate();}supportsSpatialReference(e){return E$1(this.layer.tileInfo?.spatialReference,e)}async doRefresh(){!this.attached||this.updateRequested||this.suspended||(this._fetchQueue.reset(),this._tileStrategy.tiles.forEach((e=>this._enqueueTileFetch(e))));}isUpdating(){return this._fetchQueue?.updating??!1}acquireTile(e){const i=this._bitmapView.createTile(e),t=i.bitmap;return [t.x,t.y]=this._tileInfoView.getTileCoords(T,i.key),t.resolution=this._tileInfoView.getTileResolution(i.key),[t.width,t.height]=this._tileInfoView.tileInfo.size,this._enqueueTileFetch(i),this._bitmapView.addChild(i),this.requestUpdate(),i}releaseTile(e){this._fetchQueue.abort(e.key.id),this._bitmapView.removeChild(e),e.once("detach",(()=>e.destroy())),this.requestUpdate();}async fetchTile(e$1,i={}){const r="tilemapCache"in this.layer?this.layer.tilemapCache:null,{signal:s,resamplingLevel:o$1=0}=i;if(!r)try{return await this._fetchImage(e$1,s)}catch(a){if(!j$1(a)&&!this.resampling)return o(this._tileInfoView.tileInfo.size);if(o$1<3){const t=this._tileInfoView.getTileParentId(e$1.id);if(t){const r=new e(t),s=await this.fetchTile(r,{...i,resamplingLevel:o$1+1});return n$1(this._tileInfoView,s,r,e$1)}}throw a}const l=new e(0,0,0,0);let h;try{if(await r.fetchAvailabilityUpsample(e$1.level,e$1.row,e$1.col,l,{signal:s}),l.level!==e$1.level&&!this.resampling)return o(this._tileInfoView.tileInfo.size);h=await this._fetchImage(l,s);}catch(a){if(j$1(a))throw a;h=await this._fetchImage(e$1,s);}return this.resampling?n$1(this._tileInfoView,h,l,e$1):h}async _enqueueTileFetch(e){if(!this._fetchQueue.has(e.key.id)){try{const i=await this._fetchQueue.push(e.key);e.bitmap.source=i,e.bitmap.width=this._tileInfoView.tileInfo.size[0],e.bitmap.height=this._tileInfoView.tileInfo.size[1],e.once("attach",(()=>this.requestUpdate()));}catch(r){j$1(r)||s$1.getLogger(this.declaredClass).error(r);}this.requestUpdate();}}async _fetchImage(e,i){return this.layer.fetchImageBitmapTile(e.level,e.row,e.col,{signal:i})}};e$1([y$1()],v.prototype,"_fetchQueue",void 0),e$1([y$1()],v.prototype,"resampling",null),v=e$1([a$1("esri.views.2d.layers.TileLayerView2D")],v);const I=v;
+
+export { I as default };
