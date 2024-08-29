@@ -1,7 +1,7 @@
 # Workflow for building and deploying a demo site to GitHub Pages
 name: Deploy static demo files to Pages
 
-on: push
+on: branch_protection_rule
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
