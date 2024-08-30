@@ -1,0 +1,101 @@
+# Workflow for building and deploying a demo site to GitHub Pages
+name: Deploy static demo files to Pages
+
+on: push
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+    contents: write
+    pages: write
+    id-token: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these deployments to complete.
+concurrency:
+    group: 'pages'
+    cancel-in-progress: false
+
+jobs:
+    build:
+        name: Build the project
+        runs-on: ubuntu-latest
+        environment:
+            name: github-pages
+            url: ${{ steps.deployment.outputs.page_url }}
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: '22.5.1'
+                  cache: 'npm'
+
+            - name: Build or delete the demo
+              run: |
+                  BRANCH_OR_TAG_NAME=${GITHUB_REF#refs/heads/}
+                  BRANCH_OR_TAG_NAME=${BRANCH_OR_TAG_NAME#refs/tags/}
+
+                  git config --global user.email "miles.petrov@ec.gc.ca"
+                  git config --global user.name "Miles Petrov"
+
+                  git fetch --all
+
+                  # Check if demo-page branch exists and create it if necessary
+                  if git ls-remote --heads origin demo-page | grep -q "refs/heads/demo-page"; then
+                      echo "demo-page exists."
+                      git checkout demo-page
+                  else
+                      echo "demo-page does not exist. Creating an orphan branch."
+                      git checkout --orphan demo-page
+                      git rm -rf . || true
+                      rm -r * || true
+                      git commit --allow-empty -m "Initial commit on orphan demo-page"
+                  fi
+
+                  # Checkout to current branch or tag and create a temporary branch
+                  git checkout $BRANCH_OR_TAG_NAME
+                  git checkout -b temp-$BRANCH_OR_TAG_NAME
+
+                  # Create a subfolder and checkout demo-page's content
+                  mkdir demo-folder
+                  git --work-tree=demo-folder checkout demo-page -- .
+
+                  # Modify and commit changes
+                  npm ci
+                  npm run build
+                  mv dist demo-folder/$BRANCH_OR_TAG_NAME
+                  rm -rf node_modules
+
+                  git add demo-folder
+                  git commit -m "Modified contents of demo-page within demo-folder"
+
+                  # Apply the changes to demo-page
+                  git checkout demo-page
+
+                  git checkout temp-$BRANCH_OR_TAG_NAME -- demo-folder
+
+                  mv demo-folder/* .
+
+                  rmdir demo-folder
+
+                  git add .
+
+                  git commit -m "Applied changes from demo-folder to demo-page"
+
+                  # Squash the commit history into a single commit
+                  git reset --soft $(git rev-list --max-parents=0 HEAD)
+                  git commit -m "Applied changes from demo-folder to demo-page"
+                  git push -f origin demo-page
+
+            - name: Upload artifact
+              uses: actions/upload-pages-artifact@v3
+              with:
+                  path: '.'
+                  retention-days: 1
+
+            - name: Setup Pages
+              uses: actions/configure-pages@v5
+
+            - name: Deploy to GitHub Pages
+              id: deployment
+              uses: actions/deploy-pages@v4
