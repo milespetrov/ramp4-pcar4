@@ -60,7 +60,7 @@ jobs:
 
                   # Create a subfolder and checkout demo-page's content
                   mkdir -p demo-folder/$BRANCH_OR_TAG_NAME/docs
-                  git --work-tree=demo-folder checkout demo-page -- .
+                  git --work-tree=demo-folder checkout demo-page -- . || true
 
                   # Modify and commit changes
                   npm ci
