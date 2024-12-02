@@ -1,11 +1,5 @@
 import { TinyEmitter } from 'tiny-emitter';
-import {
-    APIScope,
-    InstanceAPI,
-    LayerInstance,
-    PanelInstance,
-    TileLayer
-} from './internal';
+import { APIScope, InstanceAPI, LayerInstance, PanelInstance, TileLayer } from './internal';
 import type { AppbarAPI } from '@/fixtures/appbar/api/appbar';
 import type { DetailsAPI } from '@/fixtures/details/api/details';
 import type { GridAPI } from '@/fixtures/grid/api/grid';
@@ -19,13 +13,7 @@ import type { WizardAPI } from '@/fixtures/wizard/api/wizard';
 import { useAppbarStore } from '@/fixtures/appbar/store';
 import { useGridStore } from '@/fixtures/grid/store';
 import { LayerState, LayerType } from '@/geo/api';
-import type {
-    IdentifyResultFormat,
-    MapClick,
-    MapMove,
-    RampBasemapConfig,
-    ScreenPoint
-} from '@/geo/api';
+import type { BasemapChange, IdentifyResultFormat, MapClick, MapMove, RampBasemapConfig, ScreenPoint } from '@/geo/api';
 import type { RampConfig } from '@/types';
 import { debounce, throttle } from 'throttle-debounce';
 import { useMapCaptionStore } from '@/stores/map-caption';
@@ -94,6 +82,12 @@ export enum GlobalEvents {
     HELP_TOGGLE = 'help/toggle',
 
     /**
+     * Fires when the language of the app changes.
+     * Payload: `({ oldLang: string, newLang: string })`
+     */
+    LANG_CHANGE = 'lang/change',
+
+    /**
      * Fires when the drawing state of a layer changes.
      * Payload: `({ layer: LayerInstance, state: string })`
      */
@@ -107,7 +101,7 @@ export enum GlobalEvents {
 
     /**
      * Fires when the load state of a layer changes.
-     * Payload: `({ layer: LayerInstance, state: string })`
+     * Payload: `({ layer: LayerInstance, state: string, userCancel: boolean })`
      */
     LAYER_LAYERSTATECHANGE = 'layer/layerstatechange',
 
@@ -341,10 +335,9 @@ export enum GlobalEvents {
 }
 
 // Default Event Handler Names
-// IMPORTANT: if changing the enum values, be sure to update the documentation to reflect it.
-//            after v4.0.0 release, best to never edit them unless no other alternative,
+// IMPORTANT: These values are part of the public API, best to never edit them unless no other alternative,
 //            as it will be a breaking change to API usage.
-const enum DefEH {
+enum DefEH {
     CONFIG_CHANGE_UPDATES_MAP_ATTRIBS = 'ramp_config_change_updates_map_attribs',
     LAYER_ERROR_UPDATES_LEGEND = 'ramp_layer_error_updates_legend',
     LAYER_REGISTER_BINDS_LEGEND = 'ramp_layer_register_binds_legend',
@@ -425,9 +418,7 @@ export class EventAPI extends APIScope {
         // add the public enum items here, as they will always exist.
         // getting enum values is a mess. this code does it but assumes
         // all event names in global events use the slash format
-        this._nameRegister = Object.values(GlobalEvents).filter(
-            e => typeof e === 'string' && e.indexOf('/') > -1
-        );
+        this._nameRegister = Object.values(GlobalEvents).filter(e => typeof e === 'string' && e.indexOf('/') > -1);
     }
 
     /**
@@ -496,9 +487,7 @@ export class EventAPI extends APIScope {
         // check if name already registered
         if (this.findHandler(handlerName)) {
             // TODO decide if we are replacing, erroring, do nothing + console warn?
-            throw new Error(
-                'Duplicate handler name registration: ' + handlerName
-            );
+            throw new Error('Duplicate handler name registration: ' + handlerName);
         }
 
         if (!handlerName) {
@@ -542,6 +531,15 @@ export class EventAPI extends APIScope {
     offAll(event = ''): void {
         const active: Array<string> = this.activeHandlers(event);
         active.forEach(h => this.off(h));
+    }
+
+    /**
+     * Removes all default event handlers.
+     */
+    removeDefaultEvents(): void {
+        Object.values(DefEH).forEach((handlerName: string) => {
+            this.off(handlerName);
+        });
     }
 
     /**
@@ -595,9 +593,7 @@ export class EventAPI extends APIScope {
         if (event === '') {
             return this._eventRegister.map(eh => eh.handlerName);
         }
-        return this._eventRegister
-            .filter(eh => eh.eventName === event)
-            .map(eh => eh.handlerName);
+        return this._eventRegister.filter(eh => eh.eventName === event).map(eh => eh.handlerName);
     }
 
     /**
@@ -613,49 +609,9 @@ export class EventAPI extends APIScope {
      * @memberof EventAPI
      */
     addDefaultEvents(eventHandlerNames?: Array<string>): Array<string> {
-        if (
-            !Array.isArray(eventHandlerNames) ||
-            eventHandlerNames.length === 0
-        ) {
+        if (!Array.isArray(eventHandlerNames) || eventHandlerNames.length === 0) {
             // use all the default event handlers
-
-            eventHandlerNames = [
-                DefEH.CONFIG_CHANGE_UPDATES_MAP_ATTRIBS,
-                DefEH.LAYER_ERROR_UPDATES_LEGEND,
-                DefEH.LAYER_REGISTER_BINDS_LEGEND,
-                DefEH.LAYER_RELOAD_END_BINDS_LEGEND,
-                DefEH.LAYER_RELOAD_START_UPDATES_LEGEND,
-                DefEH.LAYER_REMOVE_UPDATES_DETAILS,
-                DefEH.LAYER_REMOVE_CHECKS_GRID,
-                DefEH.LAYER_REMOVE_UPDATES_LEGEND,
-                DefEH.LAYER_USERADD_UPDATES_LEGEND,
-                DefEH.MAP_BASEMAP_CHECKS_TILE_PROJ,
-                DefEH.MAP_BASEMAP_UPDATES_MAP_ATTRIBS,
-                DefEH.MAP_BLUR_UPDATES_KEY_HANDLER,
-                DefEH.MAP_CLICK_RUNS_IDENTIFY,
-                DefEH.MAP_CREATED_INITIALIZES_FIXTURES,
-                DefEH.MAP_CREATED_UPDATES_MAP_ATTRIBS,
-                DefEH.MAP_EXTENT_UPDATES_MAPTIP,
-                DefEH.MAP_GRAPHICHIT_CREATES_MAPTIP,
-                DefEH.MAP_IDENTIFY_OPENS_IDENTIFY_RESULTS,
-                DefEH.MAP_KEYDOWN_UPDATES_COORDS,
-                DefEH.MAP_KEYDOWN_UPDATES_KEY_HANDLER,
-                DefEH.MAP_KEYUP_UPDATES_KEY_HANDLER,
-                DefEH.MAP_MOUSE_UPDATES_COORDS,
-                DefEH.MAP_MOUSE_UPDATES_MAPTIP,
-                DefEH.MAP_MOUSELEAVE_REMOVES_MAPTIP,
-                DefEH.MAP_RESIZE_UPDATES_SCALEBAR,
-                DefEH.MAP_SCALE_UPDATES_SCALEBAR,
-                DefEH.PANEL_CLOSE_UPDATES_APPBAR,
-                DefEH.PANEL_OPEN_UPDATES_APPBAR,
-                DefEH.TOGGLE_DETAILS,
-                DefEH.TOGGLE_GRID,
-                DefEH.TOGGLE_HELP,
-                DefEH.TOGGLE_METADATA,
-                DefEH.TOGGLE_REORDER,
-                DefEH.TOGGLE_SETTINGS,
-                DefEH.TOGGLE_WIZARD
-            ];
+            eventHandlerNames = Object.values(DefEH);
         }
 
         // add all the requested default event handlers.
@@ -674,93 +630,68 @@ export class EventAPI extends APIScope {
         let zeHandler: Function;
         switch (handlerName) {
             case DefEH.CONFIG_CHANGE_UPDATES_MAP_ATTRIBS:
-                // update any basemap attribution in the map caption when the config changes (likely langauge switch)
+                // update any basemap attribution in the map caption when the config changes (likely language switch)
                 zeHandler = (payload: RampConfig) => {
-                    const currentBasemapConfig: RampBasemapConfig | undefined =
-                        payload.map.basemaps.find(
-                            bms =>
-                                bms.id ===
-                                this.$iApi.geo.map.getCurrentBasemapId()
-                        );
-
-                    this.$iApi.geo.map.caption.updateAttribution(
-                        currentBasemapConfig?.attribution
+                    const currentBasemapConfig: RampBasemapConfig | undefined = payload.map.basemaps.find(
+                        bms => bms.id === this.$iApi.geo.map.getCurrentBasemapId()
                     );
+
+                    this.$iApi.geo.map.caption.updateAttribution(currentBasemapConfig?.attribution);
                 };
-                this.$iApi.event.on(
-                    GlobalEvents.CONFIG_CHANGE,
-                    zeHandler,
-                    handlerName
-                );
+
+                this.$iApi.event.on(GlobalEvents.CONFIG_CHANGE, zeHandler, handlerName);
                 break;
 
             case DefEH.LAYER_ERROR_UPDATES_LEGEND:
                 // when a layer errors, have the standard legend update in accordance to the layer
-                zeHandler = (payload: {
-                    state: string;
-                    layer: LayerInstance;
-                }) => {
+                zeHandler = (payload: { state: string; layer: LayerInstance }) => {
                     if (payload.layer.layerState === LayerState.ERROR) {
-                        const legendFixture: LegendAPI =
-                            this.$iApi.fixture.get('legend');
+                        const legendFixture: LegendAPI = this.$iApi.fixture.get('legend');
                         if (legendFixture) {
                             legendFixture.updateLegend(payload.layer);
                         }
                     }
                 };
-                this.$iApi.event.on(
-                    GlobalEvents.LAYER_LAYERSTATECHANGE,
-                    zeHandler,
-                    handlerName
-                );
+                this.$iApi.event.on(GlobalEvents.LAYER_LAYERSTATECHANGE, zeHandler, handlerName);
                 break;
 
             case DefEH.LAYER_REGISTER_BINDS_LEGEND:
                 // when a layer is registered, have the standard legend update in accordance to the layer
                 zeHandler = (layer: LayerInstance) => {
-                    const legendFixture =
-                        this.$iApi.fixture.get<LegendAPI>('legend');
+                    const legendFixture = this.$iApi.fixture.get<LegendAPI>('legend');
                     if (legendFixture) {
                         legendFixture.updateLegend(layer);
                     }
                 };
-                this.$iApi.event.on(
-                    GlobalEvents.LAYER_REGISTERED,
-                    zeHandler,
-                    handlerName
-                );
+                this.$iApi.event.on(GlobalEvents.LAYER_REGISTERED, zeHandler, handlerName);
                 break;
 
             case DefEH.LAYER_RELOAD_END_BINDS_LEGEND:
                 // when a layer is reloaded, have the standard legend update in accordance to the layer
                 zeHandler = (layer: LayerInstance) => {
-                    const legendFixture =
-                        this.$iApi.fixture.get<LegendAPI>('legend');
+                    const legendFixture = this.$iApi.fixture.get<LegendAPI>('legend');
                     if (legendFixture) {
                         legendFixture.updateLegend(layer);
                     }
                 };
-                this.$iApi.event.on(
-                    GlobalEvents.LAYER_RELOAD_END,
-                    zeHandler,
-                    handlerName
-                );
+                this.$iApi.event.on(GlobalEvents.LAYER_RELOAD_END, zeHandler, handlerName);
                 break;
 
             case DefEH.LAYER_RELOAD_START_UPDATES_LEGEND:
                 // when a layer starts to reload, reset any entries in the standard legend to a loading state
                 zeHandler = (layer: LayerInstance) => {
-                    const legendApi =
-                        this.$iApi.fixture.get<LegendAPI>('legend');
-                    if (legendApi) {
-                        legendApi.reloadLayerItem(layer.uid);
+                    // If a sublayer reloads, its parent also reloaded.
+                    // Legend updates in this scenario key on parent layer
+                    // (since no guarantee sublayer exists when reload happens).
+                    // Ignore any events from sublayers
+                    if (!layer.isSublayer) {
+                        const legendApi = this.$iApi.fixture.get<LegendAPI>('legend');
+                        if (legendApi) {
+                            legendApi.reloadLayerItem(layer.uid);
+                        }
                     }
                 };
-                this.$iApi.event.on(
-                    GlobalEvents.LAYER_RELOAD_START,
-                    zeHandler,
-                    handlerName
-                );
+                this.$iApi.event.on(GlobalEvents.LAYER_RELOAD_START, zeHandler, handlerName);
                 break;
 
             case DefEH.LAYER_REMOVE_CHECKS_GRID:
@@ -787,11 +718,7 @@ export class EventAPI extends APIScope {
                         }
                     }
                 };
-                this.$iApi.event.on(
-                    GlobalEvents.LAYER_REMOVE,
-                    zeHandler,
-                    handlerName
-                );
+                this.$iApi.event.on(GlobalEvents.LAYER_REMOVE, zeHandler, handlerName);
                 break;
 
             case DefEH.LAYER_REMOVE_UPDATES_DETAILS:
@@ -803,18 +730,13 @@ export class EventAPI extends APIScope {
                         detailsStore.removeLayer(layer);
                     }
                 };
-                this.$iApi.event.on(
-                    GlobalEvents.LAYER_REMOVE,
-                    zeHandler,
-                    handlerName
-                );
+                this.$iApi.event.on(GlobalEvents.LAYER_REMOVE, zeHandler, handlerName);
                 break;
 
             case DefEH.LAYER_REMOVE_UPDATES_LEGEND:
                 // when a layer is removed from the map, remove any bound entries from the standard legend
                 zeHandler = (layer: LayerInstance) => {
-                    const legendApi =
-                        this.$iApi.fixture.get<LegendAPI>('legend');
+                    const legendApi = this.$iApi.fixture.get<LegendAPI>('legend');
                     if (legendApi) {
                         legendApi.removeLayerItem(layer);
                         this.$iApi.updateAlert(
@@ -824,59 +746,43 @@ export class EventAPI extends APIScope {
                         );
                     }
                 };
-                this.$iApi.event.on(
-                    GlobalEvents.LAYER_REMOVE,
-                    zeHandler,
-                    handlerName
-                );
+                this.$iApi.event.on(GlobalEvents.LAYER_REMOVE, zeHandler, handlerName);
                 break;
 
             case DefEH.LAYER_USERADD_UPDATES_LEGEND:
                 // when a layer is user-added, have the standard legend create a new stock entry for the layer
                 zeHandler = (layer: LayerInstance) => {
-                    const legendFixture =
-                        this.$iApi.fixture.get<LegendAPI>('legend');
+                    const legendFixture = this.$iApi.fixture.get<LegendAPI>('legend');
                     if (legendFixture) {
                         legendFixture.addLayerItem(layer);
                     }
                 };
-                this.$iApi.event.on(
-                    GlobalEvents.USER_LAYER_ADDED,
-                    zeHandler,
-                    handlerName
-                );
+                this.$iApi.event.on(GlobalEvents.USER_LAYER_ADDED, zeHandler, handlerName);
                 break;
 
             case DefEH.MAP_BASEMAP_CHECKS_TILE_PROJ:
                 // check for any tile layer projection mismatches when the basemap changes
-                zeHandler = () => {
-                    this.$iApi.geo.layer
-                        .allLayers()
-                        .filter(l => l.layerType === LayerType.TILE)
-                        .forEach(tl => {
-                            (tl as TileLayer).checkProj();
-                        });
+                zeHandler = (payload: BasemapChange) => {
+                    if (payload.schemaChanged) {
+                        this.$iApi.geo.layer
+                            .allLayers()
+                            .filter(l => l.layerType === LayerType.TILE)
+                            .forEach(tl => {
+                                (tl as TileLayer).checkProj();
+                            });
+                    }
                 };
-                this.$iApi.event.on(
-                    GlobalEvents.MAP_BASEMAPCHANGE,
-                    zeHandler,
-                    handlerName
-                );
+                this.$iApi.event.on(GlobalEvents.MAP_BASEMAPCHANGE, zeHandler, handlerName);
                 break;
 
             case DefEH.MAP_BASEMAP_UPDATES_MAP_ATTRIBS:
                 // update any basemap attribution in the map caption when the basemap changes
                 zeHandler = () => {
                     this.$iApi.geo.map.caption.updateAttribution(
-                        useConfigStore(this.$vApp.$pinia).activeBasemapConfig
-                            ?.attribution
+                        useConfigStore(this.$vApp.$pinia).activeBasemapConfig?.attribution
                     );
                 };
-                this.$iApi.event.on(
-                    GlobalEvents.MAP_BASEMAPCHANGE,
-                    zeHandler,
-                    handlerName
-                );
+                this.$iApi.event.on(GlobalEvents.MAP_BASEMAPCHANGE, zeHandler, handlerName);
                 break;
 
             case DefEH.MAP_BLUR_UPDATES_KEY_HANDLER:
@@ -884,11 +790,7 @@ export class EventAPI extends APIScope {
                 zeHandler = () => {
                     this.$iApi.geo.map.stopKeyPan();
                 };
-                this.$iApi.event.on(
-                    GlobalEvents.MAP_BLUR,
-                    zeHandler,
-                    handlerName
-                );
+                this.$iApi.event.on(GlobalEvents.MAP_BLUR, zeHandler, handlerName);
                 break;
 
             case DefEH.MAP_CLICK_RUNS_IDENTIFY:
@@ -911,28 +813,19 @@ export class EventAPI extends APIScope {
                 };
                 // initialize fixtures if map was created before adding event handler
                 if (this.$iApi.geo.map.created) zeHandler();
-                this.$iApi.event.on(
-                    GlobalEvents.MAP_CREATED,
-                    zeHandler,
-                    handlerName
-                );
+                this.$iApi.event.on(GlobalEvents.MAP_CREATED, zeHandler, handlerName);
                 break;
 
             case DefEH.MAP_CREATED_UPDATES_MAP_ATTRIBS:
                 // update any basemap attribution in the map caption when the map is created
                 zeHandler = () => {
                     this.$iApi.geo.map.caption.updateAttribution(
-                        useConfigStore(this.$vApp.$pinia).activeBasemapConfig
-                            ?.attribution
+                        useConfigStore(this.$vApp.$pinia).activeBasemapConfig?.attribution
                     );
                 };
                 // update basemap attribution if map was created before adding event handler
                 if (this.$iApi.geo.map.created) zeHandler();
-                this.$iApi.event.on(
-                    GlobalEvents.MAP_CREATED,
-                    zeHandler,
-                    handlerName
-                );
+                this.$iApi.event.on(GlobalEvents.MAP_CREATED, zeHandler, handlerName);
                 break;
 
             case DefEH.MAP_EXTENT_UPDATES_MAPTIP:
@@ -940,10 +833,9 @@ export class EventAPI extends APIScope {
                 zeHandler = () => {
                     if (this.$iApi.geo.map.keysActive) {
                         // The user is using the crosshairs, perform hit-test using center of screens
-                        const screenCenter: ScreenPoint =
-                            this.$iApi.geo.map.mapPointToScreenPoint(
-                                this.$iApi.geo.map.getExtent().center()
-                            );
+                        const screenCenter: ScreenPoint = this.$iApi.geo.map.mapPointToScreenPoint(
+                            this.$iApi.geo.map.getExtent().center()
+                        );
                         this.$iApi.geo.map.maptip.checkAtCoord(screenCenter);
                     } else {
                         // regular extent change, hide maptip
@@ -960,22 +852,15 @@ export class EventAPI extends APIScope {
             case DefEH.MAP_GRAPHICHIT_CREATES_MAPTIP:
                 // show a maptip in default format when the mouse goes over a vector feature
                 zeHandler = (tooltipInfo: any) => {
-                    this.$iApi.geo.map.maptip.generateDefaultMaptip(
-                        tooltipInfo
-                    );
+                    this.$iApi.geo.map.maptip.generateDefaultMaptip(tooltipInfo);
                 };
-                this.$iApi.event.on(
-                    GlobalEvents.MAP_GRAPHICHIT,
-                    zeHandler,
-                    handlerName
-                );
+                this.$iApi.event.on(GlobalEvents.MAP_GRAPHICHIT, zeHandler, handlerName);
                 break;
 
             case DefEH.MAP_IDENTIFY_OPENS_IDENTIFY_RESULTS:
                 // when identify runs, open the identify summary panel of the details fixture with the results
                 zeHandler = (identifyParam: any) => {
-                    const detailFix =
-                        this.$iApi.fixture.get<DetailsAPI>('details');
+                    const detailFix = this.$iApi.fixture.get<DetailsAPI>('details');
                     if (detailFix) {
                         detailFix.openDetails(identifyParam.results);
                     }
@@ -990,25 +875,16 @@ export class EventAPI extends APIScope {
                     throttle(50, () => {
                         // check if coords are disabled
                         // if they are, then do not update
-                        const mapCaptionStore = useMapCaptionStore(
-                            this.$vApp.$pinia
-                        );
+                        const mapCaptionStore = useMapCaptionStore(this.$vApp.$pinia);
                         const currentCrosshairsCoords = mapCaptionStore.coords;
-                        if (
-                            currentCrosshairsCoords?.disabled ||
-                            !this.$iApi.geo.map.keysActive
-                        ) {
+                        if (currentCrosshairsCoords?.disabled || !this.$iApi.geo.map.keysActive) {
                             return;
                         }
-                        this.$iApi.geo.map.caption
-                            .formatPoint(
-                                this.$iApi.geo.map.getExtent().center()
-                            )
-                            .then(fs => {
-                                mapCaptionStore.coords = {
-                                    formattedString: fs
-                                };
-                            });
+                        this.$iApi.geo.map.caption.formatPoint(this.$iApi.geo.map.getExtent().center()).then(fs => {
+                            mapCaptionStore.coords = {
+                                formattedString: fs
+                            };
+                        });
                     }),
                     handlerName
                 );
@@ -1019,11 +895,7 @@ export class EventAPI extends APIScope {
                 zeHandler = (payload: KeyboardEvent) => {
                     this.$iApi.geo.map.mapKeyDown(payload);
                 };
-                this.$iApi.event.on(
-                    GlobalEvents.MAP_KEYDOWN,
-                    zeHandler,
-                    handlerName
-                );
+                this.$iApi.event.on(GlobalEvents.MAP_KEYDOWN, zeHandler, handlerName);
                 break;
 
             case DefEH.MAP_KEYUP_UPDATES_KEY_HANDLER:
@@ -1031,11 +903,7 @@ export class EventAPI extends APIScope {
                 zeHandler = (payload: KeyboardEvent) => {
                     this.$iApi.geo.map.mapKeyUp(payload);
                 };
-                this.$iApi.event.on(
-                    GlobalEvents.MAP_KEYUP,
-                    zeHandler,
-                    handlerName
-                );
+                this.$iApi.event.on(GlobalEvents.MAP_KEYUP, zeHandler, handlerName);
                 break;
 
             case DefEH.MAP_MOUSE_UPDATES_COORDS:
@@ -1045,20 +913,14 @@ export class EventAPI extends APIScope {
                     throttle(50, (mapMove: MapMove) => {
                         // check if coords are disabled
                         // if it is, then do not update it
-                        const mapCaptionStore = useMapCaptionStore(
-                            this.$vApp.$pinia
-                        );
+                        const mapCaptionStore = useMapCaptionStore(this.$vApp.$pinia);
                         const currentCursorCoords = mapCaptionStore.coords;
                         if (currentCursorCoords?.disabled) {
                             return;
                         }
 
                         this.$iApi.geo.map.caption
-                            .formatPoint(
-                                this.$iApi.geo.map.screenPointToMapPoint(
-                                    mapMove
-                                )
-                            )
+                            .formatPoint(this.$iApi.geo.map.screenPointToMapPoint(mapMove))
                             .then(fs => {
                                 mapCaptionStore.coords = {
                                     formattedString: fs
@@ -1096,9 +958,7 @@ export class EventAPI extends APIScope {
                 // update the map scale caption when the window is resized
                 this.$iApi.event.on(
                     GlobalEvents.MAP_RESIZED,
-                    debounce(100, () =>
-                        this.$iApi.geo.map.caption.updateScale()
-                    ),
+                    debounce(100, () => this.$iApi.geo.map.caption.updateScale()),
                     handlerName
                 );
                 break;
@@ -1107,9 +967,7 @@ export class EventAPI extends APIScope {
                 // update the map scale caption when the map scale changes
                 this.$iApi.event.on(
                     GlobalEvents.MAP_SCALECHANGE,
-                    debounce(300, () =>
-                        this.$iApi.geo.map.caption.updateScale()
-                    ),
+                    debounce(300, () => this.$iApi.geo.map.caption.updateScale()),
                     handlerName
                 );
                 break;
@@ -1120,9 +978,7 @@ export class EventAPI extends APIScope {
                     const appbarStore = useAppbarStore(this.$vApp.$pinia);
                     if (
                         this.$iApi.fixture.get<AppbarAPI>('appbar') &&
-                        !appbarStore.order
-                            .flat()
-                            .find((item: string) => item === panel.id)
+                        !appbarStore.order.flat().find((item: string) => item === panel.id)
                     ) {
                         appbarStore.removeButton(panel.id);
                     }
@@ -1137,9 +993,7 @@ export class EventAPI extends APIScope {
                     if (
                         this.$iApi.fixture.get<AppbarAPI>('appbar') &&
                         (!panel.teleport || panel.teleport?.showAppbarButton) &&
-                        !appbarStore.order
-                            .flat()
-                            .find((item: string) => item === panel.id)
+                        !appbarStore.order.flat().find((item: string) => item === panel.id)
                     ) {
                         appbarStore.addTempButton(panel.id);
                     }
@@ -1157,17 +1011,12 @@ export class EventAPI extends APIScope {
                     },
                     open?: boolean
                 ) => {
-                    const detailsFixture =
-                        this.$iApi.fixture.get<DetailsAPI>('details');
+                    const detailsFixture = this.$iApi.fixture.get<DetailsAPI>('details');
                     if (detailsFixture) {
                         detailsFixture.toggleFeature(payload, open);
                     }
                 };
-                this.$iApi.event.on(
-                    GlobalEvents.DETAILS_TOGGLE,
-                    zeHandler,
-                    handlerName
-                );
+                this.$iApi.event.on(GlobalEvents.DETAILS_TOGGLE, zeHandler, handlerName);
                 break;
 
             case DefEH.TOGGLE_GRID:
@@ -1178,11 +1027,7 @@ export class EventAPI extends APIScope {
                         gridFixture.toggleGrid(layer.id, open);
                     }
                 };
-                this.$iApi.event.on(
-                    GlobalEvents.GRID_TOGGLE,
-                    zeHandler,
-                    handlerName
-                );
+                this.$iApi.event.on(GlobalEvents.GRID_TOGGLE, zeHandler, handlerName);
                 break;
 
             case DefEH.TOGGLE_HELP:
@@ -1193,83 +1038,55 @@ export class EventAPI extends APIScope {
                         helpFixture.toggleHelp(payload);
                     }
                 };
-                this.$iApi.event.on(
-                    GlobalEvents.HELP_TOGGLE,
-                    zeHandler,
-                    handlerName
-                );
+                this.$iApi.event.on(GlobalEvents.HELP_TOGGLE, zeHandler, handlerName);
                 break;
 
             case DefEH.TOGGLE_METADATA:
                 // opens the standard metadata panel when an open metadata event happens
                 zeHandler = (payload: MetadataPayload, open?: boolean) => {
-                    const metadataFixture =
-                        this.$iApi.fixture.get<MetadataAPI>('metadata');
+                    const metadataFixture = this.$iApi.fixture.get<MetadataAPI>('metadata');
                     if (metadataFixture) {
                         metadataFixture.toggleMetadata(payload, open);
                     }
                 };
-                this.$iApi.event.on(
-                    GlobalEvents.METADATA_TOGGLE,
-                    zeHandler,
-                    handlerName
-                );
+                this.$iApi.event.on(GlobalEvents.METADATA_TOGGLE, zeHandler, handlerName);
                 break;
 
             case DefEH.TOGGLE_REORDER:
                 // opens or closes the standard layer reorder panel when a toggle reorder event happens
                 zeHandler = (payload?: boolean) => {
-                    const reorderFixture =
-                        this.$iApi.fixture.get<LayerReorderAPI>(
-                            'layer-reorder'
-                        );
+                    const reorderFixture = this.$iApi.fixture.get<LayerReorderAPI>('layer-reorder');
                     if (reorderFixture) {
                         reorderFixture.toggleLayerReorder(payload);
                     }
                 };
-                this.$iApi.event.on(
-                    GlobalEvents.REORDER_TOGGLE,
-                    zeHandler,
-                    handlerName
-                );
+                this.$iApi.event.on(GlobalEvents.REORDER_TOGGLE, zeHandler, handlerName);
                 break;
 
             case DefEH.TOGGLE_SETTINGS:
                 // opens or closes the settings panel and hooks it up to the requested layer.
                 zeHandler = (layer: LayerInstance, payload?: boolean) => {
-                    const settingsFixture =
-                        this.$iApi.fixture.get<SettingsAPI>('settings');
+                    const settingsFixture = this.$iApi.fixture.get<SettingsAPI>('settings');
                     if (settingsFixture) {
                         settingsFixture.toggleSettings(layer, payload);
                     }
                 };
-                this.$iApi.event.on(
-                    GlobalEvents.SETTINGS_TOGGLE,
-                    zeHandler,
-                    handlerName
-                );
+                this.$iApi.event.on(GlobalEvents.SETTINGS_TOGGLE, zeHandler, handlerName);
                 break;
 
             case DefEH.TOGGLE_WIZARD:
                 // opens or closes the standard add layer wizard panel when an toggle wizard event happens
                 zeHandler = (payload?: boolean) => {
-                    const wizardFixture =
-                        this.$iApi.fixture.get<WizardAPI>('wizard');
+                    const wizardFixture = this.$iApi.fixture.get<WizardAPI>('wizard');
                     if (wizardFixture) {
                         wizardFixture.toggleWizard(payload);
                     }
                 };
-                this.$iApi.event.on(
-                    GlobalEvents.WIZARD_TOGGLE,
-                    zeHandler,
-                    handlerName
-                );
+                this.$iApi.event.on(GlobalEvents.WIZARD_TOGGLE, zeHandler, handlerName);
                 break;
 
             default:
-                console.error(
-                    `Unrecognized default event handler name encountered: ${handlerName}`
-                );
+                console.error(`Unrecognized default event handler name encountered: ${handlerName}`);
                 return `ERROR_NOT_REGISTERED__${handlerName}`;
         }
 

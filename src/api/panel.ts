@@ -1,6 +1,7 @@
-import { APIScope, GlobalEvents, PanelInstance } from './internal';
+import { APIScope, GlobalEvents, isHTMLScreen, PanelInstance } from './internal';
 import type { PanelConfigStyle, PanelDirection } from '@/stores/panel';
 import { usePanelStore } from '@/stores/panel';
+import type { HTMLPanelInstance } from '@/stores/panel';
 import type { PanelConfig, PanelConfigRoute } from '@/stores/panel';
 
 import type { I18nComponentOptions } from '@/lang';
@@ -8,6 +9,76 @@ import type { I18nComponentOptions } from '@/lang';
 export class PanelAPI extends APIScope {
     panelStore = usePanelStore(this.$vApp.$pinia);
 
+    /** Updates the content of a specific HTML-based screen of a panel, using HTML content
+     *
+     * @param {PanelInstance | string} panel The `PanelInstance` object, or its respective id, that corresponds to
+     * the panel whose content is to be updated.
+     * @param {{ [key: string]: string | HTMLElement }} html keyed language object containing HTML content for each
+     * language, represented as an HTMLElement object or a string.
+     * @param {string} [screenId] id of the screen to be updated. If not provided, it will update the first screen in the panel
+     * @memberof PanelAPI
+     */
+    updateHTML(panel: PanelInstance | string, html: { [key: string]: string | HTMLElement }, screenId?: string): void {
+        // An html-based panel should have only one screen
+        const panelInstance = this.get(panel);
+
+        const screen = screenId ? panelInstance.screens[screenId] : Object.values(panelInstance.screens)[0];
+
+        if (isHTMLScreen(screen)) {
+            for (const lang in html) {
+                screen[lang].innerHTML = html[lang] instanceof HTMLElement ? html[lang].outerHTML : html[lang];
+            }
+        } else {
+            console.error('Screen must be an HTML object');
+        }
+    }
+
+    /**
+     * Helper for `registerHTML()`. Creates and returns the `PanelConfigSet` required to register the HTML panel
+     *
+     * @param {HTMLPanelInstance} htmlPanel a `HTMLPanelInstance` object, excluding its `options` (if it exists), corresponding
+     * to the new html panel
+     * @returns {PanelConfigSet} The `PanelConfigSet` corresponding to the panel that is to be created
+     * @memberof PanelAPI
+     */
+    private registerHTMLConfig(htmlPanel: Omit<HTMLPanelInstance, 'options'>): PanelConfigSet {
+        for (const lang in htmlPanel.content) {
+            if (typeof htmlPanel.content[lang] === 'string') {
+                const newHtml = document.createElement('div');
+                newHtml.innerHTML = htmlPanel.content[lang];
+                htmlPanel.content[lang] = newHtml;
+            }
+        }
+
+        const panelConfig: PanelConfigSet = {};
+        panelConfig[htmlPanel.id] = {
+            screens: {},
+            style: htmlPanel.style ?? {
+                width: '350px'
+            },
+            alertName: htmlPanel.alertName
+        };
+        panelConfig[htmlPanel.id].screens[htmlPanel.id] = htmlPanel.content;
+
+        return panelConfig;
+    }
+
+    /** Registers a new panel containing a screen of HTML content and returns the PanelInstance
+     *
+     * @param {HTMLPanelInstance} htmlPanel a HTMLPanelInstance object corresponding to the new html panel
+     * @memberof PanelAPI
+     */
+    registerHTML(htmlPanel: HTMLPanelInstance): PanelInstance {
+        const existingPanel = this.get(htmlPanel.id);
+        if (existingPanel) {
+            console.error('panel already exist');
+            return existingPanel;
+        }
+        const panelConfig = this.registerHTMLConfig(htmlPanel);
+        const panel: PanelInstance = this.register(panelConfig, htmlPanel.options) as unknown as PanelInstance;
+
+        return panel;
+    }
     /**
      * Registers a provided panel object and returns the resulting `PanelInstance` objects.
      * When the panel is registered, all its screens are added to the Vue as components right away.
@@ -17,10 +88,7 @@ export class PanelAPI extends APIScope {
      * @returns {PanelInstance}
      * @memberof PanelAPI
      */
-    register(
-        value: PanelConfigPair,
-        options?: PanelRegistrationOptions
-    ): PanelInstance;
+    register(value: PanelConfigPair, options?: PanelRegistrationOptions): PanelInstance;
     /**
      * Registers a set of provided panel objects and returns the resulting `PanelInstance` object set.
      * When the panel is registered, all its screens are added to the Vue as components right away.
@@ -30,40 +98,26 @@ export class PanelAPI extends APIScope {
      * @returns {PanelInstanceSet}
      * @memberof PanelAPI
      */
-    register(
-        value: PanelConfigSet,
-        options?: PanelRegistrationOptions
-    ): PanelInstanceSet;
+    register(value: PanelConfigSet, options?: PanelRegistrationOptions): PanelInstanceSet;
     register(
         value: PanelConfigPair | PanelConfigSet,
         options?: PanelRegistrationOptions
     ): PanelInstance | PanelInstanceSet {
-        const panelConfigs = isPanelConfigPair(value)
-            ? { [value.id]: value.config }
-            : value;
-
+        const panelConfigs = isPanelConfigPair(value) ? { [value.id]: value.config } : value;
         if (options) {
             const i18n = options.i18n || {};
             const $i18n = this.$iApi.$i18n;
 
             // merge `messages`, `dateTimeFormats` and  `numberFormats` into the global locale
             // ignore `sharedMessages` prop as it makes no sense to use it here
-            Object.entries(i18n.messages || {}).forEach(value =>
-                (<any>$i18n).mergeLocaleMessage(...value)
-            );
-            Object.entries(i18n.dateTimeFormats || {}).forEach(value =>
-                (<any>$i18n).mergeDateTimeFormat(...value)
-            );
-            Object.entries(i18n.numberFormats || {}).forEach(value =>
-                (<any>$i18n).mergeNumberFormat(...value)
-            );
+            Object.entries(i18n.messages || {}).forEach(value => (<any>$i18n).mergeLocaleMessage(...value));
+            Object.entries(i18n.dateTimeFormats || {}).forEach(value => (<any>$i18n).mergeDateTimeFormat(...value));
+            Object.entries(i18n.numberFormats || {}).forEach(value => (<any>$i18n).mergeNumberFormat(...value));
         }
 
         // TODO: check if the panel with the same id already exist and don't create a new one
         // create panel instances
-        const panels: PanelInstance[] = Object.entries(panelConfigs).reduce<
-            PanelInstance[]
-        >((map, [id, config]) => {
+        const panels: PanelInstance[] = Object.entries(panelConfigs).reduce<PanelInstance[]>((map, [id, config]) => {
             map.push(new PanelInstance(this.$iApi, id, config));
             return map;
         }, []);
@@ -73,7 +127,7 @@ export class PanelAPI extends APIScope {
 
         // return either a single panel or a set of panels, depending on the function input
         if (panels.length === 1) {
-            return panels[0];
+            return panels[0] as PanelInstance;
         } else {
             return panels.reduce<PanelInstanceSet>((map, panel) => {
                 map[panel.id] = panel;
@@ -88,18 +142,21 @@ export class PanelAPI extends APIScope {
      * @param {(string | string[])} panelId the panel ID(s) for which the promise is requested
      * @memberof PanelAPI
      */
-    isRegistered(panelId: string | string[]): Promise<any> {
+    async isRegistered<T extends string | string[]>(
+        panelId: T
+    ): Promise<T extends string ? PanelInstance : PanelInstance[]> {
         // We first need to create a registration promise for all panels that currently don't have one
-        const idsToCheck = Array.isArray(panelId) ? panelId : [panelId];
+        const idsToCheck: Array<string> = Array.isArray(panelId) ? panelId : [panelId];
         idsToCheck.forEach((id: string) => {
             if (this.panelStore.regPromises[id] === undefined) {
                 this.panelStore.addRegPromise(id);
             }
         });
-        // Now, get all the promises and return
-        return Promise.all(
-            this.panelStore.getRegPromises(idsToCheck) // not sure how to get typescript to stop yelling
-        );
+
+        // Wait for all promises
+        const proms = this.panelStore.getRegPromises(idsToCheck);
+        // @ts-ignore I give up, TS is hopeless
+        return Array.isArray(panelId) ? Promise.all(proms) : proms[0];
     }
 
     /**
@@ -149,12 +206,8 @@ export class PanelAPI extends APIScope {
      * @returns {PanelInstance | undefined} the panel instance if the panel is currently registered, undefined otherwise.
      * @memberof PanelAPI
      */
-    open(
-        value: string | PanelInstance | PanelInstancePath
-    ): PanelInstance | undefined {
-        let panel: PanelInstance,
-            screen: string | undefined,
-            props: object | undefined;
+    open(value: string | PanelInstance | PanelInstancePath): PanelInstance | undefined {
+        let panel: PanelInstance, screen: string | undefined, props: object | undefined;
 
         // figure out what is passed to the function and retrieve the panel object
         if (typeof value === 'string' || value instanceof PanelInstance) {
@@ -188,13 +241,12 @@ export class PanelAPI extends APIScope {
                 screen = Object.keys(panel.screens).pop()!;
             }
         }
+
         if (this.show(panel, { screen, props })) {
             this.panelStore.openPanel(panel);
             this.$iApi.updateAlert(
                 this.$iApi.$i18n.t(`panels.alert.open`, {
-                    name: panel.alertName
-                        ? this.$iApi.$i18n.t(panel.alertName)
-                        : panel.id
+                    name: panel.alertName ? this.$iApi.$i18n.t(panel.alertName) : panel.id
                 })
             );
             this.$iApi.event.emit(GlobalEvents.PANEL_OPENED, panel);
@@ -252,9 +304,7 @@ export class PanelAPI extends APIScope {
         this.panelStore.closePanel(panel);
         this.$iApi.updateAlert(
             this.$iApi.$i18n.t(`panels.alert.close`, {
-                name: panel.alertName
-                    ? this.$iApi.$i18n.t(panel.alertName)
-                    : panel.id
+                name: panel.alertName ? this.$iApi.$i18n.t(panel.alertName) : panel.id
             })
         );
         this.$iApi.event.emit(GlobalEvents.PANEL_CLOSED, panel);
@@ -284,9 +334,7 @@ export class PanelAPI extends APIScope {
         this.panelStore.closePanel(panel);
         this.$iApi.updateAlert(
             this.$iApi.$i18n.t(`panels.alert.minimize`, {
-                name: panel.alertName
-                    ? this.$iApi.$i18n.t(panel.alertName)
-                    : panel.id
+                name: panel.alertName ? this.$iApi.$i18n.t(panel.alertName) : panel.id
             })
         );
 
@@ -303,10 +351,7 @@ export class PanelAPI extends APIScope {
      * @returns {PanelInstance | undefined} the panel instance if the panel is currently registered, undefined otherwise.
      * @memberof PanelAPI
      */
-    move(
-        value: string | PanelInstance,
-        direction: PanelDirection
-    ): PanelInstance | undefined {
+    move(value: string | PanelInstance, direction: PanelDirection): PanelInstance | undefined {
         const panel = this.get(value);
 
         // attempting to move non-existent panel, do nothing
@@ -326,10 +371,7 @@ export class PanelAPI extends APIScope {
      * @returns {PanelInstance | undefined} the panel instance if the panel is currently registered, undefined otherwise.
      * @memberof PanelAPI
      */
-    toggle(
-        value: string | PanelInstance | PanelInstancePath,
-        toggle?: boolean
-    ): PanelInstance | undefined {
+    toggle(value: string | PanelInstance | PanelInstancePath, toggle?: boolean): PanelInstance | undefined {
         let panel: PanelInstance;
 
         // figure out what is passed to the function, retrieve the panel object and make call to open or close function
@@ -361,10 +403,7 @@ export class PanelAPI extends APIScope {
      * @returns {PanelInstance | undefined} the panel instance if the panel is currently registered, undefined otherwise.
      * @memberof PanelAPI
      */
-    toggleMinimize(
-        value: string | PanelInstance | PanelInstancePath,
-        toggle?: boolean
-    ): PanelInstance | undefined {
+    toggleMinimize(value: string | PanelInstance | PanelInstancePath, toggle?: boolean): PanelInstance | undefined {
         let panel: PanelInstance;
 
         // figure out what is passed to the function, retrieve the panel object and make call to open or close function
@@ -396,10 +435,7 @@ export class PanelAPI extends APIScope {
      * @returns {PanelInstance | undefined} the panel instance if the panel is currently registered, undefined otherwise.
      * @memberof PanelAPI
      */
-    pin(
-        value: string | PanelInstance,
-        pin?: boolean
-    ): PanelInstance | undefined {
+    pin(value: string | PanelInstance, pin?: boolean): PanelInstance | undefined {
         const panel = this.get(value);
 
         // attempting to pin/unpin non-existent panel, do nothing
@@ -445,12 +481,8 @@ export class PanelAPI extends APIScope {
      * @memberof PanelAPI
      */
     // TODO: implement panel route history
-    show(
-        value: string | PanelInstance,
-        route: PanelConfigRoute
-    ): PanelInstance | undefined {
+    show(value: string | PanelInstance, route: PanelConfigRoute): PanelInstance | undefined {
         const panel = this.get(value);
-
         // attempting to show screen on non-existent panel, do nothing
         if (!panel) {
             return panel;
@@ -464,9 +496,7 @@ export class PanelAPI extends APIScope {
         // check if required props are there, or bad things can happen on startup
         // need this here until we figure out how to pass in props, after layer use is normalized
         if (panel.screens[route.screen]?.props) {
-            const propsToCheck = Object.keys(
-                panel.screens[route.screen]?.props
-            ).filter((pr: String) => pr !== 'panel');
+            const propsToCheck = Object.keys(panel.screens[route.screen]?.props).filter((pr: String) => pr !== 'panel');
             const propsPassed = route.props ? Object.keys(route.props) : [];
             for (let i = 0; i < propsToCheck.length; i++) {
                 if (
@@ -507,11 +537,7 @@ export class PanelAPI extends APIScope {
      * @returns {PanelInstance | undefined} the panel instance if the panel is currently registered, undefined otherwise.
      * @memberof PanelAPI
      */
-    setStyle(
-        value: string | PanelInstance,
-        style: object,
-        replace: boolean = false
-    ): PanelInstance | undefined {
+    setStyle(value: string | PanelInstance, style: object, replace: boolean = false): PanelInstance | undefined {
         const panel = this.get(value);
 
         // attempting to style non-existent panel, do nothing
@@ -519,9 +545,7 @@ export class PanelAPI extends APIScope {
             return panel;
         }
 
-        this.panelStore.items[panel.id].style = replace
-            ? (style as PanelConfigStyle)
-            : { ...panel.style, ...style };
+        this.panelStore.items[panel.id].style = replace ? (style as PanelConfigStyle) : { ...panel.style, ...style };
 
         return panel;
     }
@@ -534,10 +558,7 @@ export class PanelAPI extends APIScope {
      * @returns {PanelInstance | undefined} the panel instance if the panel is currently registered, undefined otherwise.
      * @memberof PanelAPI
      */
-    expand(
-        value: string | PanelInstance,
-        expand?: boolean
-    ): PanelInstance | undefined {
+    expand(value: string | PanelInstance, expand?: boolean): PanelInstance | undefined {
         const panel = this.get(value);
 
         // attempting to expand/collapse non-existent panel, do nothing
@@ -545,8 +566,7 @@ export class PanelAPI extends APIScope {
             return panel;
         }
 
-        this.panelStore.items[panel.id].expanded =
-            expand !== undefined ? expand! : !panel.expanded;
+        this.panelStore.items[panel.id].expanded = expand !== undefined ? expand! : !panel.expanded;
 
         return panel;
     }
@@ -558,14 +578,8 @@ export class PanelAPI extends APIScope {
  * @param {(PanelConfigPair | PanelConfigSet)} value
  * @returns {value is PanelConfigPair}
  */
-function isPanelConfigPair(
-    value: PanelConfigPair | PanelConfigSet
-): value is PanelConfigPair {
-    return (
-        value.id !== undefined &&
-        typeof value.id === 'string' &&
-        value.config !== undefined
-    );
+function isPanelConfigPair(value: PanelConfigPair | PanelConfigSet): value is PanelConfigPair {
+    return value.id !== undefined && typeof value.id === 'string' && value.config !== undefined;
 }
 
 /**
@@ -619,9 +633,7 @@ export interface PanelWidthObject {
     [panel: string]: number | any;
 }
 
-export type PanelTeleportConfig =
-    | PanelTeleportObject
-    | { [id: string]: PanelTeleportObject };
+export type PanelTeleportConfig = PanelTeleportObject | { [id: string]: PanelTeleportObject };
 
 export interface PanelTeleportObject {
     /**

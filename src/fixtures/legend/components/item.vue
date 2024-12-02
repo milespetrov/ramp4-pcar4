@@ -1,9 +1,5 @@
 <template>
-    <div
-        :key="`${legendItem.uid}-${legendItem.visibility}`"
-        v-if="!legendItem.hidden"
-        ref="el"
-    >
+    <div :key="`${legendItem.uid}-${legendItem.visibility}`" v-if="!legendItem.hidden" ref="el">
         <div class="relative">
             <div
                 class="flex items-center hover:bg-gray-200 default-focus-style !p-5"
@@ -20,13 +16,13 @@
                         getDatagridExists() &&
                         legendItem.type === LegendType.Item)
                         ? 'cursor-pointer'
-                        : 'cursor-default'
+                        : 'cursor-default',
+                    allowMultilineItems ? 'multilined' : 'singlelined'
                 ]"
                 @mouseover.stop="hover($event.currentTarget!)"
                 @mouseout="
                     //@ts-ignore
-                    mobileMode ? null : $event.currentTarget?._tippy?.hide(),
-                        (hovered = false)
+                    mobileMode ? null : $event.currentTarget?._tippy?.hide(), (hovered = false)
                 "
                 @click="
                     () => {
@@ -46,11 +42,7 @@
                 v-focus-item="'show-truncate'"
                 :content="
                     isGroup && controlAvailable(LegendControl.Expand)
-                        ? t(
-                              legendItem.expanded
-                                  ? 'legend.group.collapse'
-                                  : 'legend.group.expand'
-                          )
+                        ? t(legendItem.expanded ? 'legend.group.collapse' : 'legend.group.expand')
                         : legendItem instanceof LayerItem &&
                             legendItem.type === LegendType.Item &&
                             controlAvailable(LayerControl.Datatable) &&
@@ -66,10 +58,7 @@
                 truncate-trigger
             >
                 <!-- smiley face. very important that we migrate this -->
-                <div
-                    class="flex p-5"
-                    v-if="legendItem.type !== LegendType.Item"
-                >
+                <div class="flex p-5 mr-[13px]" v-if="legendItem.type !== LegendType.Item">
                     <svg
                         v-if="legendItem.type === LegendType.Placeholder"
                         xmlns="http://www.w3.org/2000/svg"
@@ -122,21 +111,15 @@
                     <button
                         type="button"
                         @click.stop="toggleSymbology"
-                        :class="[
-                            controlAvailable(LayerControl.Symbology)
-                                ? 'cursor-pointer'
-                                : 'cursor-default'
-                        ]"
+                        :class="[controlAvailable(LayerControl.Symbology) ? 'cursor-pointer' : 'cursor-default']"
                         :disabled="!controlAvailable(LayerControl.Symbology)"
                         :content="
-                            legendItem instanceof LayerItem &&
-                            legendItem.symbologyExpanded
+                            legendItem instanceof LayerItem && legendItem.symbologyExpanded
                                 ? t('legend.symbology.hide')
                                 : t('legend.symbology.expand')
                         "
                         :aria-label="
-                            legendItem instanceof LayerItem &&
-                            legendItem.symbologyExpanded
+                            legendItem instanceof LayerItem && legendItem.symbologyExpanded
                                 ? t('legend.symbology.hide')
                                 : t('legend.symbology.expand')
                         "
@@ -147,23 +130,16 @@
                         <symbology-stack
                             v-if="!legendItem.coverIcon"
                             :class="{
-                                'pointer-events-none': !controlAvailable(
-                                    LayerControl.Symbology
-                                )
+                                'pointer-events-none': !controlAvailable(LayerControl.Symbology)
                             }"
                             class="w-32 h-32"
-                            :visible="
-                                legendItem instanceof LayerItem &&
-                                legendItem.symbologyExpanded
-                            "
+                            :visible="legendItem instanceof LayerItem && legendItem.symbologyExpanded"
                             :legendItem="legendItem"
                         />
                         <img
                             v-else
                             :class="{
-                                'pointer-events-none': !controlAvailable(
-                                    LayerControl.Symbology
-                                )
+                                'pointer-events-none': !controlAvailable(LayerControl.Symbology)
                             }"
                             class="w-32 h-32 hover:scale-105"
                             :src="legendItem.coverIcon"
@@ -178,21 +154,28 @@
                     class="expand-toggle p-8 pointer-events-none"
                     :class="{ 'rotate-180': legendItem.expanded }"
                 >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        width="18"
-                    >
-                        <path
-                            d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"
-                        />
+                    <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 0 24 24" width="18">
+                        <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z" />
                     </svg>
                 </div>
 
                 <!-- name or info section-->
                 <div
-                    v-if="legendItem instanceof LayerItem"
+                    v-if="legendItem instanceof LayerItem && allowMultilineItems"
+                    class="flex-1 pointer-events-none m-5"
+                    :class="`line-clamp-${maxLines}`"
+                    v-truncate="{
+                        externalTrigger: true,
+                        noTruncateClass: true
+                    }"
+                >
+                    <span class="h-auto break-words text-ellipsis">{{
+                        legendItem.name ?? (!legendItem?.layer?.name ? legendItem.layerId : legendItem.layer?.name)
+                    }}</span>
+                </div>
+                <!-- Version if multiline legend items is turned off -->
+                <div
+                    v-else-if="legendItem instanceof LayerItem"
                     class="flex-1 pointer-events-none p-5"
                     v-truncate="{ externalTrigger: true }"
                 >
@@ -203,17 +186,8 @@
                             : legendItem.layer?.name)
                     }}</span>
                 </div>
-                <div
-                    v-else-if="legendItem instanceof SectionItem"
-                    class="flex-1"
-                >
-                    <h3
-                        class="text-lg font-bold"
-                        v-if="
-                            legendItem.infoType === InfoType.Title &&
-                            legendItem.content
-                        "
-                    >
+                <div v-else-if="legendItem instanceof SectionItem" class="flex-1">
+                    <h3 class="text-lg font-bold" v-if="legendItem.infoType === InfoType.Title && legendItem.content">
                         {{ legendItem.content }}
                     </h3>
                     <h3 v-else-if="legendItem.infoType === InfoType.Title">
@@ -232,17 +206,11 @@
                         class="ramp-markdown"
                         v-html="markdownToHtml(legendItem.content)"
                     ></div>
-                    <component
-                        v-else
-                        :is="`${legendItem.uid}-info-section`"
-                    ></component>
+                    <component v-else :is="`${legendItem.uid}-info-section`"></component>
                 </div>
 
                 <!-- reload for error'd items -->
-                <div
-                    class="relative"
-                    v-if="legendItem.type === LegendType.Error"
-                >
+                <div class="relative" v-if="legendItem.type === LegendType.Error && reloadableLayer">
                     <button
                         type="button"
                         class="text-gray-500 hover:text-black"
@@ -251,14 +219,11 @@
                             placement: 'top-start'
                         }"
                         @mouseover.stop
-                        @click.stop="reloadIfReady"
+                        @click.stop="reloadLayer"
                         :aria-label="t('legend.layer.controls.reload')"
                     >
                         <div class="flex p-8">
-                            <svg
-                                class="inline-block fill-current w-18 h-18"
-                                viewBox="0 0 24 24"
-                            >
+                            <svg class="inline-block fill-current w-18 h-18" viewBox="0 0 24 24">
                                 <path
                                     d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
                                 ></path>
@@ -267,15 +232,22 @@
                     </button>
                 </div>
 
-                <!-- Button only appears for loading or errored LayerItems -->
-                <!-- Morphs depending on state. Cancel for loading, Remove for Errored -->
-                <div
+                <!-- options dropdown menu -->
+                <legend-options
                     v-if="
-                        legendItem.type !== LegendType.Item &&
+                        (legendItem.type === LegendType.Item ||
+                            (legendItem.type === LegendType.Placeholder && allowMultilineItems)) &&
                         legendItem instanceof LayerItem
                     "
-                    class="relative"
-                >
+                    :class="{
+                        invisible: legendItem.type === LegendType.Placeholder
+                    }"
+                    :legendItem="legendItem"
+                />
+
+                <!-- Button only appears for loading or errored LayerItems -->
+                <!-- Morphs depending on state. Cancel for loading, Remove for Errored -->
+                <div v-if="legendItem.type !== LegendType.Item && legendItem instanceof LayerItem" class="relative">
                     <button
                         type="button"
                         class="text-gray-500 hover:text-black"
@@ -295,11 +267,9 @@
                                 : t('legend.layer.controls.cancel')
                         "
                     >
-                        <div class="flex p-8">
+                        <div class="flex p-5">
                             <svg
-                                v-if="
-                                    legendItem.type === LegendType.Placeholder
-                                "
+                                v-if="legendItem.type === LegendType.Placeholder"
                                 class="fill-current w-18 h-18"
                                 xmlns="http://www.w3.org/2000/svg"
                                 viewBox="0 0 352 512"
@@ -308,11 +278,7 @@
                                     d="M242.72 256l100.07-100.07c12.28-12.28 12.28-32.19 0-44.48l-22.24-22.24c-12.28-12.28-32.19-12.28-44.48 0L176 189.28 75.93 89.21c-12.28-12.28-32.19-12.28-44.48 0L9.21 111.45c-12.28 12.28-12.28 32.19 0 44.48L109.28 256 9.21 356.07c-12.28 12.28-12.28 32.19 0 44.48l22.24 22.24c12.28 12.28 32.2 12.28 44.48 0L176 322.72l100.07 100.07c12.28 12.28 32.2 12.28 44.48 0l22.24-22.24c12.28-12.28 12.28-32.19 0-44.48L242.72 256z"
                                 />
                             </svg>
-                            <svg
-                                v-else
-                                class="inline-block fill-current w-18 h-18 mr-1"
-                                viewBox="0 1 23 22"
-                            >
+                            <svg v-else class="inline-block fill-current w-18 h-18 mr-1" viewBox="0 1 23 22">
                                 <path
                                     d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
                                 ></path>
@@ -320,15 +286,6 @@
                         </div>
                     </button>
                 </div>
-
-                <!-- options dropdown menu -->
-                <legend-options
-                    v-if="
-                        legendItem.type === LegendType.Item &&
-                        legendItem instanceof LayerItem
-                    "
-                    :legendItem="legendItem"
-                />
 
                 <!-- offscale icon -->
                 <div
@@ -346,10 +303,7 @@
                     "
                     focus-icon
                 >
-                    <svg
-                        class="inline-block fill-gray-400 w-18 h-18"
-                        viewBox="0 0 24 24"
-                    >
+                    <svg class="inline-block fill-gray-400 w-18 h-18" viewBox="0 0 24 24">
                         <path
                             d="M19.81 14.99l1.19-.92-1.43-1.43-1.19.92 1.43 1.43zm-.45-4.72L21 9l-9-7-2.91 2.27 7.87 7.88 2.4-1.88zM3.27 1L2 2.27l4.22 4.22L3 9l1.63 1.27L12 16l2.1-1.63 1.43 1.43L12 18.54l-7.37-5.73L3 14.07l9 7 4.95-3.85L20.73 21 22 19.73 3.27 1z"
                         ></path>
@@ -402,9 +356,7 @@
                             placement: 'top-start'
                         }"
                         @mouseover.stop
-                        @click.stop="
-                            (legendItem as LayerItem).layer.zoomToVisibleScale()
-                        "
+                        @click.stop="(legendItem as LayerItem).layer.zoomToVisibleScale()"
                     >
                         <svg
                             class="m-auto"
@@ -424,19 +376,13 @@
 
                 <!-- visibility -->
                 <checkbox
-                    v-else-if="
-                        legendItem.type === LegendType.Item &&
-                        controlAvailable(LegendControl.Visibility)
-                    "
+                    v-else-if="legendItem.type === LegendType.Item && controlAvailable(LegendControl.Visibility)"
                     :checked="legendItem.visibility"
                     :value="legendItem as LegendItem"
                     :isRadio="legendItem.parent && legendItem.parent.exclusive"
                     :legendItem="legendItem"
                     :disabled="
-                        legendItem instanceof LayerItem &&
-                        !legendItem.layerControlAvailable(
-                            LayerControl.Visibility
-                        )
+                        legendItem instanceof LayerItem && !legendItem.layerControlAvailable(LayerControl.Visibility)
                     "
                     :label="isGroup ? 'Group' : 'Layer'"
                 />
@@ -444,9 +390,7 @@
             <div
                 v-if="
                     legendItem.type === LegendType.Placeholder ||
-                    (legendItem instanceof LayerItem &&
-                        legendItem.layerRedrawing &&
-                        legendItem.visibility)
+                    (legendItem instanceof LayerItem && legendItem.layerRedrawing && legendItem.visibility)
                 "
                 class="h-3 w-full absolute bottom-0"
             >
@@ -455,37 +399,25 @@
         </div>
         <!-- Symbology Stack Section -->
         <div
-            v-if="
-                legendItem instanceof LayerItem && legendItem.symbologyExpanded
-            "
+            v-if="legendItem instanceof LayerItem && legendItem.symbologyExpanded"
             v-focus-item
             class="symbology-stack default-focus-style"
         >
             <div v-if="symbologyStack.length > 0">
                 <!-- display each symbol -->
-                <p
-                    v-if="
-                        legendItem instanceof LayerItem &&
-                        legendItem.description
-                    "
-                    class="m-5"
-                >
+                <p v-if="legendItem instanceof LayerItem && legendItem.description" class="m-5">
                     {{ legendItem.description }}
                 </p>
                 <div class="m-5" v-for="item in symbologyStack" :key="item.uid">
                     <!-- for WMS layers and image render styles -->
                     <div
                         v-if="
-                            (item.imgUrl &&
-                                legendItem.symbologyRenderStyle === 'images') ||
+                            (item.imgUrl && legendItem.symbologyRenderStyle === 'images') ||
                             (!item.imgUrl && layerType === 'ogc-wms')
                         "
                         class="items-center grid-cols-1"
                     >
-                        <div
-                            v-if="item.imgUrl"
-                            class="symbologyIcon w-full p-5"
-                        >
+                        <div v-if="item.imgUrl" class="symbologyIcon w-full p-5">
                             <img class="max-w-full" :src="item.imgUrl" />
                         </div>
                         <div
@@ -493,25 +425,18 @@
                             class="symbologyIcon w-full p-5"
                             v-html="getLegendGraphic(item)"
                         ></div>
-                        <div
-                            v-if="item.label"
-                            class="flex-1 p-5 bg-black-75 text-white"
-                            v-truncate
-                        >
+                        <div v-if="item.label" class="flex-1 p-5 bg-black-75 text-white" v-truncate>
                             <span>{{ item.label }}</span>
                             <checkbox
                                 v-if="
-                                    (!item.imgUrl &&
-                                        symbologyStack.length > 1) ||
+                                    (!item.imgUrl && symbologyStack.length > 1) ||
                                     (item.imgUrl && item.definitionClause)
                                 "
                                 class="float-right"
                                 :value="item"
                                 :legendItem="legendItem"
                                 :checked="item.visibility"
-                                :disabled="
-                                    !controlAvailable(LayerControl.Visibility)
-                                "
+                                :disabled="!controlAvailable(LayerControl.Visibility)"
                                 label="Symbol"
                             />
                         </div>
@@ -531,15 +456,12 @@
                             v-if="
                                 modifiableLayer &&
                                 legendItem.layer.supportsFeatures &&
-                                ((!item.imgUrl && symbologyStack.length > 1) ||
-                                    (item.imgUrl && item.definitionClause))
+                                ((!item.imgUrl && symbologyStack.length > 1) || (item.imgUrl && item.definitionClause))
                             "
                             :value="item"
                             :legendItem="legendItem"
                             :checked="item.visibility"
-                            :disabled="
-                                !controlAvailable(LayerControl.Visibility)
-                            "
+                            :disabled="!controlAvailable(LayerControl.Visibility)"
                             label="Symbol"
                         />
                     </div>
@@ -548,10 +470,7 @@
             <div v-if="!symbologyStackLoaded">
                 <!-- display loading text if the stack hasn't loaded yet -->
                 <div class="flex p-5 ml-48" v-truncate>
-                    <div
-                        class="relative animate-spin spinner h-20 w-20 mr-10 pt-2"
-                        v-if="isAnimationEnabled"
-                    ></div>
+                    <div class="relative animate-spin spinner h-20 w-20 mr-10 pt-2" v-if="isAnimationEnabled"></div>
                     <div class="flex-1 text-gray-500" v-truncate>
                         <span>{{ t('legend.symbology.loading') }}</span>
                     </div>
@@ -559,15 +478,8 @@
             </div>
         </div>
         <!-- Display children of the group -->
-        <div
-            class="legend-group border-l-2 ml-4 pl-4"
-            v-if="legendItem.expanded"
-        >
-            <item
-                v-for="item in legendItem.children"
-                :legendItem="item"
-                :key="item.uid"
-            />
+        <div class="legend-group border-l-2 ml-4 pl-4" v-if="legendItem.expanded">
+            <item v-for="item in legendItem.children" :legendItem="item" :key="item.uid" />
         </div>
     </div>
 </template>
@@ -575,7 +487,7 @@
 <script setup lang="ts">
 import { GlobalEvents, InstanceAPI } from '@/api';
 import type { LegendSymbology, RampLayerConfig } from '@/geo/api';
-import { LayerControl } from '@/geo/api';
+import { InitiationState, LayerControl } from '@/geo/api';
 import { useLayerStore } from '@/stores/layer';
 import to from 'await-to-js';
 import { marked } from 'marked';
@@ -588,6 +500,7 @@ import Checkbox from './checkbox.vue';
 import LegendOptions from './legend-options.vue';
 import { usePanelStore } from '@/stores/panel';
 import { useI18n } from 'vue-i18n';
+import { useLegendStore } from '../store';
 
 // eslint doesn't recognize <symbology-stack> usage
 // eslint-disable-next-line
@@ -609,6 +522,10 @@ const props = defineProps({
     }
 });
 
+const legendStore = useLegendStore();
+const allowMultilineItems = legendStore.multilineItems;
+const maxLines = (props.legendItem instanceof LayerItem && props.legendItem.maxLines) ?? legendStore.maxLines;
+
 const mobileMode = ref(panelStore.mobileView);
 const layerConfigs = computed(() => layerStore.layerConfigs);
 const symbologyStack = ref<Array<LegendSymbology>>([]); // ref instead of reactive to maintain reactivity after promise
@@ -619,19 +536,37 @@ const hovered = ref(false);
  * Get the type of layer
  */
 const layerType = computed((): string | undefined => {
-    return props.legendItem instanceof LayerItem
-        ? toRaw(props.legendItem!.layer)?.layerType
-        : '';
+    return props.legendItem instanceof LayerItem ? toRaw(props.legendItem!.layer)?.layerType : '';
 });
 
 /**
  * Determine if the layer is modifiable
  */
 const modifiableLayer = computed((): boolean => {
-    return (
-        props.legendItem instanceof LayerItem &&
-        toRaw(props.legendItem!.layer)?.canModifyLayer
-    );
+    return props.legendItem instanceof LayerItem && toRaw(props.legendItem!.layer)?.canModifyLayer;
+});
+
+/**
+ * Determine if the layer is reloadable
+ */
+const reloadableLayer = computed((): boolean => {
+    if (props.legendItem instanceof LayerItem) {
+        const rawLayer = toRaw(props.legendItem.layer);
+        if (rawLayer) {
+            return rawLayer.canReload;
+        } else {
+            // funny logic: if layer doesn't exist, it hasn't been registered and
+            // linked yet. Main scenario is MIL children who don't get created
+            // until after parent loads.
+            // Non-reloadability is typically due to file stuff via wizard or
+            // using rawData + no caching config. Their RAMP layer will register
+            // prior to failpoints.
+            // So return true, else child-bound entries won't be able to reload
+            return true;
+        }
+    } else {
+        return false;
+    }
 });
 
 /**
@@ -649,26 +584,17 @@ const isGroup = computed((): boolean => {
         props.legendItem.children.length > 0 ||
         // TODO: Determine why Vue reactivity isn't picking updates to the children property of the parent.
         // isGroup is being called on the parent before the children are mapped in legend.ts. After they're mapped, isGroup isn't called again.
-        (props.legendItem instanceof LayerItem &&
-            toRaw(props.legendItem!.layer)?.sublayers.length > 0)
+        (props.legendItem instanceof LayerItem && toRaw(props.legendItem!.layer)?.sublayers.length > 0)
     );
 });
 
 /**
  * Designate between layer controls and legend controls
  */
-const controlAvailable = (
-    control: LegendControl | LayerControl
-): boolean | undefined => {
-    if (
-        control === LegendControl.Expand ||
-        control === LegendControl.Visibility
-    )
+const controlAvailable = (control: LegendControl | LayerControl): boolean | undefined => {
+    if (control === LegendControl.Expand || control === LegendControl.Visibility)
         return props.legendItem.controlAvailable(control as LegendControl);
-    else
-        return (props.legendItem as LayerItem).layerControlAvailable(
-            control as LayerControl
-        );
+    else return (props.legendItem as LayerItem).layerControlAvailable(control as LayerControl);
 };
 
 const markdownToHtml = (md: string) => {
@@ -676,20 +602,11 @@ const markdownToHtml = (md: string) => {
 };
 
 const toggleExpand = () => {
-    if (
-        props.legendItem.children.length === 0 ||
-        !controlAvailable(LegendControl.Expand)
-    ) {
+    if (props.legendItem.children.length === 0 || !controlAvailable(LegendControl.Expand)) {
         return;
     }
     props.legendItem.toggleExpanded();
-    iApi.updateAlert(
-        t(
-            `legend.alert.group${
-                props.legendItem.expanded ? 'Expanded' : 'Collapsed'
-            }`
-        )
-    );
+    iApi.updateAlert(t(`legend.alert.group${props.legendItem.expanded ? 'Expanded' : 'Collapsed'}`));
 };
 /**
  * Display symbology stack for the layer.
@@ -697,9 +614,7 @@ const toggleExpand = () => {
 const toggleSymbology = (): void => {
     if (controlAvailable(LayerControl.Symbology)) {
         const expanded = (props.legendItem as LayerItem).toggleSymbology();
-        iApi.updateAlert(
-            t(`legend.alert.symbology${expanded ? 'Expanded' : 'Collapsed'}`)
-        );
+        iApi.updateAlert(t(`legend.alert.symbology${expanded ? 'Expanded' : 'Collapsed'}`));
     }
 };
 
@@ -708,10 +623,7 @@ const toggleSymbology = (): void => {
  */
 const toggleGrid = (): void => {
     if (controlAvailable(LayerControl.Datatable) && getDatagridExists()) {
-        iApi.event.emit(
-            GlobalEvents.GRID_TOGGLE,
-            (props.legendItem as LayerItem).layer
-        );
+        iApi.event.emit(GlobalEvents.GRID_TOGGLE, (props.legendItem as LayerItem).layer);
     }
 };
 
@@ -742,61 +654,43 @@ const getDatagridExists = (): boolean => {
 };
 
 /**
- * Reloads layer if its "ready" to be reloaded.
- * If a layer has not been cancelled, it is ready to be reloaded.
- * If it has been cancelled by the user, then we wait for any currently in progress load to finish.
- */
-const reloadIfReady = () => {
-    // reload legend item state back to placeholder state
-    props.legendItem.reload();
-    if ((props.legendItem as LayerItem)._loadCancelled) {
-        const readyWatcher = setInterval(() => {
-            if ((props.legendItem as LayerItem).layer) {
-                Promise.allSettled([
-                    (props.legendItem as LayerItem).layer.loadPromise
-                ]).then(() => {
-                    clearInterval(readyWatcher);
-                    reloadLayer();
-                });
-            }
-        }, 250);
-    } else {
-        reloadLayer();
-    }
-};
-/**
  * Reloads a layer on the map.
+ * Layer is in an error'd state for that UI to be available.
  */
 const reloadLayer = () => {
+    props.legendItem.reload();
     // want the animation to play for half a second because a reload can fail "instantly", making it look like nothing happened to the user
     setTimeout(() => {
-        (props.legendItem as LayerItem)._loadCancelled = false;
-        // call reload on layer if it exists
-        if ((props.legendItem as LayerItem).layer !== undefined) {
-            toRaw((props.legendItem as LayerItem).layer!).reload();
-        } else {
-            // otherwise attempt to re-create layer with layer config
-            const layerConfig =
-                (props.legendItem as LayerItem).layerIdx === undefined ||
-                (props.legendItem as LayerItem).layerIdx === -1
-                    ? layerConfigs.value.find(
-                          (lc: RampLayerConfig) =>
-                              lc.id === (props.legendItem as LayerItem).layerId
-                      )
-                    : layerConfigs.value.find(
-                          (lc: RampLayerConfig) =>
-                              lc.id ===
-                              (props.legendItem as LayerItem).parentLayerId
-                      );
+        const layerItemProp = props.legendItem as LayerItem;
+        let recreateFromConfig = true;
+
+        if (layerItemProp.layer) {
+            // layer exists, reload it
+            toRaw(layerItemProp.layer).reload();
+            recreateFromConfig = false;
+        } else if (layerItemProp.isSublayer && layerItemProp.parentLayerId) {
+            // see if parent exists, if so, reload it.
+            const testParent = iApi.geo.layer.getLayer(layerItemProp.parentLayerId);
+            if (testParent) {
+                toRaw(testParent).reload();
+                recreateFromConfig = false;
+            }
+        }
+
+        if (recreateFromConfig) {
+            // were unable to find any layers. Attempt to re-create layer with layer config
+
+            const targetId = layerItemProp.isSublayer ? layerItemProp.parentLayerId : layerItemProp.layerId;
+
+            const layerConfig = layerConfigs.value.find((lc: RampLayerConfig) => lc.id === targetId);
             if (layerConfig !== undefined) {
                 recreateLayer(layerConfig);
             }
         }
-        // catch error if reload fails
-        props.legendItem.loadPromise.catch(() => {
-            console.error('Failed to reload layer -', props.legendItem.name);
-        });
-    }, 500);
+
+        // just to silence console about unhandled rejections.
+        props.legendItem.loadPromise.catch(() => {});
+    }, 400);
 };
 
 /**
@@ -818,9 +712,13 @@ const recreateLayer = async (layerConfig: RampLayerConfig) => {
         } else {
             // try to re-create new layer based on layerConfig
             // same code to how layers are initialized when layer config array changes, expose this as layer API method?
+
+            // TODO low priority investigation: now that layers get registered right away,
+            // can this ELSE block even get hit anymore? I think we'll always find checkLayer.
+            // if layer got removed, legend block should have vanished.
             const layer = iApi.geo.layer.createLayer(layerConfig);
 
-            await iApi.geo.map.addLayer(layer!).catch(() => {
+            await iApi.geo.map.addLayer(layer).catch(() => {
                 throw new Error();
             });
 
@@ -838,69 +736,87 @@ const recreateLayer = async (layerConfig: RampLayerConfig) => {
  */
 const cancelOrRemoveLayer = () => {
     const layerItem: LayerItem = toRaw(props.legendItem as LayerItem); // so that typescript doesn't yell in the whole method
+    let safetyCount = 0;
+
     if (layerItem.type === LegendType.Error) {
         // layer in error state, remove layer permanently
-        // layer could appear in store later, so we need to keep checking if its there
+        // layer could appear later, so we need to keep checking if its there.
+        // It will typically be in the store (now happens soon as its added),
+        // but the ESRI layer may appear later if things get wacky.
+        // given we can also cancel prior to initiation finishing, we consider
+        // layers in that state.
 
         props.legendItem.toggleHidden(true); // temporarily hide item until we can remove it
 
         const removalWatcher = setInterval(() => {
-            // layer is gone from everywhere, so we are done
-            if (layerItem.layer && layerItem.layer.layerExists) {
+            // test: we can find the Ramp layer AND ...
+            //           the Esri layer exists OR layer is not on the path to have an Esri layer
+            //       OR if it's been 5 minutes, stop and try ur best (1200 * 250 === five mins)
+
+            const rampL = layerItem.layer;
+
+            if (
+                (rampL &&
+                    (rampL.layerExists ||
+                        rampL.initiationState === InitiationState.NEW ||
+                        rampL.initiationState === InitiationState.TERMINATING ||
+                        rampL.initiationState === InitiationState.TERMINATED)) ||
+                safetyCount > 1200
+            ) {
                 // stop the interval
                 clearInterval(removalWatcher);
 
-                // layer is now there, time to remove!
-                iApi.geo.map.removeLayer(layerItem.layer);
+                if (rampL) {
+                    // remove from the map, which will de-register and remove anything from the map
+                    iApi.geo.map.removeLayer(rampL);
+                }
 
                 // remove layer config from store
                 layerStore.removeLayerConfig(layerItem.layerId);
 
                 // remove layer item from legend
-                iApi.fixture
-                    .get<LegendAPI>('legend')
-                    ?.removeLayerItem(layerItem.layerId);
+                iApi.fixture.get<LegendAPI>('legend')?.removeLayerItem(layerItem.layerId);
             }
+
+            safetyCount++;
         }, 250);
     } else {
         // layer in loading state, "cancel" layer
         // this puts it in error state. user can then reload or remove
+
         props.legendItem.error();
-        (props.legendItem as LayerItem)._loadCancelled = true;
+
         // if a sublayer or parent layer was cancelled, cancel the parent layer and all other sublayers.
         // need to keep polling for the parent layer since some sublayers may not be in the config (stuff that came from a group)
 
-        // TODO: revisit the need for this watcher. Now that every registered layer is returned by allLayers, it should always
-        //       find the parent first find(). Unless I'm mis-understanding what parentLayerId is and that can be a
-        //       temporary group node thing. Possibly .parentLayerId on an MIL group isn't set until after load? Sorta makes sense.
+        // This should find stuff real quick now that layers are immediately registered. But keeping the watcher to handle
+        // any weird scenarios (e.g. RampMapAPI.addLayer had critical failure)
+        // The interval is at a faster rate to account for any rapid cancel & reload clicks. setInterval always waits the interval
+        // before first check.
         const cancelWatcher = setInterval(() => {
-            const parentLayer = iApi.geo.layer
-                .allLayers()
-                .find(
-                    l =>
-                        l.id === layerItem.parentLayerId ||
-                        l.id === layerItem.layerId
-                );
+            const parentmostId = layerItem.parentLayerId || layerItem.layerId;
+            const parentLayer = iApi.geo.layer.getLayer(parentmostId);
+
             if (parentLayer) {
                 clearInterval(cancelWatcher);
-                const layerItemToCancel = iApi.fixture
-                    .get<LegendAPI>('legend')
-                    ?.getLayerItem(parentLayer);
-                if (layerItemToCancel) {
-                    layerItemToCancel.error();
-                    layerItemToCancel._loadCancelled = true;
-                }
-                parentLayer.sublayers?.forEach(sl => {
-                    const sublayerItemToCancel = iApi.fixture
-                        .get<LegendAPI>('legend')
-                        ?.getLayerItem(sl);
-                    if (sublayerItemToCancel) {
-                        sublayerItemToCancel.error();
-                        sublayerItemToCancel._loadCancelled = true;
-                    }
-                });
+
+                // cancel the ramp layer
+                parentLayer.cancelLoad();
+
+                // cancel any blocks tied to the layer or sublayers.
+
+                const affectedBlocks = iApi.fixture.get<LegendAPI>('legend')?.getLayerBoundItems(parentLayer) || [];
+
+                affectedBlocks.forEach(block => block.error());
             }
-        }, 250);
+
+            if (safetyCount > 1200) {
+                // 1 minute
+                clearInterval(cancelWatcher);
+            }
+
+            safetyCount++;
+        }, 50);
     }
 };
 
@@ -912,21 +828,13 @@ const loadSymbologyStack = () => {
             // Wait for symbology to load
             if (!(props.legendItem as LayerItem).layer) {
                 // This should never happen because the layer is loaded before the legend item component is mounted
-                console.warn(
-                    'Attempted to mount legend item component with undefined layer'
-                );
+                console.warn('Attempted to mount legend item component with undefined layer');
                 return;
             }
             Promise.all(
-                toRaw(
-                    (props.legendItem as LayerItem).symbologyStack.map(
-                        (item: LegendSymbology) => item.drawPromise
-                    )
-                )
+                toRaw((props.legendItem as LayerItem).symbologyStack.map((item: LegendSymbology) => item.drawPromise))
             ).then(() => {
-                symbologyStack.value = (
-                    props.legendItem as LayerItem
-                ).symbologyStack;
+                symbologyStack.value = (props.legendItem as LayerItem).symbologyStack;
 
                 // Mark the symbology stack as loaded.
                 symbologyStackLoaded.value = true;
@@ -967,11 +875,18 @@ if (props.legendItem instanceof LayerItem) {
 .rotate-180 {
     transform: rotate(-180deg);
 }
+
 @media (hover) {
-    .loaded-item {
+    .loaded-item.singlelined {
         @apply min-h-[39px];
         .options {
             @apply hidden;
+        }
+    }
+    .loaded-item.multilined {
+        @apply min-h-[39px];
+        .options {
+            @apply block;
         }
     }
     .loaded-item:hover {
@@ -985,10 +900,62 @@ if (props.legendItem instanceof LayerItem) {
         @apply block;
     }
 }
+
 .non-loaded-item {
     @apply px-5 py-5 pb-10 pr-0 align-middle;
 }
 .disabled {
     @apply text-gray-400 cursor-default;
+}
+
+// Overriding Tailwind's line-clamp classes,
+// which occasionally fail or disappear for no reason
+
+// NOTE: The multiline legend items use the CSS line-clamp
+// property. If padding is used, it will start showing the
+// clamped/hidden text using the padding space, which can lead
+// to fragments of the clamped text showing up. In these cases,
+// refactor to use margin.
+
+.line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+}
+
+.line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}
+
+.line-clamp-4 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+}
+
+.line-clamp-5 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 5;
+}
+
+.line-clamp-6 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 6;
 }
 </style>

@@ -1,11 +1,5 @@
 import { Tools } from 'terraformer';
-import {
-    BaseGeometry,
-    Extent,
-    GeometryType,
-    Polygon,
-    SpatialReference
-} from '@/geo/api';
+import { BaseGeometry, Extent, GeometryType, Polygon, SpatialReference } from '@/geo/api';
 import type { EpsgLookup, SrDef } from '@/geo/api';
 import { EsriRequest } from '@/geo/esri';
 import { geo } from '@/main';
@@ -33,10 +27,7 @@ export class ProjectionAPI {
             'EPSG:3979',
             '+proj=lcc +lat_1=49 +lat_2=77 +lat_0=49 +lon_0=-95 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs'
         );
-        proj4.defs(
-            'EPSG:54004',
-            '+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs'
-        );
+        proj4.defs('EPSG:54004', '+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs');
         proj4.defs('EPSG:102100', proj4.defs('EPSG:3857'));
         proj4.defs(
             'EPSG:102187',
@@ -51,10 +42,7 @@ export class ProjectionAPI {
         let utm = 1;
         while (utm <= 60) {
             const zone = utm < 10 ? `0${utm}` : utm;
-            proj4.defs(
-                `EPSG:326${zone}`,
-                `+proj=utm +zone=${utm} +ellps=WGS84 +datum=WGS84 +units=m +no_defs`
-            );
+            proj4.defs(`EPSG:326${zone}`, `+proj=utm +zone=${utm} +ellps=WGS84 +datum=WGS84 +units=m +no_defs`);
             utm++;
         }
     }
@@ -74,9 +62,7 @@ export class ProjectionAPI {
         const urnRegex = /urn:ogc:def:crs:EPSG::(\d+)/;
         const epsgRegex = /EPSG:(\d+)/;
         const matcher: RegExpMatchArray =
-            String(code).match(urnRegex) ||
-            String(code).match(epsgRegex) ||
-            ([] as unknown as RegExpMatchArray);
+            String(code).match(urnRegex) || String(code).match(epsgRegex) || ([] as unknown as RegExpMatchArray);
 
         if (matcher.length < 2) {
             throw new Error('Invalid code provided.');
@@ -127,12 +113,12 @@ export class ProjectionAPI {
     }
 
     /**
-     * Convert a projection to an string that is compatible with proj4.  If it is an ESRI SpatialReference or an integer it will be converted.
-     * @param {Object|Integer|String} proj an ESRI SpatialReference, integer or string.  Strings will be unchanged and unchecked,
+     * Convert a projection to an string that is compatible with proj4.  If it is an SpatialReference or an integer it will be converted.
+     * @param {SpatialReference|Integer|String} proj an SpatialReference, integer or string.  Strings will be unchanged and unchecked,
      * ints and SpatialReference objects will be converted.
-     * @return {String} A string in the form EPSG:#### or a WKT
+     * @return {String} A proj4 friendly projection, in the form EPSG:#### or a WKT
      */
-    normalizeProj(proj: any): string {
+    normalizeProj(proj: SpatialReference | string | number): string {
         if (typeof proj === 'object') {
             if (proj.wkid) {
                 // TODO consider checking for .latestWkid first, then using .wkid as backup
@@ -145,32 +131,31 @@ export class ProjectionAPI {
         } else if (typeof proj === 'string') {
             return proj;
         }
-        throw new Error(
-            'Bad argument type, please provide a string, integer or SpatialReference object.'
-        );
+        throw new Error('Bad argument type, please provide a string, integer or SpatialReference object.');
     }
 
     /**
      * Check whether or not a spatialReference is supported by proj4 library. Attempt to load from epsg source if not.
      *
-     * @param {Object} spatialReference to be checked to see if it's supported by proj4. Can be ESRI SR object or a EPSG string.
+     * @param {SpatialReference | string | number} spatialReference to be checked to see if it's supported by proj4. Can be ESRI SR object, WKID integer, EPSG string or WKT.
      * @returns {Promise<boolean>} true if proj was defined or was able to download definition. false if out of luck
      */
-    async checkProj(spatialReference: any): Promise<boolean> {
+    async checkProj(spatialReference: SpatialReference | string | number): Promise<boolean> {
         let srcProj: string;
         let latestProj = ''; // falsey!
-
-        if (spatialReference.wkt) {
-            // WKT is fine to use raw. quick exit.
-            return true;
-        }
 
         try {
             srcProj = this.normalizeProj(spatialReference);
         } catch {
             return false;
         }
-        if (spatialReference.latestWkid) {
+
+        // fast check for WKT
+        if (!srcProj.startsWith('EPSG:')) {
+            return true;
+        }
+
+        if (typeof spatialReference === 'object' && spatialReference.latestWkid) {
             latestProj = this.normalizeProj(spatialReference.latestWkid);
         }
 
@@ -215,9 +200,7 @@ export class ProjectionAPI {
 
         // check the latestWkid first, if it exists (as that wkid is usally the EPSG friendly one)
         // otherwise make a dummy promise that will just cause the standard wkid promise to run.
-        const latestLookup = latestProj
-            ? doLookup(latestProj)
-            : Promise.resolve(false);
+        const latestLookup = latestProj ? doLookup(latestProj) : Promise.resolve(false);
 
         const latestSuccess = await latestLookup;
         if (latestSuccess) {
@@ -230,7 +213,12 @@ export class ProjectionAPI {
         }
     }
 
-    // utility for checking a set of spatial references, and accepting an error bomb if they cannot be used
+    /**
+     * Utility for checking a set of spatial references, rejects if one cannot be used
+     *
+     * @param {Array<SpatialReference | string | number>} spatialReferences set of Spatial references to be checked. Can be ESRI SR object, WKID integer, EPSG string or WKT.
+     * @returns {Promise<void>} resolves after all references succeed the check. rejects if any test fails.
+     */
     async checkProjBomber(spatialReferences: Array<any>): Promise<void> {
         if (spatialReferences.length > 0) {
             const prj = spatialReferences.pop();
@@ -239,13 +227,8 @@ export class ProjectionAPI {
                 // recursion. array will have 1 less at this point
                 return this.checkProjBomber(spatialReferences);
             } else {
-                console.error(
-                    'Unable to parse or locate projection information for this item:',
-                    prj
-                );
-                throw new Error(
-                    'Could not find projection information, see console for details'
-                );
+                console.error('Unable to parse or locate projection information for this item:', prj);
+                throw new Error('Could not find projection information, see console for details');
             }
         }
     }
@@ -253,37 +236,37 @@ export class ProjectionAPI {
     /**
      * Reproject a GeoJSON object in place.
      * Note the .crs of the object will not be updated or corrected.
+     * Valid formats for the spatial reference parameters are: RAMP SpatialReference, WKID number,
+     * WKT string, or EPSG:#### string
      *
      * @param {Object} geojson the GeoJSON to be reprojected, this will be modified in place
-     * @param {String|Number} outputSpatialReference the target spatial reference,
-     * 'EPSG:4326' (lat-long) is used by default; if a number is suppied it will be used as an EPSG code
-     * @param {String|Number} inputSpatialReference same rules as outputSpatialReference if suppied
-     * if missing it will attempt to find it encoded in the GeoJSON
+     * @param {SpatialReference | String | Number} inputSR spatial reference of the GeoJSON. If missing it will attempt to use any crs data in the GeoJSON, defaulting to Lat Long.
+     * @param {SpatialReference | String | Number} outputSR spatial reference to project to. If missing, will use Lat Long.
      * @returns {Promise<Object>} resolves with projected geoJson
      */
     async projectGeoJson(
         geoJson: any,
-        inputSR: string | number,
-        outputSR: string | number
+        inputSR?: SpatialReference | string | number,
+        outputSR?: SpatialReference | string | number
     ): Promise<any> {
-        // TODO revist the types on the SR params. figure out what we're really supporting, and what terraformer can support
+        let inSr: string;
+        let outSr: string;
 
-        let inSr: string = this.normalizeProj(inputSR);
-        let outSr: string = this.normalizeProj(outputSR);
-
-        if (!inSr && geoJson.crs && geoJson.crs.type === 'name') {
+        if (inputSR) {
+            inSr = this.normalizeProj(inputSR);
+        } else {
+            // get from geojson
             inSr = SpatialReference.parseGeoJsonCrs(geoJson.crs);
         }
 
-        if (!inSr) {
-            inSr = latLongProj;
-        }
-
-        if (!outSr) {
+        if (outputSR) {
+            outSr = this.normalizeProj(outputSR);
+        } else {
             outSr = latLongProj;
         }
 
         if (outSr === inSr) {
+            // no projection needed.
             return geoJson;
         }
 
@@ -303,10 +286,7 @@ export class ProjectionAPI {
      * @param {BaseGeometry} geometry a RAMP API Geometry object
      * @return {Promise} resolve in a RAMP API Geometry object with co-ordinates in the destination projection
      */
-    async projectGeometry(
-        destProj: SrDef,
-        geometry: BaseGeometry
-    ): Promise<BaseGeometry> {
+    async projectGeometry(destProj: SrDef, geometry: BaseGeometry): Promise<BaseGeometry> {
         // NOTES: a few significant changes to this function from RAMP2
         //        Making the result asynch. due to us now validating the projection and possibly
         //        downloading a new formula if the we dont have an existing solution.
@@ -325,17 +305,10 @@ export class ProjectionAPI {
         const preGJ = geometry.toGeoJSON();
 
         // project geojson
-        const postGJ = await this.projectGeoJson(
-            preGJ,
-            this.normalizeProj(geometry.sr),
-            this.normalizeProj(destProj)
-        );
+        const postGJ = await this.projectGeoJson(preGJ, this.normalizeProj(geometry.sr), this.normalizeProj(destProj));
 
         // convert back to RAMP geometry
-        const projectedRampGeom = geo.geom.geomGeoJsonToRamp(
-            postGJ,
-            geometry.id
-        );
+        const projectedRampGeom = geo.geom.geomGeoJsonToRamp(postGJ, geometry.id);
 
         // fix up the spatial reference, as the GeoJSON projection library doesn't really handle it well.
         projectedRampGeom.sr = SpatialReference.parseSR(destProj);
@@ -356,11 +329,7 @@ export class ProjectionAPI {
     async projectExtent(destProj: SrDef, extent: Extent): Promise<Extent> {
         // interpolates two points by splitting the line in half recursively
         // steps indicates how many recursions
-        const interpolate = (
-            p0: Array<number>,
-            p1: Array<number>,
-            steps: number
-        ): Array<Array<number>> => {
+        const interpolate = (p0: Array<number>, p1: Array<number>, steps: number): Array<Array<number>> => {
             if (steps === 0) {
                 // return the points
                 return [p0, p1];
@@ -386,8 +355,7 @@ export class ProjectionAPI {
         // TODO original code is constructing point array in counter-clockwise manner (see commented logic below)
         //      the poly array will be clockwise.
         //      if we run into issues, might need to do a reverse on the array, or just stick with original hardcoded approach
-        const points: Array<Array<number>> =
-            extent.toPolygonArray().pop() || [];
+        const points: Array<Array<number>> = extent.toPolygonArray().pop() || [];
 
         // [ [extent.xmin, extent.ymin], [extent.xmax, extent.ymin],
         // [extent.xmax, extent.ymax], [extent.xmin, extent.ymax],
@@ -400,17 +368,9 @@ export class ProjectionAPI {
             .map(i => interpolate(points[i], points[i + 1], 3).slice(1))
             .forEach(seg => (interpolatedPoly = interpolatedPoly.concat(seg)));
 
-        const iPoly: Polygon = new Polygon(
-            'warpy',
-            [interpolatedPoly],
-            extent.sr,
-            true
-        );
+        const iPoly: Polygon = new Polygon('warpy', [interpolatedPoly], extent.sr, true);
 
-        const iWarped = (await this.projectGeometry(
-            destProj,
-            iPoly
-        )) as Polygon;
+        const iWarped = (await this.projectGeometry(destProj, iPoly)) as Polygon;
 
         // take our projected interpolated polygon, strip out the co-ords for X and Y
         const rawWarp = iWarped.toArray().pop() || [];
@@ -422,13 +382,6 @@ export class ProjectionAPI {
         const x1 = Math.max.apply(null, xvals);
         const y0 = Math.min.apply(null, yvals);
         const y1 = Math.max.apply(null, yvals);
-        return Extent.fromParams(
-            extent.id + '_projected',
-            x0,
-            y0,
-            x1,
-            y1,
-            iWarped.sr
-        );
+        return Extent.fromParams(extent.id + '_projected', x0, y0, x1, y1, iWarped.sr);
     }
 }

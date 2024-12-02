@@ -229,7 +229,12 @@
             "properties": {
                 "name": {
                     "type": "string",
-                    "description": "Display name of the identified layer"
+                    "description": "Display name field of the identified layer. Only applies to layers that support attributes and do not have an overriding template. The field defined by the layer is used if not provided."
+                },
+                "priority": {
+                    "type": "number",
+                    "description": "Specifies a priority ranking for the layer result being initially selected. Smaller number has higher priority.",
+                    "default": 50
                 },
                 "template": {
                     "type": "string",
@@ -237,7 +242,7 @@
                 },
                 "fields": {
                     "type": "array",
-                    "description": "An array to specify how the layer data fields are defined. Only applies to attribute layers that do not have an overriding template.",
+                    "description": "An array to specify alternate display settings for layer fields. Only applies to layers that support attributes and do not have an overriding template.",
                     "items": {
                         "$ref": "#/$defs/detailsField"
                     }
@@ -349,12 +354,7 @@
             "properties": {
                 "headerControls": {
                     "$ref": "legendHeaderControls",
-                    "default": [
-                        "wizard",
-                        "layerReorder",
-                        "groupToggle",
-                        "visibilityToggle"
-                    ]
+                    "default": ["wizard", "layerReorder", "groupToggle", "visibilityToggle"]
                 },
                 "panelWidth": {
                     "$ref": "#/$defs/panelWidth"
@@ -364,6 +364,22 @@
                 },
                 "root": {
                     "$ref": "#/$defs/sectionItem"
+                },
+                "multilineItems": {
+                    "type": "object",
+                    "description": "Determines whether legend items should wrap using multiple lines if necessary. Only applies to layer items.",
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean",
+                            "description": "Determines whether the multilineItems setting is enabled.",
+                            "default": true
+                        },
+                        "maxLines": {
+                            "type": "number",
+                            "description": "Determines the max number of lines a legend item can take up before truncating. Only applies if the legend property multilineItems.enabled is true. Only accepts integers 1-6, inclusive.",
+                            "default": 3
+                        }
+                    }
                 }
             },
             "required": ["root"],
@@ -469,6 +485,10 @@
                     "type": "boolean",
                     "default": false,
                     "description": "Indicates if symbology stack is expand by default"
+                },
+                "maxLines": {
+                    "type": "number",
+                    "description": "Determines the max number of lines this legend layer item can take up before truncating. Only applies if the legend-level property multilineItems.enabled is true. Overrides the legend-level property multilineItems.maxLines, and defaults to it if no value is provided here. Only accepts integers 1-6, inclusive."
                 }
             },
             "required": ["layerId"],
@@ -526,12 +546,7 @@
             "description": "All possible controls to show in the legend header.",
             "items": {
                 "type": "string",
-                "enum": [
-                    "groupToggle",
-                    "layerReorder",
-                    "visibilityToggle",
-                    "wizard"
-                ]
+                "enum": ["groupToggle", "layerReorder", "visibilityToggle", "wizard"]
             },
             "uniqueItems": true
         },
@@ -600,30 +615,15 @@
                     "type": "string",
                     "enum": ["all", "buttons", "slider"],
                     "default": "buttons",
-                    "description": "Specifies between zoom buttons or zoom sliders."
+                    "description": "Specifies between zoom buttons or zoom sliders. Currently not supported."
                 },
                 "items": {
                     "type": "array",
-                    "default": [
-                        "fullscreen",
-                        "help",
-                        "home",
-                        "geolocator",
-                        "basemap"
-                    ],
-                    "description": "Map navigation buttons displayed on mapnav.",
+                    "default": ["fullscreen", "help", "home", "geolocator", "basemap"],
+                    "description": "Map navigation buttons displayed on mapnav. These will be displayed in addition to the zoom buttons, which are always visible.",
                     "items": {
                         "type": "string",
-                        "enum": [
-                            "geolocator",
-                            "zoom",
-                            "home",
-                            "basemap",
-                            "help",
-                            "fullscreen",
-                            "geosearch",
-                            "legend"
-                        ]
+                        "enum": ["geolocator", "home", "basemap", "help", "fullscreen", "geosearch", "legend"]
                     },
                     "uniqueItems": true
                 }
@@ -817,8 +817,8 @@
                 },
                 "maxLoadTime": {
                     "type": "number",
-                    "default": 20000,
-                    "description": "The time span (in milliseconds) a layer can load for before entering the 'error' state. Zero will allow the layer to load forever"
+                    "default": 0,
+                    "description": "The time span (in milliseconds) a layer can load for before entering the 'error' state. Zero will defer to the map default."
                 },
                 "metadata": {
                     "$ref": "#/$defs/layerMetadata"
@@ -891,8 +891,8 @@
                 },
                 "maxLoadTime": {
                     "type": "number",
-                    "default": 20000,
-                    "description": "The time span (in milliseconds) a layer can load for before entering the 'error' state. Zero will allow the layer to load forever"
+                    "default": 0,
+                    "description": "The time span (in milliseconds) a layer can load for before entering the 'error' state. Zero will defer to the map default."
                 },
                 "metadata": {
                     "$ref": "#/$defs/layerMetadata"
@@ -907,15 +907,7 @@
                 },
                 "controls": {
                     "$ref": "#/$defs/layerControls",
-                    "default": [
-                        "opacity",
-                        "visibility",
-                        "metadata",
-                        "boundaryZoom",
-                        "reload",
-                        "remove",
-                        "settings"
-                    ]
+                    "default": ["opacity", "visibility", "metadata", "boundaryZoom", "reload", "remove", "settings"]
                 },
                 "disabledControls": {
                     "$ref": "#/$defs/layerControls",
@@ -966,8 +958,8 @@
                 },
                 "maxLoadTime": {
                     "type": "number",
-                    "default": 20000,
-                    "description": "The time span (in milliseconds) a layer can load for before entering the 'error' state. Zero will allow the layer to load forever"
+                    "default": 0,
+                    "description": "The time span (in milliseconds) a layer can load for before entering the 'error' state. Zero will defer to the map default."
                 },
                 "metadata": {
                     "$ref": "#/$defs/layerMetadata"
@@ -1033,17 +1025,7 @@
                 },
                 "imageFormat": {
                     "type": "string",
-                    "enum": [
-                        "png",
-                        "png8",
-                        "png24",
-                        "png32",
-                        "jpg",
-                        "pdf",
-                        "bmp",
-                        "gif",
-                        "svg"
-                    ],
+                    "enum": ["png", "png8", "png24", "png32", "jpg", "pdf", "bmp", "gif", "svg"],
                     "description": "The format of the layer image output. Default service setting used if not supplied (usually png32)"
                 },
                 "fixtures": {
@@ -1171,8 +1153,8 @@
                 },
                 "maxLoadTime": {
                     "type": "number",
-                    "default": 20000,
-                    "description": "The time span (in milliseconds) a layer can load for before entering the 'error' state. Zero will allow the layer to load forever"
+                    "default": 0,
+                    "description": "The time span (in milliseconds) a layer can load for before entering the 'error' state. Zero will defer to the map default."
                 },
                 "metadata": {
                     "$ref": "#/$defs/layerMetadata"
@@ -1294,12 +1276,12 @@
                 },
                 "maxLoadTime": {
                     "type": "number",
-                    "default": 20000,
-                    "description": "The time span (in milliseconds) a layer can load for before entering the 'error' state. Zero will allow the layer to load forever"
+                    "default": 0,
+                    "description": "The time span (in milliseconds) a layer can load for before entering the 'error' state. Zero will defer to the map default."
                 },
                 "layerType": {
                     "type": "string",
-                    "enum": ["file-geojson", "file-csv", "file-shape"],
+                    "enum": ["file-csv", "file-fgb", "file-geojson", "file-shape", "file-zip-fgb", "file-zip-geojson"],
                     "description": "Format type for file layers."
                 },
                 "latField": {
@@ -1416,8 +1398,8 @@
                 },
                 "maxLoadTime": {
                     "type": "number",
-                    "default": 20000,
-                    "description": "The time span (in milliseconds) a layer can load for before entering the 'error' state. Zero will allow the layer to load forever"
+                    "default": 0,
+                    "description": "The time span (in milliseconds) a layer can load for before entering the 'error' state. Zero will defer to the map default."
                 },
                 "layerType": {
                     "type": "string",
@@ -1429,14 +1411,7 @@
                 },
                 "controls": {
                     "$ref": "#/$defs/layerControls",
-                    "default": [
-                        "datatable",
-                        "visibility",
-                        "metadata",
-                        "reload",
-                        "remove",
-                        "symbology"
-                    ]
+                    "default": ["datatable", "visibility", "metadata", "reload", "remove", "symbology"]
                 },
                 "disabledControls": {
                     "$ref": "#/$defs/layerControls",
@@ -1511,8 +1486,8 @@
                 },
                 "maxLoadTime": {
                     "type": "number",
-                    "default": 20000,
-                    "description": "The time span (in milliseconds) a layer can load for before entering the 'error' state. Zero will allow the layer to load forever"
+                    "default": 0,
+                    "description": "The time span (in milliseconds) a layer can load for before entering the 'error' state. Zero will defer to the map default."
                 },
                 "colour": {
                     "type": "string",
@@ -1629,8 +1604,8 @@
                 },
                 "maxLoadTime": {
                     "type": "number",
-                    "default": 20000,
-                    "description": "The time span (in milliseconds) a layer can load for before entering the 'error' state. Zero will allow the layer to load forever"
+                    "default": 0,
+                    "description": "The time span (in milliseconds) a layer can load for before entering the 'error' state. Zero will defer to the map default."
                 },
                 "metadata": {
                     "$ref": "#/$defs/layerMetadata"
@@ -1814,6 +1789,11 @@
                     "type": "string",
                     "default": "",
                     "description": "Specifies the field title. If missing, attempts to use the service alias, then defaults to the field name."
+                },
+                "trim": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Specifies whether trailing/preceding spaces should be trimmed from the string attribute."
                 }
             },
             "required": ["name"]
@@ -2213,11 +2193,7 @@
                             "layerType": {
                                 "type": "string",
                                 "description": "Base layer's type",
-                                "enum": [
-                                    "esri-map-image",
-                                    "esri-tile",
-                                    "osm-tile"
-                                ]
+                                "enum": ["esri-map-image", "esri-tile", "osm-tile"]
                             },
                             "url": {
                                 "type": "string",
@@ -2237,14 +2213,7 @@
                     "$ref": "#/$defs/attribution"
                 }
             },
-            "required": [
-                "id",
-                "name",
-                "description",
-                "layers",
-                "altText",
-                "tileSchemaId"
-            ],
+            "required": ["id", "name", "description", "layers", "altText", "tileSchemaId"],
             "unevaluatedProperties": false
         },
         "attribution": {
@@ -2473,14 +2442,7 @@
                             "type": "object",
                             "description": "Specifies a custom Vue component to render as the default details template for each identify result format.",
                             "propertyNames": {
-                                "enum": [
-                                    "esri",
-                                    "text",
-                                    "image",
-                                    "html",
-                                    "xml",
-                                    "json"
-                                ]
+                                "enum": ["esri", "text", "image", "html", "xml", "json"]
                             },
                             "additionalProperties": {
                                 "type": "string"
@@ -2490,15 +2452,7 @@
                             "$ref": "#/$defs/panelWidth"
                         },
                         "panelTeleport": {
-                            "type": "object",
-                            "properties": {
-                                "details-layers": {
-                                    "$ref": "#/$defs/panelTeleport"
-                                },
-                                "details-items": {
-                                    "$ref": "#/$defs/panelTeleport"
-                                }
-                            }
+                            "$ref": "#/$defs/panelTeleport"
                         }
                     },
                     "required": ["templates"]
@@ -2568,7 +2522,7 @@
                             "enum": ["glow", "lift", "fog", "none"]
                         },
                         "options": {
-                            "description": "Options for the selected hilight mode.",
+                            "description": "Options for the selected hilight mode. The below schema is for fog mode. In glow mode, the options object should conform to an ESRI MapView HighlightOptions type.",
                             "type": "object",
                             "properties": {
                                 "onOpacity": {
@@ -2605,13 +2559,7 @@
                     "$ref": "#/$defs/mapnav",
                     "default": {
                         "zoom": "buttons",
-                        "items": [
-                            "fullscreen",
-                            "home",
-                            "geolocator",
-                            "help",
-                            "basemap"
-                        ]
+                        "items": ["fullscreen", "home", "geolocator", "help", "basemap"]
                     },
                     "description": "Provides configuration to the appbar. If not supplied, default appbar controls are displayed."
                 },
@@ -2825,6 +2773,11 @@
                             "type": "number",
                             "default": 10000,
                             "description": "The time span (in milliseconds) after which a 'slow-to-load' notification is shown for any loading layer. Zero will disable notifications. Values on individual layer configs will override."
+                        },
+                        "maxLoadTime": {
+                            "type": "number",
+                            "description": "Time limit (in milliseconds) to wait for any added layer to load. Layer errors if time exceeds. Value must be greater than 0.",
+                            "default": 90000
                         }
                     }
                 }

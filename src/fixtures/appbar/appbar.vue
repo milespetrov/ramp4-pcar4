@@ -19,10 +19,7 @@
         <template v-for="(subArray, index) in items">
             <template v-for="(item, index2) in subArray">
                 <default-button
-                    v-if="
-                        typeof item === 'string' &&
-                        overflowFlags[`${item}-${index2}`] !== true
-                    "
+                    v-if="typeof item === 'string' && overflowFlags[`${item}-${index2}`] !== true"
                     :key="`${item}-${index2}-default`"
                     :panelId="item"
                     class="appbar-item h-48"
@@ -47,9 +44,7 @@
         </template>
 
         <default-button
-            v-for="item in temporaryItems?.filter(
-                t => overflowFlags[`${t}-temp`] !== true
-            )"
+            v-for="item in temporaryItems?.filter(t => overflowFlags[`${t}-temp`] !== true)"
             :panelId="item"
             :minimize="true"
             :key="`${item}-temp`"
@@ -57,15 +52,18 @@
             class="appbar-item h-48"
         ></default-button>
 
-        <more-button id="more" v-show="overflow">
+        <more-button
+            id="more"
+            v-show="overflow"
+            :numItems="numberOverflow"
+            :renderWatch="popperRerender"
+            @update-parent="rerender"
+        >
             <template v-slot:default>
                 <template v-for="(subArray, index) in items" :key="index">
                     <template v-for="(item, index2) in subArray">
                         <default-button
-                            v-if="
-                                typeof item === 'string' &&
-                                overflowFlags[`${item}-${index2}`]
-                            "
+                            v-if="typeof item === 'string' && overflowFlags[`${item}-${index2}`]"
                             :key="`${item}-${index2}-default`"
                             :panelId="item"
                             class="text-black hover:bg-gray my-4 h-36"
@@ -90,9 +88,7 @@
                 </template>
 
                 <default-button
-                    v-for="item in temporaryItems?.filter(
-                        t => overflowFlags[`${t}-temp`]
-                    )"
+                    v-for="item in temporaryItems?.filter(t => overflowFlags[`${t}-temp`])"
                     :panelId="item"
                     :minimize="true"
                     :key="`${item}-temp`"
@@ -102,9 +98,7 @@
                 ></default-button>
             </template>
         </more-button>
-        <notifications-appbar-button
-            class="appbar-item bottom-48 h-48 sm:display-none"
-        ></notifications-appbar-button>
+        <notifications-appbar-button class="appbar-item bottom-48 h-48 sm:display-none"></notifications-appbar-button>
 
         <!-- TODO: disabled this button for now, revist this when we need it in the future -->
         <!-- <nav-button id="nav"></nav-button> -->
@@ -116,16 +110,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-    computed,
-    getCurrentInstance,
-    nextTick,
-    onBeforeMount,
-    onBeforeUnmount,
-    onMounted,
-    onUpdated,
-    ref
-} from 'vue';
+import { computed, getCurrentInstance, nextTick, onBeforeMount, onBeforeUnmount, onMounted, onUpdated, ref } from 'vue';
 import DefaultButton from './default-button.vue';
 import Divider from './divider.vue';
 import MoreButton from './more-button.vue';
@@ -138,11 +123,11 @@ import { useI18n } from 'vue-i18n';
 
 const panelStore = usePanelStore();
 const appbarStore = useAppbarStore();
+const numberOverflow = ref(0);
+const popperRerender = ref(0);
 
 const items = computed<any>(() => appbarStore.visible);
-const temporaryItems = computed<string[] | undefined>(
-    () => appbarStore.temporary
-);
+const temporaryItems = computed<string[] | undefined>(() => appbarStore.temporary);
 const { t } = useI18n();
 const overflow = ref(false);
 const overflowFlags = ref<{
@@ -150,6 +135,21 @@ const overflowFlags = ref<{
 }>({});
 
 const el = ref<Element>();
+
+// When the popper (from the more-button component) is rendered for the first time, it tends to
+// overlap the top border of the `inner-shell` component. Re-rendering the appbar (as well as recreating
+// the popper) seems to resolve this. The same issue tends to occur when opening a new (non-default) panel,
+// then opening the popper. When closing a non-default panel (ex. grid, details) while the popper is open, there
+// would have been empty space in the popper (due to the way that the popper height is set in the more-button
+// component). Re-rendering the appbar also fixes this. Note: this solution isn't really tackling the root cause
+// of the issue, and seems inefficient. If a better solution exists, feel free to implement it and remove this
+// function (as well as the other code involved in re-rendering)
+const rerender = () => {
+    nextTick(() => {
+        const instance = getCurrentInstance();
+        instance?.proxy?.$forceUpdate();
+    });
+};
 
 const blurEvent = () => {
     (el.value as any)._tippy.hide();
@@ -187,8 +187,7 @@ onUpdated(() => {
         const element: Element = el.value!;
         let key: string | undefined = undefined;
         let children: Element[] = [...element.children];
-        let bound: number | undefined =
-            children[children.length - 2].getBoundingClientRect().top;
+        let bound: number | undefined = children[children.length - 2].getBoundingClientRect().top;
         if (!panelStore.mobileView) {
             bound = element.getBoundingClientRect().bottom - 38;
         }
@@ -196,17 +195,19 @@ onUpdated(() => {
         // check positions of appbar buttons
         for (let i = children.length - 4; i >= 0; i--) {
             let bottom: number = children[i].getBoundingClientRect().bottom;
-            if (
-                bound &&
-                dropdown &&
-                (bottom > bound || (overflow.value && bottom + 56 > bound))
-            ) {
+            if (bound && dropdown && (bottom > bound || (overflow.value && bottom + 56 > bound))) {
                 children[i].classList.forEach(cl => {
                     if (cl.includes('identifier')) {
                         key = cl.slice(11);
                     }
                 });
-                if (key) overflowFlags.value[key] = true;
+                if (key) {
+                    overflowFlags.value[key] = true;
+                    if (!(key as String).includes('divider')) {
+                        numberOverflow.value++;
+                    }
+                    popperRerender.value++;
+                }
                 if (!overflow.value) overflow.value = true;
             } else if (bottom !== 0) {
                 break;
@@ -222,8 +223,7 @@ onUpdated(() => {
             more &&
             dropdown &&
             moreBottom !== 0 &&
-            (moreBottom <= bound - 56 ||
-                (dropdown.childElementCount == 1 && moreBottom <= bound))
+            (moreBottom <= bound - 56 || (dropdown.childElementCount == 1 && moreBottom <= bound))
         ) {
             // dropdown.classList.add(`max-h-${moreBottom - 8}`);
             let buttonsRemaining: number = dropdown.childElementCount;
@@ -236,7 +236,12 @@ onUpdated(() => {
                             key = cl.slice(11);
                         }
                     });
-                    if (key) overflowFlags.value[key] = false;
+                    if (key) {
+                        overflowFlags.value[key] = false;
+                        if (!(key as String).includes('divider')) {
+                            numberOverflow.value--;
+                        }
+                    }
                     moreBottom += 48;
                     buttonsRemaining -= 1;
                     index += 1;
@@ -249,8 +254,13 @@ onUpdated(() => {
         }
         // clean up flags for items that were removed.
         Object.keys(overflowFlags.value).forEach((key: string) => {
-            if (!element.querySelector(`.identifier-${key}`))
+            if (!element.querySelector(`.identifier-${key}`)) {
                 delete overflowFlags.value[key];
+                if (!key.includes('divider')) {
+                    numberOverflow.value = Math.max(0, numberOverflow.value - 1);
+                }
+                popperRerender.value++;
+            }
         });
     });
 });

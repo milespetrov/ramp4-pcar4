@@ -123,10 +123,7 @@ export class DataLayer extends CommonLayer {
             realJson.data.forEach((row, i) => row.push(i + 1)); // +1 to start at 1, not zero
 
             // this will apply any additional aliases and field exclusions as specified.
-            this.$iApi.geo.attributes.applyFieldMetadata(
-                this,
-                this.origRampConfig.fieldMetadata
-            );
+            this.$iApi.geo.attributes.applyFieldMetadata(this, this.origRampConfig.fieldMetadata);
             this.fieldList = '*'; // overwrite, no server.
 
             // TODO this is a potential improvement. Consider doing it if this format becomes popular, otherwise this
@@ -145,12 +142,10 @@ export class DataLayer extends CommonLayer {
                 batchSize: -1, // mandatory to avoid easy bugs in server process; not used here
                 sourceDataJson: realJson,
                 oidField: this.oidField,
-                attribs: '*' // even required?
+                attribs: '*', // even required?
+                fieldsToTrim: this.getFieldsToTrim()
             };
-            this.attribs.attLoader = new DataLayerAttributeLoader(
-                this.$iApi,
-                loadData
-            );
+            this.attribs.attLoader = new DataLayerAttributeLoader(this.$iApi, loadData);
 
             // trigger the attribute load. this will be synchronous, but is a promise to meet convention.
             // we toss the end result, but it now exists (in proper format) inside the attLoader for all future calls
@@ -160,10 +155,8 @@ export class DataLayer extends CommonLayer {
             this.featureCount = realJson.data.length;
             if (this.origRampConfig.nameField) {
                 this.nameField =
-                    this.$iApi.geo.attributes.fieldValidator(
-                        this.fields,
-                        this.origRampConfig.nameField
-                    ) || this.oidField;
+                    this.$iApi.geo.attributes.fieldValidator(this.fields, this.origRampConfig.nameField) ||
+                    this.oidField;
             } else {
                 this.nameField = this.oidField;
             }
@@ -175,9 +168,7 @@ export class DataLayer extends CommonLayer {
                 delete this.origRampConfig.rawData;
             }
         } else {
-            throw new Error(
-                'Attempted to initiate file based data layer, sourceJson is missing'
-            );
+            throw new Error('Attempted to initiate file based data layer, sourceJson is missing');
         }
     }
 
@@ -188,14 +179,9 @@ export class DataLayer extends CommonLayer {
     }
 
     async reload(): Promise<void> {
-        if (this.initiationState === InitiationState.INITIATED) {
-            // TODO might need to store layer state. If we want layer to look the same as it was prior to re-loading,
-            //      could do that here. Alternative is to not, and let whomever is calling this save state before
-            //      and restore state after. Might be more flexible.
-            this.$iApi.event.emit(GlobalEvents.LAYER_RELOAD_START, this);
+        this.$iApi.event.emit(GlobalEvents.LAYER_RELOAD_START, this);
 
-            await this.terminate();
-        }
+        await this.terminate();
 
         await this.initiate();
 
@@ -211,9 +197,6 @@ export class DataLayer extends CommonLayer {
         }, 300);
     }
 
-    // performs setup on the layer that needs to occur after server load but
-    // before we mark the layer as loaded. Any async tasks must
-    // include their promise in the return array.
     protected onLoadActions(): Array<Promise<void>> {
         const proms = super.onLoadActions();
 
@@ -247,37 +230,17 @@ export class DataLayer extends CommonLayer {
         return this.attribs.attLoader.getAttribs();
     }
 
-    /**
-     * Invokes the process to get the full set of attribute values for the layer,
-     * formatted in a tabular format. Additional data properties are also included.
-     * Repeat calls will re-use the downloaded values unless the values have been explicitly cleared.
-     *
-     * @returns {Promise} resolves with set of tabular attribute values
-     */
     getTabularAttributes(): Promise<TabularAttributeSet> {
         // this call will generate the tabular format, or return the cache if
         // it exists
-        return this.$iApi.geo.attributes.generateTabularAttributes(
-            this,
-            this.attribs
-        );
+        return this.$iApi.geo.attributes.generateTabularAttributes(this, this.attribs);
     }
 
-    /**
-     * Gets information on a graphic in the most efficient way possible.
-     * The options parameter is ignored for data layers, since attributes is the only valid item
-     * to request
-     *
-     * @param {Integer} objectId the object id of the graphic to find
-     * @param {Object} options options object for the request. Ignored for data layers
-     * @returns {Promise} resolves with a Graphic containing the requested information
-     */
-    async getGraphic(
-        objectId: number,
-        options: GetGraphicParams
-    ): Promise<Graphic> {
+    async getGraphic(objectId: number, options: GetGraphicParams): Promise<Graphic> {
         // note: this methods supports data layers not tied to an ArcGIS server.
         //      class TableLayer will override.
+
+        // note: the options is ignored, data layers only have attributes and they always get returned
 
         // the layer should have pre-populated its attribute store during load.
 
@@ -288,20 +251,12 @@ export class DataLayer extends CommonLayer {
             resultAttribs = atSet.features[atSet.oidIndex[objectId]];
         } else {
             // something went wrong
-            throw new Error(
-                'Non ESRI data layer did not have attributes populated.'
-            );
+            throw new Error('Non ESRI data layer did not have attributes populated.');
         }
 
         return new Graphic(new NoGeometry(), '', resultAttribs);
     }
 
-    /**
-     * Gets the icon for a specific feature, as an SVG string.
-     *
-     * @param {Integer} objectId the object id of the feature to find
-     * @returns {Promise} resolves with an svg string encoding of the icon
-     */
     async getIcon(objectId: number): Promise<string> {
         // TODO decide what we want as the icon.
         //      other options can be .generateBlankSymbology()
@@ -330,42 +285,23 @@ export class DataLayer extends CommonLayer {
         return undefined;
     }
 
-    /**
-     * Since data layers (except table layers) do not have asynch attribute loading, there is nothing to do here.
-     * However, we have it there just so that calling this method for a giant list is peaceful, and filtering
-     * by layer type is not required.
-     */
+    // Since data layers (except table layers) do not have asynch attribute loading, there is nothing to do in the following methods.
+    // However, we have it there just so that calling this method for a giant list is peaceful, and filtering
+    // by layer type is not required.
+
     abortAttributeLoad(): void {}
 
-    /**
-     * Since data layers (except table layers) do not have asynch attribute loading, there is nothing to do here.
-     * However, we have it there just so that calling this method for a giant list is peaceful, and filtering
-     * by layer type is not required.
-     */
     attribLoadAborted(): boolean {
         return false;
     }
 
-    /**
-     * Since data layers (except table layers) do not have asynch attribute loading, there is nothing to do here.
-     * However, we have it there just so that calling this method for a giant list is peaceful, and filtering
-     * by layer type is not required.
-     */
     clearFeatureCache(): void {}
 
-    /**
-     * The number of attributes currently downloaded (will update as download progresses)
-     * @returns current download count
-     */
     downloadedAttributes(): number {
         // non-table data layer has downloaded everything after initialize.
         return this.featureCount;
     }
 
-    /**
-     * Override for data layers.
-     * Used to determine if layer is available for use.
-     */
     get layerExists(): boolean {
         return this.isLoaded;
     }

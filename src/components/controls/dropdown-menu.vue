@@ -3,14 +3,15 @@
         <button
             type="button"
             class="text-gray-500 hover:text-black dropdown-button"
-            @click="open = !open"
+            @click="toggleDropdown"
             :content="tooltip"
             :aria-label="ariaLabel ? String(ariaLabel) : String(tooltip)"
             v-tippy="{
                 placement: tooltipPlacement,
                 theme: tooltipTheme,
                 animation: tooltipAnimation,
-                appendTo: 'parent'
+                appendTo: 'parent',
+                trigger: 'manual'
             }"
             ref="dropdownTrigger"
         >
@@ -29,14 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-    ref,
-    reactive,
-    watch,
-    nextTick,
-    onMounted,
-    onBeforeUnmount
-} from 'vue';
+import { ref, reactive, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import type { Placement, Modifier, State } from '@popperjs/core';
 import { createPopper, detectOverflow } from '@popperjs/core';
 
@@ -61,6 +55,7 @@ const props = defineProps({
     },
     tooltip: { type: String },
     tooltipPlacement: { type: String, default: 'bottom' },
+    tooltipPlacementAlt: { type: String, default: 'top' },
     tooltipTheme: { type: String, default: 'ramp4' },
     tooltipAnimation: { type: String, default: 'scale' },
     centered: { type: Boolean, default: true },
@@ -72,6 +67,22 @@ watchers.push(
         popper.value.update();
     })
 );
+
+const toggleDropdown = () => {
+    open.value = !open.value;
+    (dropdownTrigger.value as any)._tippy.hide();
+};
+
+const focusDropdownTrigger = () => {
+    (dropdownTrigger.value as any)._tippy.setProps({
+        placement: open.value ? props.tooltipPlacementAlt : props.tooltipPlacement
+    });
+    (dropdownTrigger.value as any)._tippy.show();
+};
+
+const blurDropdownTrigger = () => {
+    (dropdownTrigger.value as any)._tippy.hide();
+};
 
 onMounted(() => {
     window.addEventListener(
@@ -94,6 +105,14 @@ onMounted(() => {
         }
     });
 
+    dropdownTrigger.value!.addEventListener('focus', focusDropdownTrigger);
+
+    dropdownTrigger.value!.addEventListener('blur', blurDropdownTrigger);
+
+    dropdownTrigger.value!.addEventListener('mouseover', focusDropdownTrigger);
+
+    dropdownTrigger.value!.addEventListener('mouseleave', blurDropdownTrigger);
+
     // nextTick should prevent any race conditions by letting the child elements render before trying to place them using popper
     nextTick(() => {
         const overflowScrollModifier: Modifier<'overflowScroll', {}> = {
@@ -104,12 +123,9 @@ onMounted(() => {
                 const { bottom } = detectOverflow(state);
 
                 if (bottom > 0) {
-                    state.styles.popper.overflowY =
-                        bottom > 100 ? 'auto' : undefined;
+                    state.styles.popper.overflowY = bottom > 100 ? 'auto' : undefined;
                     state.styles.popper.overflowX = 'hidden';
-                    state.styles.popper.height = `${
-                        state.rects.popper.height - bottom - 8
-                    }px`;
+                    state.styles.popper.height = `${state.rects.popper.height - bottom - 8}px`;
                 } else {
                     state.styles.popper.height = 'auto';
                 }
@@ -117,23 +133,19 @@ onMounted(() => {
         };
 
         if (dropdownTrigger.value && dropdown.value) {
-            popper.value = createPopper(
-                dropdownTrigger.value as Element,
-                dropdown.value as HTMLElement,
-                {
-                    placement: (props.position || 'bottom') as Placement,
-                    modifiers: [
-                        overflowScrollModifier,
-                        {
-                            name: 'offset',
-                            options: {
-                                offset: [0, 5]
-                            }
+            popper.value = createPopper(dropdownTrigger.value as Element, dropdown.value as HTMLElement, {
+                placement: (props.position || 'bottom') as Placement,
+                modifiers: [
+                    overflowScrollModifier,
+                    {
+                        name: 'offset',
+                        options: {
+                            offset: [0, 5]
                         }
-                    ],
-                    ...props.popperOptions
-                }
-            );
+                    }
+                ],
+                ...props.popperOptions
+            });
         }
     });
 });
@@ -160,6 +172,14 @@ onBeforeUnmount(() => {
             open.value = false;
         }
     });
+
+    dropdownTrigger.value!.removeEventListener('focus', focusDropdownTrigger);
+
+    dropdownTrigger.value!.removeEventListener('blur', blurDropdownTrigger);
+
+    dropdownTrigger.value!.removeEventListener('mouseover', focusDropdownTrigger);
+
+    dropdownTrigger.value!.removeEventListener('mouseleave', blurDropdownTrigger);
 
     open.value = false;
 });

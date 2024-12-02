@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
-import type { PanelInstance } from '@/api';
+import { PanelInstance } from '@/api';
 import { DefPromise } from '@/geo/api';
 import type { PanelDirection } from './panel-state';
 import type { PanelConfig } from '@/stores/panel';
@@ -14,13 +14,13 @@ export interface PanelStore {
     mobileView: Ref<boolean>;
     reorderable: Ref<boolean>;
     items: Ref<{ [name: string]: PanelInstance }>;
-    regPromises: Ref<{ [name: string]: DefPromise }>;
+    regPromises: Ref<{ [name: string]: DefPromise<PanelInstance> }>;
     orderedItems: Ref<[]>;
     teleported: Ref<[]>;
     visible: Ref<[]>;
     getRemainingWidth: ComputedRef<number>;
     getVisible: (screenSize: string) => PanelConfig[];
-    getRegPromises: (panelIds: string[]) => Promise<void>[];
+    getRegPromises: (panelIds: string[]) => Promise<PanelInstance>[];
     openPanel: (panel: PanelInstance) => void;
     closePanel: (panel: PanelInstance) => void;
     movePanel: (panel: PanelInstance, direction: PanelDirection) => void;
@@ -44,7 +44,7 @@ export const usePanelStore = defineStore('panel', () => {
     const mobileView = ref(false);
     const reorderable = ref(true);
     const items = ref<{ [name: string]: PanelInstance }>({});
-    const regPromises = ref<{ [name: string]: DefPromise }>({});
+    const regPromises = ref<{ [name: string]: DefPromise<PanelInstance> }>({});
     const orderedItems = ref<PanelInstance[]>([]);
     const teleported = ref<PanelInstance[]>([]);
     const visible = ref<PanelInstance[]>([]);
@@ -76,8 +76,8 @@ export const usePanelStore = defineStore('panel', () => {
      * Should ideally be called when all panelIds have a promise associated with them.
      * @param panelIds the panel Ids for which promises should be returned
      */
-    function getRegPromises(panelIds: string[]): Promise<void>[] {
-        const reguPromises: Promise<void>[] = [];
+    function getRegPromises(panelIds: string[]): Promise<PanelInstance>[] {
+        const reguPromises: Promise<PanelInstance>[] = [];
         panelIds.forEach((panelId: string) => {
             if (panelId in regPromises.value) {
                 reguPromises.push(regPromises.value[panelId].getPromise());
@@ -128,10 +128,12 @@ export const usePanelStore = defineStore('panel', () => {
         const nowVisible: PanelInstance[] = [];
         const defaultWidth = 350;
         const panelMargin = 12;
+        const gridMinWidth = 600; // Define a minimum width for the grid
 
         // add panels until theres no space in the stack
         for (let i = orderedItems.value.length - 1; i >= 0; i--) {
-            let panelWidth = orderedItems.value[i].width || defaultWidth;
+            const panel = orderedItems.value[i];
+            let panelWidth = panel.width || defaultWidth;
 
             // if not in mobile view, all panels have a 12px margin to the right
             if (!mobileView.value) {
@@ -141,14 +143,22 @@ export const usePanelStore = defineStore('panel', () => {
                 panelWidth = remainingWidth;
             }
 
+            // If we are dealing with the grid, ensure it doesn't occupy too much space
+            if (panel.id === 'grid') {
+                // Ensure the grid occupies only up to the remaining width or its min width
+                panelWidth = Math.max(Math.min(panelWidth, remainingWidth), gridMinWidth);
+            }
+
             // mobile mode only allows for one panel to be visible
-            if (
-                (remainingWidth >= panelWidth && !mobileView.value) ||
-                nowVisible.length === 0
-            ) {
+            if ((remainingWidth >= panelWidth && !mobileView.value) || nowVisible.length === 0) {
                 remainingWidth -= panelWidth;
                 //@ts-ignore
-                nowVisible.unshift(orderedItems.value[i]);
+                nowVisible.unshift(panel);
+            }
+
+            // Close the grid if it starts taking too much space
+            if (panel.id === 'grid' && remainingWidth < gridMinWidth) {
+                break;
             }
         }
 
@@ -163,9 +173,7 @@ export const usePanelStore = defineStore('panel', () => {
             // remove elements from visible until theres room for pinned
             for (
                 let i = 0;
-                i < nowVisible.length - 1 &&
-                remainingWidth <
-                    (pinned.value.width || defaultWidth) + panelMargin;
+                i < nowVisible.length - 1 && remainingWidth < (pinned.value.width || defaultWidth) + panelMargin;
                 i++
             ) {
                 lastElement = nowVisible.shift()!;
@@ -210,14 +218,14 @@ export const usePanelStore = defineStore('panel', () => {
         items.value = { ...items.value, [panel.id]: panel };
         // since panel has successfully registered, resolve its associated registration promise
         if (!(panel.id in regPromises.value)) {
-            const regPromise = new DefPromise();
-            regPromise.resolveMe();
+            const regPromise = new DefPromise<PanelInstance>();
+            regPromise.resolveMe(panel);
             regPromises.value = {
                 ...regPromises.value,
                 [panel.id]: regPromise
             };
         } else {
-            regPromises.value[panel.id].resolveMe();
+            regPromises.value[panel.id].resolveMe(panel);
         }
     }
 
@@ -238,19 +246,13 @@ export const usePanelStore = defineStore('panel', () => {
             //@ts-ignore
             const index = teleported.value.indexOf(panel);
             if (index !== -1) {
-                teleported.value = [
-                    ...teleported.value.slice(0, index),
-                    ...teleported.value.slice(index + 1)
-                ];
+                teleported.value = [...teleported.value.slice(0, index), ...teleported.value.slice(index + 1)];
             }
         } else {
             //@ts-ignore
             const index = orderedItems.value.indexOf(panel);
             if (index !== -1) {
-                orderedItems.value = [
-                    ...orderedItems.value.slice(0, index),
-                    ...orderedItems.value.slice(index + 1)
-                ];
+                orderedItems.value = [...orderedItems.value.slice(0, index), ...orderedItems.value.slice(index + 1)];
             }
         }
     }
@@ -281,10 +283,7 @@ export const usePanelStore = defineStore('panel', () => {
         //@ts-ignore
         const index = visible.value.indexOf(panel);
         if (index !== -1) {
-            visible.value = [
-                ...visible.value.slice(0, index),
-                ...visible.value.slice(index + 1)
-            ];
+            visible.value = [...visible.value.slice(0, index), ...visible.value.slice(index + 1)];
         }
 
         // remove from pinner

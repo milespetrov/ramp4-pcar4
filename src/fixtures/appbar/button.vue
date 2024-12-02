@@ -10,9 +10,12 @@
                 }
             "
             v-focus-item
-            :content="tooltip"
             :aria-label="String(tooltip)"
-            v-tippy="{ placement: 'right' }"
+            :content="`<div style='word-break: break-word;'>${tooltip}</div>`"
+            v-tippy="{
+                allowHTML: true,
+                placement: 'right'
+            }"
         >
             <slot></slot>
         </button>
@@ -41,8 +44,7 @@ const props = defineProps({
     }
 });
 
-const onClick = () =>
-    iApi?.event.emit(GlobalEvents.APPBAR_BUTTON_CLICK, props.id);
+const onClick = () => iApi?.event.emit(GlobalEvents.APPBAR_BUTTON_CLICK, props.id);
 </script>
 
 <style lang="scss" scoped>

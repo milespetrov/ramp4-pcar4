@@ -1,10 +1,6 @@
 import { createApp as createRampApp, Transition, TransitionGroup } from 'vue';
 import { createPinia } from 'pinia';
-import type {
-    ComponentPublicInstance,
-    App as VueApp,
-    DefineComponent
-} from 'vue';
+import type { ComponentPublicInstance, App as VueApp, DefineComponent } from 'vue';
 import type { RampConfig, RampConfigs } from '@/types';
 import { i18n } from '@/lang';
 import screenfull from 'screenfull';
@@ -17,15 +13,7 @@ import VueTippy from 'vue-tippy';
 import { FocusList, FocusItem, FocusContainer } from '@/directives/focus-list';
 import { Truncate } from '@/directives/truncate/truncate';
 
-import {
-    EventAPI,
-    FixtureAPI,
-    GeoAPI,
-    GlobalEvents,
-    PanelAPI,
-    NotificationAPI
-} from './internal';
-import type { LayerInstance } from './internal';
+import { EventAPI, FixtureAPI, GeoAPI, GlobalEvents, PanelAPI, NotificationAPI } from './internal';
 
 import PanelScreenV from '@/components/panel-stack/panel-screen.vue';
 import PinV from '@/components/panel-stack/controls/pin.vue';
@@ -95,6 +83,7 @@ export class InstanceAPI {
         isPlainText: (content: any) => boolean;
     };
     startRequired: boolean = false;
+    private _eventsOn: boolean = false; // internal tracker that indicates whether default event handlers are on.
 
     /**
      * The instance of Vue R4MP application controlled by this InstanceAPI.
@@ -108,11 +97,7 @@ export class InstanceAPI {
 
     private _isFullscreen: boolean;
 
-    constructor(
-        element: HTMLElement,
-        configs?: RampConfigs,
-        options?: RampOptions
-    ) {
+    constructor(element: HTMLElement, configs?: RampConfigs, options?: RampOptions) {
         this.event = new EventAPI(this);
 
         const appInstance = createApp(element, this);
@@ -155,17 +140,18 @@ export class InstanceAPI {
             });
         }
 
-        this.initialize(configs, options);
+        this.initialize(true, configs, options);
     }
 
     /**
      * Initializes a Vue R4MP instance with the given config and options
      *
      * @private
+     * @param {boolean} first whether this is the first time initialize is being called for this R4MP instance
      * @param {RampConfigs | undefined} configs language-keyed R4MP config
      * @param {RampOptions | undefined} options startup options for this R4MP instance
      */
-    private initialize(configs?: RampConfigs, options?: RampOptions): void {
+    private initialize(first: boolean, configs?: RampConfigs, options?: RampOptions): void {
         const configStore = useConfigStore(this.$vApp.$pinia);
         const panelStore = usePanelStore(this.$vApp.$pinia);
         const maptipStore = useMaptipStore(this.$vApp.$pinia);
@@ -174,9 +160,7 @@ export class InstanceAPI {
                 [key: string]: RampConfig;
             } = configs.configs;
 
-            const langConfig =
-                langConfigs[this.$i18n.locale.value] ??
-                langConfigs[Object.keys(langConfigs)[0]];
+            const langConfig = langConfigs[this.$i18n.locale.value] ?? langConfigs[Object.keys(langConfigs)[0]];
             configStore.newConfig(langConfig);
 
             // register first config for all available languages and then overwrite configs per language as needed
@@ -204,16 +188,12 @@ export class InstanceAPI {
             // if startRequired is true, it will appear after calling start() or setting started to true,
             // at which point the map is created
             const mapDivWatcher = setInterval(() => {
-                const mapViewElement: Element | null =
-                    this.$vApp.$el.querySelector('#esriMap');
+                const mapViewElement: Element | null = this.$vApp.$el.querySelector('#esriMap');
                 if (mapViewElement) {
                     clearInterval(mapDivWatcher);
 
                     // create the map
-                    this.geo.map.createMap(
-                        langConfig.map,
-                        mapViewElement as HTMLDivElement
-                    );
+                    this.geo.map.createMap(langConfig.map, mapViewElement as HTMLDivElement);
 
                     // Hide hovertip on map creation
                     //@ts-ignore
@@ -227,9 +207,11 @@ export class InstanceAPI {
                         // Enhanced positioning logic is now handled by map.addLayer()
                         let mapOrderPos = 0;
                         langConfig.layers.forEach(layerConfig => {
-                            const layer =
-                                this.geo.layer.createLayer(layerConfig);
-                            this.geo.map.addLayer(layer, mapOrderPos);
+                            const layer = this.geo.layer.createLayer(layerConfig);
+                            this.geo.map
+                                .addLayer(layer, mapOrderPos)
+                                // just to silence console about unhandled rejections.
+                                .catch(() => {});
                             if (layer.mapLayer) {
                                 // we only increment for map layers. Data layers get added but do not live in the map stack.
                                 // so no ++. We pass the param to map.addLayer above out of lazyness. It gets ignored for data layers.
@@ -247,10 +229,7 @@ export class InstanceAPI {
                 // there is no way to open the panel with layer data loaded without writing specific code for specific fixtures.
                 // Once layer usage throughout RAMP is normalized, add an extra nugget in the config called options or something so that the panel
                 // can load layer data as well.
-                if (
-                    langConfig.panels.open &&
-                    langConfig.panels.open.length > 0
-                ) {
+                if (langConfig.panels.open && langConfig.panels.open.length > 0) {
                     const panelIds = langConfig.panels.open.map(p => p.id);
                     this.panel.isRegistered(panelIds).then(() => {
                         langConfig.panels?.open?.forEach(panel => {
@@ -270,14 +249,8 @@ export class InstanceAPI {
             }
 
             // disable animations if needed
-            if (
-                !langConfig.system?.animate &&
-                this.$element._container &&
-                this.$element._container.children[0]
-            ) {
-                this.$element._container.children[0].classList.remove(
-                    'animation-enabled'
-                );
+            if (!langConfig.system?.animate && this.$element._container && this.$element._container.children[0]) {
+                this.$element._container.children[0].classList.remove('animation-enabled');
             }
 
             // process system configurations
@@ -288,15 +261,13 @@ export class InstanceAPI {
                 this.ui.exposeOids = langConfig.system.exposeOid;
             }
             if (langConfig.system?.exposeMeasurements != undefined) {
-                this.ui.exposeMeasurements =
-                    langConfig.system.exposeMeasurements;
+                this.ui.exposeMeasurements = langConfig.system.exposeMeasurements;
             }
             if (langConfig.system?.scrollToInstance) {
                 this.ui.scrollToInstance = langConfig.system?.scrollToInstance;
             }
             if (langConfig.system?.suppressNumberLocalization) {
-                this.ui.suppressNumberLocalization =
-                    langConfig.system?.suppressNumberLocalization;
+                this.ui.suppressNumberLocalization = langConfig.system?.suppressNumberLocalization;
             }
 
             // set up key to SVG bindings for zoom icons
@@ -314,9 +285,7 @@ export class InstanceAPI {
             };
 
             this.ui.formatNumber = (num: number) => {
-                return this.ui.suppressNumberLocalization
-                    ? num.toString()
-                    : this.$i18n.n(num, 'number');
+                return this.ui.suppressNumberLocalization ? num.toString() : this.$i18n.n(num, 'number');
             };
 
             /**
@@ -338,8 +307,7 @@ export class InstanceAPI {
              */
             this.ui.isPlainText = (content: any) => {
                 return typeof content === 'string'
-                    ? !this.containsValidHtml(content) &&
-                          !this.representsObject(content)
+                    ? !this.containsValidHtml(content) && !this.representsObject(content)
                     : false;
             };
         }
@@ -362,14 +330,14 @@ export class InstanceAPI {
         // use strict check against false, as missing properties have default value of true.
         // run the default setup functions unless flags have been set to false.
         // override the loadDefaultFixtures flag if startingFixtures is provided
-        if (
-            !(options.loadDefaultFixtures === false) ||
-            configs?.startingFixtures !== undefined
-        ) {
+        if (first && (options.loadDefaultFixtures !== false || configs?.startingFixtures !== undefined)) {
             this.fixture.addDefaultFixtures(configs?.startingFixtures);
+        } else if (!first) {
+            this.fixture.restore();
         }
-        if (!(options.loadDefaultEvents === false)) {
+        if (options.loadDefaultEvents !== false && !this._eventsOn) {
             this.event.addDefaultEvents();
+            this._eventsOn = true;
         }
     }
 
@@ -387,16 +355,24 @@ export class InstanceAPI {
         const layerStore = useLayerStore(this.$vApp.$pinia);
         const gridStore = useGridStore(this.$vApp.$pinia);
 
-        // remove all fixtures
-        // get list of all fixture ids currently added
-        const addedFixtures: Array<string> = Object.keys(fixtureStore.items);
-        // remove each fixture
-        addedFixtures.forEach((id: string) => {
-            // check if the fixture exists first otherwise it will error
-            if (this.fixture.exists(id)) {
-                this.fixture.remove(id);
-            }
-        });
+        // if a user provides their own config, we pretend that RAMP is initializing for the first time
+        const first = !!configs;
+
+        if (first) {
+            // remove all fixtures
+            // get list of all fixture ids currently added
+            const addedFixtures: Array<string> = Object.keys(fixtureStore.items);
+            // remove each fixture
+            addedFixtures.forEach((id: string) => {
+                // check if the fixture exists first otherwise it will error
+                if (this.fixture.exists(id)) {
+                    this.fixture.remove(id);
+                }
+            });
+        } else {
+            // remove all fixtures which we do not want to persist, otherwise just call the removed hook
+            this.fixture.flush();
+        }
 
         // remove all grids
         // get list of all grid ids currently added
@@ -416,8 +392,11 @@ export class InstanceAPI {
         // reset the layer store
         layerStore.$reset();
 
-        // remove all event handlers
-        this.event.offAll();
+        // remove all default event handlers if new config wants them off
+        if (options?.loadDefaultEvents === false) {
+            this.event.removeDefaultEvents();
+            this._eventsOn = false;
+        }
 
         // if configs is not provided, use the current configs
         if (configs === undefined) {
@@ -437,7 +416,7 @@ export class InstanceAPI {
         this.geo.map.maptip.clear();
 
         // re-initalize ramp
-        this.initialize(configs, options);
+        this.initialize(first, configs, options);
     }
 
     /**
@@ -480,8 +459,7 @@ export class InstanceAPI {
             return null;
         }
 
-        const classList = (this.$vApp.$root.$refs['app-size'] as HTMLElement)
-            .classList;
+        const classList = (this.$vApp.$root.$refs['app-size'] as HTMLElement).classList;
         if (classList.contains('lg')) {
             return 'lg';
         } else if (classList.contains('md')) {
@@ -501,9 +479,7 @@ export class InstanceAPI {
     getConfig() {
         // clone it to avoid mutations to store config
         const configStore = useConfigStore(this.$vApp.$pinia);
-        return JSON.parse(
-            JSON.stringify(configStore.getActiveConfig(this.language))
-        );
+        return JSON.parse(JSON.stringify(configStore.getActiveConfig(this.language)));
     }
 
     /**
@@ -603,21 +579,29 @@ export class InstanceAPI {
             return;
         }
         const configStore = useConfigStore(this.$vApp.$pinia);
+        const notificationStore = useNotificationStore(this.$vApp.$pinia);
         const langs = configStore.registeredLangs;
 
-        // prevent full map reload if the new language uses the same config
-        if (langs[language] === langs[this.$i18n.locale.value]) {
-            this.$i18n.locale.value = language;
-            return;
+        // If monoconfig, clear all notifications (notification language isn't changed on lang change)
+        if (Object.keys(configStore.registeredConfigs).length === 1) {
+            notificationStore.clearAll();
         }
 
+        const old = this.$i18n.locale.value;
         this.$i18n.locale.value = language;
 
         const activeConfig = this.getConfig();
-        this.event.emit(GlobalEvents.CONFIG_CHANGE, activeConfig);
 
-        // reload the map to apply new config
-        this.reload();
+        // reload the map and emit event if configs are different
+        if (langs[old] !== langs[language]) {
+            this.event.emit(GlobalEvents.CONFIG_CHANGE, activeConfig);
+            this.reload();
+        }
+
+        this.event.emit(GlobalEvents.LANG_CHANGE, {
+            oldLang: old,
+            newLang: language
+        });
     }
 
     /**
@@ -642,9 +626,7 @@ export class InstanceAPI {
         return !!(
             this.$element._container &&
             this.$element._container.children[0] &&
-            this.$element._container.children[0].classList.contains(
-                'animation-enabled'
-            )
+            this.$element._container.children[0].classList.contains('animation-enabled')
         );
     }
 
@@ -689,9 +671,7 @@ export class InstanceAPI {
      * @memberof InstanceAPI
      */
     updateAlert(alert: string): void {
-        const alertContainer = this.$vApp.$el.querySelector(
-            '.screen-reader-alert'
-        ) as HTMLElement;
+        const alertContainer = this.$vApp.$el.querySelector('.screen-reader-alert') as HTMLElement;
 
         if (alertContainer.childNodes.length > 0) {
             alertContainer.innerHTML = '';
@@ -742,8 +722,7 @@ export class InstanceAPI {
      * Return whether the string represents an object or array
      */
     representsObject(content: string): boolean {
-        const tagPattern =
-            /^(?:\[\s*(?:[\s\S]*?)\s*\]|\{\s*(?:[\s\S]*?)\s*\})$/;
+        const tagPattern = /^(?:\[\s*(?:[\s\S]*?)\s*\]|\{\s*(?:[\s\S]*?)\s*\})$/;
         return tagPattern.test(content);
     }
 }

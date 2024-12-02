@@ -71,11 +71,6 @@ export class CommonGraphicLayer extends MapLayer {
         return this.esriLayer?.graphics.find((g: any) => g.id === graphicId);
     }
 
-    protected notLoadedErr(): void {
-        console.error('Attempted to manipulate the layer before it was loaded');
-        console.trace();
-    }
-
     /** Returns a copy of the graphics in the layer. */
     get graphics(): Array<Graphic> {
         return this._graphics.slice();
@@ -89,7 +84,7 @@ export class CommonGraphicLayer extends MapLayer {
      * @returns {Promise} resolves when graphics have been added
      */
     async addGraphic(graphics: Graphic | Array<Graphic>): Promise<void> {
-        if (!this.esriLayer) {
+        if (!this.layerExists) {
             this.noLayerErr();
             return;
         }
@@ -108,17 +103,13 @@ export class CommonGraphicLayer extends MapLayer {
                 this._graphics.push(g);
                 return true;
             } else {
-                console.error(
-                    `Attempting to add graphic with id '${g.id}' that has already been added.`
-                );
+                console.error(`Attempting to add graphic with id '${g.id}' that has already been added.`);
                 return false;
             }
         });
 
         const mapSR = this.$iApi.geo.map.getSR();
-        const projGeomsProms = validGraphics.map(g =>
-            this.$iApi.geo.proj.projectGeometry(mapSR, g.geometry)
-        );
+        const projGeomsProms = validGraphics.map(g => this.$iApi.geo.proj.projectGeometry(mapSR, g.geometry));
 
         const projGeoms = await Promise.all(projGeomsProms);
 
@@ -133,7 +124,7 @@ export class CommonGraphicLayer extends MapLayer {
         });
 
         // TODO raise event?
-        this.esriLayer.addMany(esriGraphics);
+        this.esriLayer!.addMany(esriGraphics);
     }
 
     /**
@@ -142,13 +133,13 @@ export class CommonGraphicLayer extends MapLayer {
      * @param {Graphic | string | Array<Graphic | string>} graphics Valid formats: A Graphic object, a graphic ID in string form, or an array of Graphic objects and/or graphic ID strings
      */
     removeGraphic(graphics?: Array<string | Graphic> | string | Graphic): void {
-        if (!this.esriLayer) {
+        if (!this.layerExists) {
             this.noLayerErr();
             return;
         }
         if (typeof graphics === 'undefined') {
             // TODO remove hover stuff once supported
-            this.esriLayer.removeAll();
+            this.esriLayer!.removeAll();
             this._graphics = [];
             // TODO raise event?
             return;
@@ -173,9 +164,7 @@ export class CommonGraphicLayer extends MapLayer {
         ids.forEach(id => {
             // need to tag the param as `any` because .id is something we manually added
 
-            const esriIdx = this.esriLayer!.graphics.findIndex(
-                (g: any) => g.id === id
-            );
+            const esriIdx = this.esriLayer!.graphics.findIndex((g: any) => g.id === id);
             if (esriIdx > -1) {
                 this.esriLayer!.graphics.removeAt(esriIdx);
             }

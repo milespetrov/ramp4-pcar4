@@ -20,9 +20,7 @@ export class TileLayer extends MapLayer {
     }
 
     protected async onInitiate(): Promise<void> {
-        this.esriLayer = markRaw(
-            new EsriTileLayer(this.makeEsriLayerConfig(this.origRampConfig))
-        );
+        this.esriLayer = markRaw(new EsriTileLayer(this.makeEsriLayerConfig(this.origRampConfig)));
         await super.onInitiate();
     }
 
@@ -32,29 +30,24 @@ export class TileLayer extends MapLayer {
      * @param rampLayerConfig snippet from RAMP for this layer
      * @returns configuration object for the ESRI layer representing this layer
      */
-    protected makeEsriLayerConfig(
-        rampLayerConfig: RampLayerConfig
-    ): __esri.TileLayerProperties {
-        const esriConfig: __esri.TileLayerProperties =
-            super.makeEsriLayerConfig(rampLayerConfig);
+    protected makeEsriLayerConfig(rampLayerConfig: RampLayerConfig): __esri.TileLayerProperties {
+        const esriConfig: __esri.TileLayerProperties = super.makeEsriLayerConfig(rampLayerConfig);
 
         return esriConfig;
     }
 
-    /**
-     * Triggers when the layer loads.
-     *
-     * @function onLoadActions
-     */
-    onLoadActions(): Array<Promise<void>> {
+    protected onLoadActions(): Array<Promise<void>> {
         const loadPromises: Array<Promise<void>> = super.onLoadActions();
+        const startTime = Date.now();
 
         this.layerTree.name = this.name;
 
         const legendPromise = this.$iApi.geo.symbology
             .mapServerToLocalLegend(this.origRampConfig.url!)
             .then(legArray => {
-                this.legend = legArray;
+                if (startTime > this.lastCancel) {
+                    this.legend = legArray;
+                }
             });
 
         loadPromises.push(legendPromise);

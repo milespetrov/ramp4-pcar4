@@ -52,10 +52,7 @@ export class ReactiveIdentifyFactory {
      * @param {any} payload the data for the item
      * @returns {IdentifyItem} a loaded identify item
      */
-    static makeRawItem(
-        format: IdentifyResultFormat,
-        payload: any
-    ): IdentifyItem {
+    static makeRawItem(format: IdentifyResultFormat, payload: any): IdentifyItem {
         const doneThanksPromise = Promise.resolve();
         const vanillaItem: IdentifyItem = {
             format,
@@ -88,7 +85,7 @@ export class ReactiveIdentifyFactory {
         // The method params also use the same secret reference, allowing the
         // layer to not fall under reactive().
 
-        const sneakyDeferred = new DefPromise();
+        const sneakyDeferred = new DefPromise<void>();
 
         const vanillaItem: IdentifyItem = {
             format: IdentifyResultFormat.ESRI,
@@ -132,6 +129,11 @@ export interface IdentifyResult {
      * UID of the logical layer the result came from
      */
     uid: string;
+
+    /**
+     * Layer Id of the logical layer the result came from
+     */
+    layerId: string;
 
     /**
      * Indicates if the list of results have been identified.

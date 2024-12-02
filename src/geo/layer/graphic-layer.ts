@@ -18,9 +18,7 @@ export class GraphicLayer extends CommonGraphicLayer {
     }
 
     protected async onInitiate(): Promise<void> {
-        this.esriLayer = markRaw(
-            new EsriGraphicsLayer(this.makeEsriLayerConfig(this.origRampConfig))
-        );
+        this.esriLayer = markRaw(new EsriGraphicsLayer(this.makeEsriLayerConfig(this.origRampConfig)));
         await super.onInitiate();
     }
 
@@ -30,27 +28,19 @@ export class GraphicLayer extends CommonGraphicLayer {
      * @param rampLayerConfig snippet from RAMP for this layer
      * @returns configuration object for the ESRI layer representing this layer
      */
-    protected makeEsriLayerConfig(
-        rampLayerConfig: RampLayerConfig
-    ): __esri.GraphicsLayerProperties {
+    protected makeEsriLayerConfig(rampLayerConfig: RampLayerConfig): __esri.GraphicsLayerProperties {
         // NOTE: it would be nice to put esri.LayerProperties as the return type, but since we are cheating with refreshInterval it wont work
         //       we can make our own interface if it needs to happen (or can extent the esri one)
-        const esriConfig: __esri.GraphicsLayerProperties =
-            super.makeEsriLayerConfig(rampLayerConfig);
+        const esriConfig: __esri.GraphicsLayerProperties = super.makeEsriLayerConfig(rampLayerConfig);
 
         return esriConfig;
     }
 
-    /**
-     * Triggers when the layer loads.
-     *
-     * @function onLoadActions
-     */
-    onLoadActions(): Array<Promise<void>> {
+    protected onLoadActions(): Array<Promise<void>> {
         const loadPromises: Array<Promise<void>> = super.onLoadActions();
 
-        // TODO if we ever have a way to "configure" initial graphics in the layer config,
-        //      would probably want to create them here.
+        // if we ever have a way to "configure" initial graphics in the layer config,
+        // would probably want to create them here.
 
         this.layerTree.name = this.name;
         this.updateDrawState(DrawState.UP_TO_DATE);

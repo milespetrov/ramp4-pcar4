@@ -1,8 +1,5 @@
 import { defineStore } from 'pinia';
-import type {
-    DetailsItemInstance,
-    DetailsRequestOrigin
-} from './details-state';
+import type { DetailsItemInstance, DetailsRequestOrigin } from './details-state';
 import type { IdentifyResult, LayerInstance } from '@/api';
 import { ref } from 'vue';
 
@@ -26,11 +23,6 @@ export const useDetailsStore = defineStore('details', () => {
      * The id of the feature that the current details panel is targeting.
      */
     const currentFeatureId = ref<string>();
-
-    /**
-     * Indicates whether greedy mode is still loading for current identify request after 500ms delay.
-     */
-    const slowLoadingFlag = ref<boolean>(false);
 
     /**
      * Indicates whether greedy mode is off (0), or currently running for the last request timestamp.
@@ -70,7 +62,6 @@ export const useDetailsStore = defineStore('details', () => {
         properties,
         defaultTemplates,
         currentFeatureId,
-        slowLoadingFlag,
         activeGreedy,
         lastHilight,
         hilightToggle,

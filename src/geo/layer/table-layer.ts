@@ -6,14 +6,7 @@ import {
     InstanceAPI,
     QuickCache
 } from '@/api/internal';
-import {
-    CoreFilter,
-    Extent,
-    Filter,
-    Graphic,
-    LayerType,
-    NoGeometry
-} from '@/geo/api';
+import { CoreFilter, Extent, Filter, Graphic, LayerType, NoGeometry } from '@/geo/api';
 import type {
     Attributes,
     DiscreteGraphicResult,
@@ -35,10 +28,7 @@ export class TableLayer extends DataLayer {
         super(rampConfig, $iApi);
         this.layerType = LayerType.DATATABLE;
         this.serviceUrl = rampConfig.url;
-        this.filter = new Filter(
-            rampConfig.permanentFilteredQuery || '',
-            rampConfig.initialFilteredQuery || ''
-        );
+        this.filter = new Filter(rampConfig.permanentFilteredQuery || '', rampConfig.initialFilteredQuery || '');
     }
 
     protected async onInitiate(): Promise<void> {
@@ -50,72 +40,62 @@ export class TableLayer extends DataLayer {
         // common layer stuff is done in .initiate()
     }
 
-    /**
-     * Triggers when the layer loads.
-     *
-     * @function onLoadActions
-     */
-    onLoadActions(): Array<Promise<void>> {
+    protected onLoadActions(): Array<Promise<void>> {
         // super call currently does nothing.
         // once data layers mature, we can decide to remove this, or
         // move it to the end of this method if super starts doing something.
         // whatever works best.
         const loadPromises: Array<Promise<void>> = super.onLoadActions();
+        const startTime = Date.now();
 
         const urlData = this.$iApi.geo.shared.parseUrlIndex(this.serviceUrl);
         const featIdx: number = urlData.index || 0;
 
         // update asynch data
-        const pLD: Promise<void> = this.$iApi.geo.layer
-            .loadLayerMetadata(this.serviceUrl)
-            .then(sData => {
-                if (!this.name) {
-                    this.name = sData.name;
-                }
-                this.layerTree.name = this.name;
+        const pLD: Promise<void> = this.$iApi.geo.layer.loadLayerMetadata(this.serviceUrl).then(sData => {
+            if (startTime < this.lastCancel) {
+                return;
+            }
+            if (!this.name) {
+                this.name = sData.name;
+            }
+            this.layerTree.name = this.name;
 
-                this.oidField = sData.objectIdField;
+            this.oidField = sData.objectIdField;
 
-                // apply any config based overrides to the data we just downloaded
-                // TODO should the final default be objectID field? Or will this turn off names / let something have no names?
-                this.nameField =
-                    this.origRampConfig.nameField || sData.displayField || '';
+            // apply any config based overrides to the data we just downloaded
 
-                // process fields and any overrides
-                this.fields = sData.fields;
+            this.nameField = this.origRampConfig.nameField || sData.displayField || this.oidField;
 
-                this.$iApi.geo.attributes.applyFieldMetadata(
-                    this,
-                    this.origRampConfig.fieldMetadata
-                );
+            // process fields and any overrides
+            this.fields = sData.fields;
 
-                // set up attribute loader.
-                // will add a cache even though it will be rarely used (would require an API call to show details prior to grid load)
-                const loadData: AttributeLoaderDetails = {
-                    // version number is only provided on 10.0 SP1 servers and up.
-                    // servers 10.1 and higher support the query limit flag
-                    supportsLimit: (sData.currentVersion || 1) >= 10.1,
-                    serviceUrl: this.serviceUrl,
-                    oidField: this.oidField,
-                    batchSize: -1,
-                    attribs: this.fieldList,
-                    permanentFilter: this.getSqlFilter(CoreFilter.PERMANENT)
-                };
-                this.attribs.attLoader = new ArcServerAttributeLoader(
-                    this.$iApi,
-                    loadData
-                );
-                this.attribs.quickCache = new QuickCache(this.geomType);
-            });
+            this.$iApi.geo.attributes.applyFieldMetadata(this, this.origRampConfig.fieldMetadata);
+
+            // set up attribute loader.
+            // will add a cache even though it will be rarely used (would require an API call to show details prior to grid load)
+            const loadData: AttributeLoaderDetails = {
+                // version number is only provided on 10.0 SP1 servers and up.
+                // servers 10.1 and higher support the query limit flag
+                supportsLimit: (sData.currentVersion || 1) >= 10.1,
+                serviceUrl: this.serviceUrl,
+                oidField: this.oidField,
+                batchSize: -1,
+                attribs: this.fieldList,
+                permanentFilter: this.getSqlFilter(CoreFilter.PERMANENT),
+                fieldsToTrim: this.getFieldsToTrim()
+            };
+            this.attribs.attLoader = new ArcServerAttributeLoader(this.$iApi, loadData);
+            this.attribs.quickCache = new QuickCache(this.geomType);
+        });
 
         // feature count
         const pFC = this.$iApi.geo.layer
-            .loadFeatureCount(
-                this.serviceUrl,
-                this.getSqlFilter(CoreFilter.PERMANENT)
-            )
+            .loadFeatureCount(this.serviceUrl, this.getSqlFilter(CoreFilter.PERMANENT))
             .then(count => {
-                this.featureCount = count;
+                if (startTime > this.lastCancel) {
+                    this.featureCount = count;
+                }
             });
 
         this.layerTree.layerIdx = featIdx;
@@ -125,10 +105,7 @@ export class TableLayer extends DataLayer {
         return loadPromises;
     }
 
-    async getGraphic(
-        objectId: number,
-        opts: GetGraphicParams
-    ): Promise<Graphic> {
+    async getGraphic(objectId: number, opts: GetGraphicParams): Promise<Graphic> {
         // overridden from DataLayer just to take advantage of caching. If we decide to drop caching, this can almost be deleted;
         // would just need to ensure the attribute downloader runs first if not already started.
 
@@ -154,9 +131,7 @@ export class TableLayer extends DataLayer {
                 attribs: this.fieldList
             };
 
-            const webFeat = await this.$iApi.geo.attributes.loadSingleFeature(
-                serviceParams
-            );
+            const webFeat = await this.$iApi.geo.attributes.loadSingleFeature(serviceParams);
 
             this.attribs.quickCache.setAttribs(objectId, webFeat.attributes);
 
@@ -170,24 +145,14 @@ export class TableLayer extends DataLayer {
         return resGraphic;
     }
 
-    /**
-     * Requests that an attribute load request be aborted. Useful when encountering a massive dataset or a runaway process.
-     */
     abortAttributeLoad(): void {
         this.attribs.attLoader.abortAttribLoad();
     }
 
-    /**
-     * Requests that any downloaded attribute sets or cached geometry be removed from memory. The next requests will pull from the server again.
-     */
     clearFeatureCache(): void {
         this.attribs.clearAll();
     }
 
-    /**
-     * The number of attributes currently downloaded (will update as download progresses)
-     * @returns current download count
-     */
     downloadedAttributes(): number {
         if (this.isLoaded) {
             return this.attribs.attLoader.loadCount();
@@ -196,10 +161,6 @@ export class TableLayer extends DataLayer {
         }
     }
 
-    /**
-     * Indicates if the attribute load has been aborted.
-     * @returns boolean if the process has been stopped
-     */
     attribLoadAborted(): boolean {
         if (this.isLoaded) {
             return this.attribs.attLoader.isLoadAborted();
@@ -215,13 +176,6 @@ export class TableLayer extends DataLayer {
     // Making a common class between data and attribute layers adds in other duplications for the non-attribute-layer stuff.
     // This set of methods is more streamlined since there are no layer/extent stuff to deal with.
 
-    /**
-     * Applies an SQL filter to the layer. Will overwrite any existing filter for the given key.
-     * Use `1=2` for a "hide all" where clause.
-     *
-     * @param {String} filterKey the filter key / named filter to apply the SQL to
-     * @param {String} whereClause the WHERE clause of the filter
-     */
     setSqlFilter(filterKey: string, whereClause: string): void {
         // dirty test
         const currentFilter = this.filter.getSql(filterKey);
@@ -239,12 +193,6 @@ export class TableLayer extends DataLayer {
         // no debounce stuff required since no layer
     }
 
-    /**
-     * Returns the value of a named SQL filter on the layer.
-     *
-     * @param {String} filterKey the filter key / named filter to view
-     * @returns {String} the value of the where clause for the filter. Empty string if not defined.
-     */
     getSqlFilter(filterKey: string): string {
         return this.filter.getSql(filterKey);
     }
@@ -260,15 +208,6 @@ export class TableLayer extends DataLayer {
         return this.filter.getCombinedSql(exclusions);
     }
 
-    /**
-     * Gets array of object ids that currently pass any filters
-     *
-     * @function getFilterOIDs
-     *
-     * @param {Array} [exclusions] list of any filters keys to exclude from the result. omission includes all filters
-     * @param {Extent} [extent] ignored for Data Layer. param exists for consistency.
-     * @returns {Promise} resolves with array of object ids that pass the filter. if no filters are active, resolves with undefined.
-     */
     async getFilterOIDs(
         exclusions: Array<string> = [],
         extent: Extent | undefined = undefined
@@ -321,9 +260,7 @@ export class TableLayer extends DataLayer {
      * @param options {Object} options to provide filters and helpful information.
      * @returns {Promise} resolves in an array of object ids and promises resolving in each feature
      */
-    async queryFeaturesDiscrete(
-        options: QueryFeaturesParams
-    ): Promise<Array<DiscreteGraphicResult>> {
+    async queryFeaturesDiscrete(options: QueryFeaturesParams): Promise<Array<DiscreteGraphicResult>> {
         // TODO potential optimization.
         //      see notes in same method inside AttribLayer
 

@@ -1,54 +1,42 @@
 <template>
-    <panel-screen :panel="panel" :footer="true">
-        <template #header> {{ t('export.title') }} </template>
+    <div ref="componentEl">
+        <panel-screen :panel="panel" :footer="true">
+            <template #header> {{ t('export.title') }} </template>
 
-        <template #content>
-            <div class="overflow-hidden border border-gray-200">
-                <canvas class="export-canvas !w-[100%]"></canvas>
-            </div>
-        </template>
+            <template #content>
+                <div class="overflow-hidden border border-gray-200">
+                    <canvas class="export-canvas !w-[100%]"></canvas>
+                </div>
+            </template>
 
-        <template #footer>
-            <div class="flex">
-                <button
-                    type="button"
-                    @click="fixture?.export()"
-                    class="bg-green-500 hover:bg-green-700 text-white font-bold py-8 px-8 sm:px-16 mr-8 sm:mr-16"
-                    :aria-label="t('export.download')"
-                >
-                    {{ t('export.download') }}
-                </button>
+            <template #footer>
+                <div class="flex">
+                    <button
+                        type="button"
+                        @click="fixture?.export()"
+                        class="bg-green-700 hover:bg-green-800 text-white font-bold py-8 px-4 sm:px-16 mr-8 sm:mr-16"
+                        :aria-label="t('export.download')"
+                    >
+                        {{ t('export.download') }}
+                    </button>
 
-                <button
-                    type="button"
-                    @click="make()"
-                    class="py-8 px-4 sm:px-16"
-                    :aria-label="t('export.refresh')"
-                >
-                    {{ t('export.refresh') }}
-                </button>
+                    <button type="button" @click="make()" class="py-8 px-4 sm:px-16" :aria-label="t('export.refresh')">
+                        {{ t('export.refresh') }}
+                    </button>
 
-                <export-settings
-                    v-if="!hasCustomRenderer"
-                    :componentSelectedState="selectedComponents"
-                    class="ml-auto flex px-4 sm:px-8"
-                ></export-settings>
-            </div>
-        </template>
-    </panel-screen>
+                    <export-settings
+                        v-if="!hasCustomRenderer"
+                        :componentSelectedState="selectedComponents"
+                        class="ml-auto flex px-4 sm:px-8"
+                    ></export-settings>
+                </div>
+            </template>
+        </panel-screen>
+    </div>
 </template>
 
 <script setup lang="ts">
-import {
-    computed,
-    getCurrentInstance,
-    inject,
-    onBeforeMount,
-    onBeforeUnmount,
-    onMounted,
-    ref,
-    watch
-} from 'vue';
+import { computed, inject, onBeforeMount, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue';
 import type { PropType } from 'vue';
 import type { InstanceAPI, PanelInstance } from '@/api';
 import type { ExportAPI } from './api/export';
@@ -59,7 +47,7 @@ import ExportSettings from './settings-button.vue';
 import { useExportStore } from './store';
 import { useI18n } from 'vue-i18n';
 
-defineProps({
+const props = defineProps({
     panel: {
         type: Object as PropType<PanelInstance>,
         required: true
@@ -71,36 +59,28 @@ const iApi = inject<InstanceAPI>('iApi')!;
 const exportStore = useExportStore();
 
 const fixture = ref<ExportAPI>();
-const resizeObserver = ref<ResizeObserver | undefined>(undefined);
+
+// we need two resize observers, one for the root element and one for the panel since the panel can resize independently of the root (another panel was closed/opened)
+// changes to the root element impact map boundaries, changes to the panel impact the resolution of the displayed export
+const rootResizeObserver = ref<ResizeObserver | undefined>(undefined);
+const panelResizeObserver = ref<ResizeObserver | undefined>(undefined);
 const watchers = ref<Array<Function>>([]);
 
-const el = computed<Element>(() => getCurrentInstance()?.proxy?.$el);
-const componentSelectedState = computed(
-    () => exportStore.componentSelectedState
-);
+const el = useTemplateRef('componentEl');
+const componentSelectedState = computed(() => exportStore.componentSelectedState);
 const selectedComponents = computed<any>(() => {
     let state: any = {};
     if (fixture.value) {
-        Object.keys(componentSelectedState.value).forEach(
-            (component: string) => {
-                state[component] = {
-                    name: component,
-                    selected:
-                        componentSelectedState.value[
-                            component as
-                                | 'title'
-                                | 'map'
-                                | 'mapElements'
-                                | 'legend'
-                                | 'footnote'
-                                | 'timestamp'
-                        ] ?? false,
-                    selectable:
-                        (fixture.value?.config as any)[component]?.selectable ??
-                        true
-                };
-            }
-        );
+        Object.keys(componentSelectedState.value).forEach((component: string) => {
+            state[component] = {
+                name: component,
+                selected:
+                    componentSelectedState.value[
+                        component as 'title' | 'map' | 'mapElements' | 'legend' | 'footnote' | 'timestamp'
+                    ] ?? false,
+                selectable: (fixture.value?.config as any)[component]?.selectable ?? true
+            };
+        });
     }
     return state;
 });
@@ -110,18 +90,17 @@ const hasCustomRenderer = computed(() => {
 });
 
 const make = debounce(300, () => {
-    if (!fixture.value) {
+    if (!fixture.value || !el.value) {
         return;
     }
 
-    const canvasElement = el.value.querySelector(
-        '.export-canvas'
-    ) as HTMLCanvasElement;
+    const canvasElement = el.value!.querySelector('.export-canvas') as HTMLCanvasElement;
 
-    fixture.value.make(canvasElement, el.value.clientWidth);
+    fixture.value.make(canvasElement, el.value!.clientWidth);
 });
 
 onBeforeMount(() => {
+    (props.panel as any).exportMake = make;
     // Set up watchers
     watchers.value.push(
         // Listen for any changes to the settings, and refresh the image when they do change
@@ -133,15 +112,17 @@ onBeforeMount(() => {
 
 onMounted(() => {
     fixture.value = iApi.fixture.get('export') as ExportAPI;
-    resizeObserver.value = new ResizeObserver(() => {
-        make();
-    });
-    resizeObserver.value.observe(el.value);
+    rootResizeObserver.value = new ResizeObserver(make);
+    panelResizeObserver.value = new ResizeObserver(make);
+    // observe the root element for resize events, not the component itself
+    rootResizeObserver.value.observe(iApi?.$vApp.$root?.$el);
+    panelResizeObserver.value.observe(iApi?.$vApp.$root?.$el.querySelector('[data-cy="export"]'));
 });
 
 onBeforeUnmount(() => {
     // remove the resize observer
-    resizeObserver.value!.disconnect();
+    rootResizeObserver.value!.disconnect();
+    panelResizeObserver.value!.disconnect();
     // remove the watchers
     watchers.value.forEach(unwatch => unwatch());
 });

@@ -12,7 +12,8 @@ const enum KEYS {
     Escape = 'Escape',
     EscapeIE = 'Esc',
     Enter = 'Enter',
-    Space = ' '
+    Space = ' ',
+    Tab = 'Tab'
 }
 
 const LIST_ATTR = 'focus-list';
@@ -23,7 +24,7 @@ const FOCUS_ATTRS = `[${LIST_ATTR}],[${CONTAINER_ATTR}]`;
 const TRUNCATE_ATTR = 'truncate-text';
 const SHOW_TRUNCATE = 'show-truncate';
 const FOCUSED_CLASS = 'focused';
-const TABBABLE_TAGS = `button,input,select,a,textarea,[contenteditable],[${LIST_ATTR}],[${ICON_ATTR}]`;
+const TABBABLE_TAGS = `button,input,select,a,textarea,[contenteditable],[${LIST_ATTR}],[${ICON_ATTR}],[tabIndex]`;
 
 // TODO: Figure out a way to put the control scheme into the description of the focus-list for screen readers (hidden text?), or see if the help file would be sufficient.
 
@@ -44,10 +45,7 @@ const TABBABLE_TAGS = `button,input,select,a,textarea,[contenteditable],[${LIST_
  * ```
  */
 export const FocusList: Directive = {
-    mounted(
-        el: HTMLElement,
-        binding: DirectiveBinding /*, vnode: Vue.VNode */
-    ) {
+    mounted(el: HTMLElement, binding: DirectiveBinding /*, vnode: Vue.VNode */) {
         // make it tabbable if it isn't
         // NOTE: +<string> = the string as a number, +<null> = 0
         if (+el.getAttribute('tabindex')! <= 0) {
@@ -77,17 +75,12 @@ function syncTabIndex(element: HTMLElement) {
         // make sure its not part of a sub-list
         if (
             el.closest(FOCUS_ATTRS) === element ||
-            (el.closest(FOCUS_ATTRS) === el &&
-                el.parentElement!.closest(FOCUS_ATTRS) === element)
+            (el.closest(FOCUS_ATTRS) === el && el.parentElement!.closest(FOCUS_ATTRS) === element)
         ) {
             // if this element is under a `focused` element in this class list then we dont want to set tabindex to -1
             // this checks if an ancestor with the class `focused` comes before an ancestor that is a `focus-list`
             // ELSE if it is under a `focused` element, set it to 0 in case it was just added to the list
-            if (
-                !el
-                    .closest(`[${LIST_ATTR}],.${FOCUSED_CLASS}`)!
-                    .classList.contains(FOCUSED_CLASS)
-            ) {
+            if (!el.closest(`[${LIST_ATTR}],.${FOCUSED_CLASS}`)!.classList.contains(FOCUSED_CLASS)) {
                 el.setAttribute('tabindex', '-1');
                 return;
             } else {
@@ -135,9 +128,6 @@ export class FocusListManager {
         element.addEventListener('keydown', function (event: KeyboardEvent) {
             focusManager.onKeydown(event);
         });
-        element.addEventListener('click', function (event: MouseEvent) {
-            focusManager.onClick(event);
-        });
         element.addEventListener('focus', function () {
             focusManager.onFocus();
         });
@@ -149,6 +139,15 @@ export class FocusListManager {
         });
         element.addEventListener('touchstart', function () {
             focusManager.onTouchstart();
+        });
+
+        document.addEventListener('click', function (event: MouseEvent) {
+            // @ts-ignore
+            if (element.contains(event.target)) {
+                focusManager.onClick(event);
+            } else {
+                focusManager.defocusItem(focusManager.highlightedItem);
+            }
         });
     }
 
@@ -166,11 +165,8 @@ export class FocusListManager {
             if (
                 value === -1 ||
                 el.closest(FOCUS_ATTRS) === this.element ||
-                (el.closest(FOCUS_ATTRS) === el &&
-                    el.parentElement!.closest(FOCUS_ATTRS) === this.element) ||
-                el
-                    .closest(`[${LIST_ATTR}],.${FOCUSED_CLASS}`)!
-                    .classList.contains(FOCUSED_CLASS)
+                (el.closest(FOCUS_ATTRS) === el && el.parentElement!.closest(FOCUS_ATTRS) === this.element) ||
+                el.closest(`[${LIST_ATTR}],.${FOCUSED_CLASS}`)!.classList.contains(FOCUSED_CLASS)
             ) {
                 el.setAttribute('tabindex', value.toString());
             }
@@ -218,10 +214,7 @@ export class FocusListManager {
      * @param item The element that should be the active descendant
      */
     setAriaActiveDescendant(item: HTMLElement) {
-        this.element.setAttribute(
-            'aria-activedescendant',
-            item.getAttribute('id')!
-        );
+        this.element.setAttribute('aria-activedescendant', item.getAttribute('id')!);
     }
 
     /**
@@ -232,19 +225,15 @@ export class FocusListManager {
      */
     shiftHighlight(listOfItems: HTMLElement[], reverse = false) {
         this.defocusItem(this.highlightedItem);
+
         if (reverse) {
             // if the main element is highlighted, move it to the last sub-item
             // otherwise move the highlight "back" one item (wrapping if needed)
             if (this.highlightedItem === this.element) {
                 this.highlightedItem = listOfItems[listOfItems.length - 1];
             } else {
-                const index = Array.prototype.indexOf.call(
-                    listOfItems,
-                    this.highlightedItem
-                );
-                this.highlightedItem =
-                    listOfItems[index - 1] ||
-                    listOfItems[listOfItems.length - 1];
+                const index = Array.prototype.indexOf.call(listOfItems, this.highlightedItem);
+                this.highlightedItem = listOfItems[index - 1] || listOfItems[listOfItems.length - 1];
             }
         } else {
             // if the main element is highlighted, move it to the first sub-item
@@ -252,10 +241,7 @@ export class FocusListManager {
             if (this.highlightedItem === this.element) {
                 this.highlightedItem = listOfItems[0];
             } else {
-                const index = Array.prototype.indexOf.call(
-                    listOfItems,
-                    this.highlightedItem
-                );
+                const index = Array.prototype.indexOf.call(listOfItems, this.highlightedItem);
                 this.highlightedItem = listOfItems[index + 1] || listOfItems[0];
             }
         }
@@ -275,10 +261,7 @@ export class FocusListManager {
             this.element.querySelectorAll(`[${ITEM_ATTR}]`),
             (el: HTMLElement) => {
                 // !!el.offsetParent == true if the element is visible
-                return (
-                    el.closest(`[${LIST_ATTR}]`) === tempFocusManager.element &&
-                    !!el.offsetParent
-                );
+                return el.closest(`[${LIST_ATTR}]`) === tempFocusManager.element && !!el.offsetParent;
             }
         );
 
@@ -347,13 +330,10 @@ export class FocusListManager {
 
             case KEYS.Enter:
             case KEYS.Space:
-                // if the the list is the target then it has focus, meaning the user is traversing this list
+                // if the list is the target then it has focus, meaning the user is traversing this list
                 // and not a list farther down the tree (or a tabbable button, etc.)
                 // however if the list is the highlighted item we let the default behaviour through (as it has regular focus)
-                if (
-                    (event.target as HTMLElement) === this.element &&
-                    this.highlightedItem !== this.element
-                ) {
+                if ((event.target as HTMLElement) === this.element && this.highlightedItem !== this.element) {
                     // dont click on the list
                     event.preventDefault();
                     event.stopPropagation();
@@ -361,6 +341,25 @@ export class FocusListManager {
                     this.highlightedItem.click();
                 }
                 break;
+            case KEYS.Tab:
+                // we only modify Tab behavior if the highlighted item isnt the list
+                if (this.highlightedItem !== this.element) {
+                    // prevent focus-items with tabbable children from being defocused right away
+                    if (this.highlightedItem.querySelectorAll(TABBABLE_TAGS).length === 0) {
+                        this.defocusItem(this.highlightedItem);
+                    }
+
+                    // If the Shift key was clicked alongside Tab, prevent the default behavior
+                    // and return focus to the focus list
+                    if (event.shiftKey) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        this.defocusItem(this.highlightedItem);
+                        this.highlightedItem = this.element;
+                        this.element.removeAttribute('aria-activedescendant');
+                        this.element.focus();
+                    }
+                }
         }
     }
 
@@ -377,13 +376,8 @@ export class FocusListManager {
         // This block restricts the search space to valid choices.
         if (!targetElement.hasAttribute(LIST_ATTR)) {
             // if we're in a sublist => loop
-            while (
-                targetElement.parentElement!.closest(`[${LIST_ATTR}]`) !==
-                this.element
-            ) {
-                targetElement = targetElement.parentElement!.closest(
-                    `[${LIST_ATTR}]`
-                )! as HTMLElement;
+            while (targetElement.parentElement!.closest(`[${LIST_ATTR}]`) !== this.element) {
+                targetElement = targetElement.parentElement!.closest(`[${LIST_ATTR}]`)! as HTMLElement;
             }
             // targetElement is now the root of the closest sublist to *this* focus list
         }
@@ -419,29 +413,23 @@ export class FocusListManager {
                 (this.highlightedItem as any)._tippy.show();
             }
 
-            if (
-                this.highlightedItem.getAttribute(ITEM_ATTR) === SHOW_TRUNCATE
-            ) {
-                (
-                    this.highlightedItem.querySelector(
-                        `[${TRUNCATE_ATTR}]`
-                    )! as any
-                )?._tippy?.show();
+            if (this.highlightedItem.getAttribute(ITEM_ATTR) === SHOW_TRUNCATE) {
+                (this.highlightedItem.querySelector(`[${TRUNCATE_ATTR}]`)! as any)?._tippy?.show();
             }
         }
 
         this.isClicked = false;
 
-        if (
-            !(
-                this.element.hasAttribute('aria-activedescendant') ||
-                this.highlightedItem === this.element
-            )
-        ) {
+        if (!(this.element.hasAttribute('aria-activedescendant') || this.highlightedItem === this.element)) {
             this.setAriaActiveDescendant(this.highlightedItem);
+        } else if (this.highlightedItem !== this.element) {
+            this.focusItem(this.highlightedItem);
         }
 
         syncTabIndex(this.element);
+        if (this.highlightedItem && this.highlightedItem !== this.element) {
+            this.highlightedItem.setAttribute('tabindex', '-1');
+        }
     }
 
     /**
@@ -455,14 +443,8 @@ export class FocusListManager {
                 (this.highlightedItem as any)._tippy.hide();
             }
 
-            if (
-                this.highlightedItem.getAttribute(ITEM_ATTR) === SHOW_TRUNCATE
-            ) {
-                (
-                    this.highlightedItem.querySelector(
-                        `[${TRUNCATE_ATTR}]`
-                    )! as any
-                )?._tippy?.hide();
+            if (this.highlightedItem.getAttribute(ITEM_ATTR) === SHOW_TRUNCATE) {
+                (this.highlightedItem.querySelector(`[${TRUNCATE_ATTR}]`)! as any)?._tippy?.hide();
             }
         }
     }

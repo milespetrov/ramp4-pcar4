@@ -1,10 +1,4 @@
-import type {
-    BaseGeometry,
-    Extent,
-    Graphic,
-    Point,
-    SpatialReference
-} from '@/geo/api';
+import type { BaseGeometry, Extent, Graphic, Point, SpatialReference } from '@/geo/api';
 import type { EsriRenderer } from '../esri';
 
 // From the supported ESRI field types
@@ -168,8 +162,11 @@ export const enum LayerType {
 
     // File Based
     GEOJSON = 'file-geojson',
+    GEOJSONZIPPED = 'file-zip-geojson',
     CSV = 'file-csv',
     SHAPEFILE = 'file-shape',
+    FLATGEOBUF = 'file-fgb',
+    FLATGEOBUFZIPPED = 'file-zip-fgb',
 
     // Other
     OSM = 'osm-tile', // open street map
@@ -311,6 +308,9 @@ export const enum IdentifyResultFormat {
 // way they should be exposed from the main app as well (like, exported? in one of those .d.ts files?)?
 // same question probably applies to a number of other interfaces here.
 
+/**
+ * Event payload for a Map Click
+ */
 export interface MapClick {
     mapPoint: Point;
     screenX: number;
@@ -320,11 +320,29 @@ export interface MapClick {
     clickTime: number;
 }
 
+/**
+ * Event payload for a Map Move
+ */
 export interface MapMove {
     screenX: number;
     screenY: number;
     button: number;
     moveTime: number;
+}
+
+/**
+ * Event payload for a Basemap Change
+ */
+export interface BasemapChange {
+    /**
+     * New basemap id
+     */
+    basemapId: string;
+
+    /**
+     * True if new basemap caused the map schema to change
+     */
+    schemaChanged: boolean;
 }
 
 export interface LayerTimes {
@@ -338,16 +356,14 @@ export interface LayerTimes {
      */
     load: number;
 
-    // TODO pr for #1491 will add 'fail' here
+    /**
+     * Max load time until forced failure
+     */
+    fail: number;
 }
 
 // needs to align to esri values for GoToOptions2D.easing
-export type ZoomEasing =
-    | 'linear'
-    | 'ease'
-    | 'ease-in'
-    | 'ease-out'
-    | 'ease-in-out';
+export type ZoomEasing = 'linear' | 'ease' | 'ease-in' | 'ease-out' | 'ease-in-out';
 
 export interface ScreenPoint {
     screenX: number;
@@ -372,6 +388,7 @@ export interface FieldDefinition {
     alias?: string;
     type: string;
     length?: number;
+    trim?: boolean;
 }
 
 export interface TabularAttributeSet {
@@ -416,6 +433,7 @@ export interface ArcGisServerMetadata {
     name: string;
     dataFormat: DataFormat;
     mapLayer: boolean;
+    sourceSR?: SpatialReference;
 }
 
 export interface GetGraphicParams {
@@ -432,6 +450,7 @@ export interface GetGraphicServiceDetails {
     mapSR?: string; // stringified spatial reference of the map
     geometryPrecision?: number; // number of decimal places to keep in result geometry
     oid: number; // oid of the feature to find
+    fieldsToTrim?: Array<string>; // list of fields to trim
 }
 
 export interface DiscreteGraphicResult {
@@ -440,14 +459,36 @@ export interface DiscreteGraphicResult {
 }
 
 export interface QueryFeaturesParams {
-    filterGeometry?: BaseGeometry; // filter by geometry
-    filterSql?: string; // filter by sql query
-    filterOIDs?: Array<number>; // filtering against object ids
-    includeGeometry?: boolean; // if geometry should be included in the result
-    sourceSR?: SpatialReference; // the spatial reference of the web service. providing helps avoid some reprojection issues
+    /**
+     * A geometry to spatially filter by.
+     */
+    filterGeometry?: BaseGeometry;
+
+    /**
+     * A sql query to filtery by
+     */
+    filterSql?: string;
+
+    /**
+     * List of object ids to filter by
+     */
+    filterOIDs?: Array<number>;
+
+    /**
+     * If geometry should be included in the result
+     */
+    includeGeometry?: boolean;
+
+    /**
+     * Spatial reference of the data source. Providing helps avoid some reprojection issues
+     */
+    sourceSR?: SpatialReference;
 }
 
 export interface QueryFeaturesArcServerParams extends QueryFeaturesParams {
+    /**
+     * Url of service to query
+     */
     url: string;
 }
 
@@ -458,11 +499,22 @@ export interface IdentifyParameters {
     hitTest?: Promise<Array<GraphicHitResult>>; // Optional results of local hits to incorporate in the identify
 }
 
-//TODO: Enhance this when a RAMP Graphic is properly defined
+// this would need to expand if we start supporting hits from Graphic Layers (they have no concept of OID)
 export interface GraphicHitResult {
-    oid: number; // graphic OBJECTID
-    layerIdx: number; // layer index of the graphic
-    layerId: string; // graphic layer id
+    /**
+     * graphic Object ID value
+     */
+    oid: number;
+
+    /**
+     * layer index of the layer the graphic lives in
+     */
+    layerIdx: number;
+
+    /**
+     * layer id of layer the graphic lives in
+     */
+    layerId: string;
 }
 
 export interface MaptipProperties {
@@ -506,13 +558,43 @@ export interface UrlQueryMap {
     [name: string]: string;
 }
 
+/**
+ * Options for converting GeoJson to EsriJson
+ */
 export interface GeoJsonOptions {
+    /**
+     * Will use this layerid on the EsriJson
+     */
     layerId?: string;
+
+    /**
+     * Will use this colour in the basic default symbol
+     */
     colour?: string;
+
+    /**
+     * Any layer fieldMetadata configuration to apply
+     */
     fieldMetadata?: RampLayerFieldMetadataConfig;
-    sourceProjection?: string;
-    targetSR?: string | number | SpatialReference | Record<any, unknown>;
+
+    /**
+     * Projection of incoming GeoJson. If missing, will use geojson crs, LatLong if no crs.
+     */
+    sourceProjection?: string | number | SpatialReference;
+
+    /**
+     * Spatial Reference of output Esri Json geometry
+     */
+    targetSR?: string | number | SpatialReference;
+
+    /**
+     * Latitude field name if exists in the GeoJson. Typically from a CSV conversion. Ensures field gets encoded as a number.
+     */
     latField?: string;
+
+    /**
+     * Longitude field name if exists in the GeoJson. Typically from a CSV conversion. Ensures field gets encoded as a number.
+     */
     lonField?: string;
 }
 
@@ -590,6 +672,7 @@ export interface RampLayerStateConfig {
 export interface RampLayerFieldInfoConfig {
     name: string;
     alias?: string;
+    trim?: boolean;
 }
 
 export interface RampLayerFieldMetadataConfig {
@@ -658,9 +741,7 @@ export interface RampLayerConfig {
     featureInfoMimeType?: string; // used by WMS layer
     controls?: Array<LayerControl>;
     disabledControls?: Array<LayerControl>;
-    sublayers?:
-        | Array<RampLayerMapImageSublayerConfig>
-        | Array<RampLayerWmsSublayerConfig>;
+    sublayers?: Array<RampLayerMapImageSublayerConfig> | Array<RampLayerWmsSublayerConfig>;
     extent?: RampExtentConfig;
     latField?: string; // csv coord field
     longField?: string; // csv coord field
@@ -763,5 +844,6 @@ export interface RampMapConfig {
     layerTimeDefault?: {
         expectedDrawTime?: number;
         expectedLoadTime?: number;
+        maxLoadTime?: number;
     };
 }

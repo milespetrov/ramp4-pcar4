@@ -1,10 +1,6 @@
 <template>
-    <div
-        class="rv-geosearch-top-filters sm:flex items-center w-full ml-8 mb-14"
-    >
-        <div
-            class="w-fit inline-block sm:w-1/2 h-26 mb-8 sm:mb-0 pr-16 sm:pr-0"
-        >
+    <div class="rv-geosearch-top-filters sm:flex items-center w-full ml-8 mb-14" ref="el">
+        <div class="w-fit inline-block sm:w-1/2 h-26 mb-8 sm:mb-0 pr-16 sm:pr-0">
             <select
                 class="border-b border-b-gray-600 w-full h-full py-0 cursor-pointer"
                 :value="queryParams.province"
@@ -15,15 +11,17 @@
                     })
                 "
                 v-truncate
+                v-tippy="{
+                    content: t('select.items'),
+                    trigger: 'manual',
+                    placement: 'top-start'
+                }"
+                ref="selectProvince"
             >
                 <option value="" disabled hidden v-truncate>
                     {{ t('geosearch.filters.province') }}
                 </option>
-                <option
-                    v-for="province in provinces"
-                    v-bind:key="province.code"
-                    v-truncate
-                >
+                <option v-for="province in provinces" v-bind:key="province.code" v-truncate>
                     {{ province.name }}
                 </option>
             </select>
@@ -39,6 +37,12 @@
                     })
                 "
                 v-truncate
+                v-tippy="{
+                    content: t('select.items'),
+                    trigger: 'manual',
+                    placement: 'top-start'
+                }"
+                ref="selectFilter"
             >
                 <option value="" disabled hidden>
                     {{ t('geosearch.filters.type') }}
@@ -70,14 +74,7 @@
 
 <script setup lang="ts">
 import type { InstanceAPI } from '@/api';
-import {
-    computed,
-    inject,
-    onBeforeMount,
-    onBeforeUnmount,
-    ref,
-    watch
-} from 'vue';
+import { computed, inject, onBeforeMount, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import type { GeosearchAPI } from './api/geosearch';
 import { useGeosearchStore } from './store';
 import type { QueryParams } from './store';
@@ -86,20 +83,19 @@ import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 const iApi = inject<InstanceAPI>('iApi')!;
 const geosearchStore = useGeosearchStore();
+const el = ref<Element>();
+const selectProvince = ref<Element>();
+const selectFilter = ref<Element>();
 
 const provinces = ref<Array<any>>([]);
 const types = ref<Array<any>>([]);
 const watchers = ref<Array<Function>>([]);
 
-const queryParams = computed<QueryParams>(
-    () => geosearchStore.queryParams as QueryParams
-);
+const queryParams = computed<QueryParams>(() => geosearchStore.queryParams as QueryParams);
 const language = computed<string>(() => iApi.language);
 
-const setProvince = (payload: { province?: string; forceReRun?: boolean }) =>
-    geosearchStore.setProvince(payload);
-const setType = (payload: { type?: string; forceReRun?: boolean }) =>
-    geosearchStore.setType(payload);
+const setProvince = (payload: { province?: string; forceReRun?: boolean }) => geosearchStore.setProvince(payload);
+const setType = (payload: { type?: string; forceReRun?: boolean }) => geosearchStore.setType(payload);
 
 // Called when the `clear filters` button is clicked. Clears province and type filters.
 const clearFilters = () => {
@@ -112,18 +108,11 @@ const clearFilters = () => {
 // and then re fetch all the provinces and types again.
 // TODO: In the future, we should look to refactor the code for this fixture to improve clarity and reduce the number of API calls.
 const updateProvincesAndTypes = () => {
-    geosearchStore.initService(
-        iApi.language,
-        iApi.fixture.get<GeosearchAPI>('geosearch').config
-    );
+    geosearchStore.initService(iApi.language, iApi.fixture.get<GeosearchAPI>('geosearch').config);
 
     // convert current province and type selection to new lang
-    const queryProvCode = provinces.value.find(
-        prov => queryParams.value.province === prov.name
-    )?.code;
-    const queryTypeCode = types.value.find(
-        type => queryParams.value.type === type.name
-    )?.code;
+    const queryProvCode = provinces.value.find(prov => queryParams.value.province === prov.name)?.code;
+    const queryTypeCode = types.value.find(type => queryParams.value.type === type.name)?.code;
 
     // populate province and type selection lists in new lang
     geosearchStore.getProvinces.then(provs => {
@@ -142,13 +131,48 @@ const updateProvincesAndTypes = () => {
     });
 };
 
+const blurProvince = () => {
+    (selectProvince.value as any)._tippy.hide();
+};
+const blurFilter = () => {
+    (selectFilter.value as any)._tippy.hide();
+};
+const keyupProvince = (e: Event) => {
+    const evt = e as KeyboardEvent;
+    if (evt.key === 'Tab' && selectProvince.value?.matches(':focus') && navigator.userAgent.includes('Firefox')) {
+        (selectProvince.value as any)._tippy.show();
+    } else {
+        (selectProvince.value as any)._tippy.hide();
+    }
+};
+const keyupFilter = (e: Event) => {
+    const evt = e as KeyboardEvent;
+    if (evt.key === 'Tab' && selectFilter.value?.matches(':focus') && navigator.userAgent.includes('Firefox')) {
+        (selectFilter.value as any)._tippy.show();
+    } else {
+        (selectFilter.value as any)._tippy.hide();
+    }
+};
+
 onBeforeMount(() => {
     updateProvincesAndTypes();
     watchers.value.push(watch(language, updateProvincesAndTypes));
 });
 
+onMounted(() => {
+    selectProvince.value?.addEventListener('blur', blurProvince);
+    selectProvince.value?.addEventListener('keyup', keyupProvince);
+    selectFilter.value?.addEventListener('blur', blurFilter);
+    selectFilter.value?.addEventListener('keyup', keyupFilter);
+});
+
 onBeforeUnmount(() => {
     watchers.value.forEach(unwatch => unwatch());
+
+    selectProvince.value?.removeEventListener('blur', blurProvince);
+    selectProvince.value?.removeEventListener('keyup', keyupProvince);
+    selectFilter.value?.removeEventListener('blur', blurFilter);
+    selectFilter.value?.removeEventListener('keyup', keyupFilter);
 });
 </script>
 

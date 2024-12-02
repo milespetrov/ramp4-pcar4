@@ -16,31 +16,29 @@ export class CsvLayer extends FileLayer {
         }
 
         let csvData: string; // contents of the file, encoded in UTF8
+        const startTime = Date.now();
 
-        if (
-            this.origRampConfig.rawData &&
-            typeof this.origRampConfig.rawData === 'string'
-        ) {
+        if (this.origRampConfig.rawData && typeof this.origRampConfig.rawData === 'string') {
             // csv data has been passed in as static string
             csvData = this.origRampConfig.rawData;
         } else if (this.origRampConfig.url) {
-            csvData = await this.$iApi.geo.layer.files.fetchFileData(
-                this.origRampConfig.url,
-                this.layerType
-            );
+            csvData = await this.$iApi.geo.layer.files.fetchFileData(this.origRampConfig.url, this.layerType);
         } else {
             throw new Error('Csv file config contains no raw data or url');
         }
 
-        // convert csv to geojson, store in property for FileLayer to consume.
-        this.sourceGeoJson = await this.$iApi.geo.layer.files.csvToGeoJson(
-            csvData,
-            {
+        if (startTime > this.lastCancel) {
+            // convert csv to geojson, store in property for FileLayer to consume.
+
+            const gj = await this.$iApi.geo.layer.files.csvToGeoJson(csvData, {
                 latfield: this.origRampConfig.latField,
                 lonfield: this.origRampConfig.longField
-            }
-        );
+            });
 
-        await super.onInitiate();
+            if (startTime > this.lastCancel) {
+                this.sourceGeoJson = gj;
+                await super.onInitiate();
+            }
+        }
     }
 }

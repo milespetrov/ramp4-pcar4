@@ -48,9 +48,7 @@ export class SpatialReference {
         if (
             (this.wkid && otherSR.wkid && this.wkid === otherSR.wkid) ||
             (this.wkt && otherSR.wkt && this.wkt === otherSR.wkt) ||
-            (this.latestWkid &&
-                otherSR.latestWkid &&
-                this.latestWkid === otherSR.latestWkid)
+            (this.latestWkid && otherSR.latestWkid && this.latestWkid === otherSR.latestWkid)
         ) {
             return true;
         }
@@ -117,12 +115,20 @@ export class SpatialReference {
         }
     }
 
+    /**
+     * Parse the typical RAMP formats for spatial references into an RAMP SpatialReference object
+     * @param {SpatialReference | string | number} sr can be RAMP SpatialReference, WKID integer, WKT string, or ESPG:#### string
+     * @returns {SpatialReference} Spatial Reference object
+     */
     static parseSR(sr?: SrDef): SpatialReference {
         if (!sr) {
             // default to lat long if no SR is provided
             return SpatialReference.latLongSR();
         } else if (sr instanceof SpatialReference) {
             return sr.clone();
+        } else if (typeof sr === 'string' && sr.startsWith('EPSG:')) {
+            // convert epsg code to wkid
+            return new SpatialReference(parseInt(sr.substring(5).trim()));
         } else {
             // cheating typescript. this will pass a string wkt or number wkid
             return new SpatialReference(<any>sr);
@@ -146,9 +152,7 @@ export class SpatialReference {
         return new EsriSpatialReference(this.lean());
     }
 
-    static fromGeoJSON(
-        crs: GeoJson.CoordinateReferenceSystem | undefined
-    ): SpatialReference {
+    static fromGeoJSON(crs: GeoJson.CoordinateReferenceSystem | undefined): SpatialReference {
         const p: string = SpatialReference.parseGeoJsonCrs(crs);
 
         if (p.substring(0, 5) === 'EPSG:') {
@@ -162,11 +166,9 @@ export class SpatialReference {
     /**
      * Convert a GeoJSON styled co-ord reference to an EPSG styled string
      * @param {GeoJson.CoordinateReferenceSystem} crs GeoJSON crs object
-     * @returns {string} EPSG projection string, either EPSG code or wkt
+     * @returns {string} A proj4 friendly projection, in the form EPSG:#### or a WKT
      */
-    static parseGeoJsonCrs(
-        crs: GeoJson.CoordinateReferenceSystem | undefined
-    ): string {
+    static parseGeoJsonCrs(crs: GeoJson.CoordinateReferenceSystem | undefined): string {
         if (!crs) {
             return 'EPSG:4326';
         } else if (crs.type === 'name') {
@@ -209,8 +211,7 @@ export class SpatialReference {
         if (this.wkt) {
             crs.properties.name = this.wkt; // this is probably wrong, but i dont see a way to hardcode wkt in the geojson specs
         } else {
-            crs.properties.name =
-                'urn:ogc:def:crs:EPSG::' + (this.latestWkid || this.wkid);
+            crs.properties.name = 'urn:ogc:def:crs:EPSG::' + (this.latestWkid || this.wkid);
         }
         return crs;
     }

@@ -120,8 +120,11 @@ The ESRI formats assume being hosted on an ArcGIS Server `MapServer`. `FeatureSe
 - OGC WFS 3.0 (`ogc-wfs`)
 - OGC WMS (`ogc-wms`)
 - GeoJSON (`file-geojson`)
+- Zipped GeoJSON (`file-zip-geojson`)
 - CSV File (`file-csv`)
 - Shapefile (`file-shape`)
+- FlatGeobuf (`file-fgb`)
+- Zipped FlatGeobuf (`file-zip-fgb`)
 - OpenStreetMap Tile Layer (`osm-tile`)
 
 ### Data Layers
@@ -368,10 +371,16 @@ Determine if the Layer has been removed from the map / session. This also applie
 myLayer.isRemoved; // false
 ```
 
-Request the layer's spatial reference in [RAMP's format](geometry.md#spatial-reference). Not supported by Data Layers.
+Request the layer's client-side spatial reference in [RAMP's format](geometry.md#spatial-reference). This represents how geometry is encoded within the ESRI map layer. Not supported by Data Layers.
 
 ```js
 const sr = myLayer.getSR() // { wkid: 102100, latestWkid: 3857 }
+```
+
+Request the layer's server-side spatial reference in [RAMP's format](geometry.md#spatial-reference). This represents how geometry is encoded within an ArcGIS Service. Data Layers and any Map Layer not sourcing an ArcGIS Server will return `undefined`.
+
+```js
+const sr = myLayer.sourceSR // { wkid: 3978 }
 ```
 
 ## Identify
@@ -424,9 +433,10 @@ Options parameter object, with descriptions following:
 
 The result object of `runIdentify()` is on the fancy side, as there are a few levels identify acts upon. The topmost array of results has an entry for each logical layer involved, including:
 
-- The `uid` of the logical layer
-- A request timestamp (`requestTime`)
-- An array of individual hits (`items`) for the logical layer
+- The `uid` of the logical layer.
+- The `layerId` (i.e. the `id` property value) of the logical layer.
+- A request timestamp (`requestTime`).
+- An array of individual hits (`items`) for the logical layer.
 - A loaded flag (`loaded`) to indicate if `items` has been populated.
 - A promise (`loading`) that resolves when `items` has been populated.
 - A flag to indicate if the identify request failed (`errored`).
@@ -447,6 +457,7 @@ The objects in the `items` array manage each result. To limit lots of potential 
 [
     {
         uid,
+        layerId,
         loaded,
         loading,
         errored,

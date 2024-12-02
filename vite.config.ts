@@ -35,9 +35,7 @@ const baseConfig = {
             output: {
                 inlineDynamicImports: true,
                 assetFileNames: (assetInfo: any) => {
-                    return assetInfo.name === 'style.css'
-                        ? 'bad.css'
-                        : assetInfo.name;
+                    return assetInfo.name === 'style.css' ? 'bad.css' : assetInfo.name;
                 }
             }
         }
@@ -48,20 +46,20 @@ const baseConfig = {
     }
 } as Record<string, any>;
 
-function cdnBundleConfig() {
+function inlineConfig() {
     return mergeConfig(baseConfig, {
         build: {
             cssMinify: true,
+            minify: true,
+            sourcemap: true,
             lib: {
-                fileName: (format: string) => `lib/ramp.browser.${format}.js`,
+                fileName: (format: string) => `ramp.browser.${format}.js`,
                 formats: ['es', 'iife']
             },
             rollupOptions: {
                 output: {
                     assetFileNames: (assetInfo: any) => {
-                        return assetInfo.name === 'style.css'
-                            ? 'lib/ramp.css'
-                            : assetInfo.name;
+                        return assetInfo.name === 'style.css' ? 'ramp.css' : assetInfo.name;
                     }
                 }
             }
@@ -69,28 +67,37 @@ function cdnBundleConfig() {
     });
 }
 
-function prodBundleConfig() {
+function esDynamicConfig() {
     return mergeConfig(baseConfig, {
         build: {
+            outDir: `${distName}/esDynamic`,
             minify: true,
+            sourcemap: true,
+            cssMinify: true,
             lib: {
-                fileName: (format: string) =>
-                    `lib/ramp.browser.${format}.prod.js`,
-                formats: ['es', 'iife']
+                fileName: `ramp`,
+                formats: ['es']
+            },
+            rollupOptions: {
+                output: {
+                    inlineDynamicImports: false,
+                    assetFileNames: (assetInfo: any) => {
+                        return assetInfo.name === 'style.css' ? 'ramp.css' : assetInfo.name;
+                    }
+                }
             }
-        }
+        },
+        esbuild: { legalComments: 'none' }
     });
 }
 
 function npmBundleConfig() {
-    const externalImports = Object.keys(pkg.dependencies).map(
-        dep => new RegExp(`^${dep}`)
-    );
+    const externalImports = Object.keys(pkg.dependencies).map(dep => new RegExp(`^${dep}`));
 
     const config = mergeConfig(baseConfig, {
         build: {
             lib: {
-                fileName: 'lib/ramp.bundle.es',
+                fileName: 'ramp.bundle.es',
                 formats: ['es']
             },
             rollupOptions: {
@@ -121,6 +128,8 @@ function testBuildConfig() {
                     enhancedAll: '/enhanced-all.html',
                     samples: '/index-samples.html',
                     all: '/index-all.html',
+                    qaSamples: '/qa-samples.html',
+                    qaAll: '/qa-all.html',
                     form: '/index-form.html',
                     teleport: '/index-teleport.html',
                     teleportWet: '/index-teleport-wet.html',
@@ -139,10 +148,10 @@ export default defineConfig(viteConfig => {
     if (command === 'build') {
         if (mode === 'npm') {
             return npmBundleConfig();
-        } else if (mode === 'cdn') {
-            return cdnBundleConfig();
-        } else if (mode === 'prod') {
-            return prodBundleConfig();
+        } else if (mode === 'esDynamic') {
+            return esDynamicConfig();
+        } else if (mode === 'inline') {
+            return inlineConfig();
         } else {
             return testBuildConfig();
         }

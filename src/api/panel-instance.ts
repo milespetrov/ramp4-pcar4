@@ -4,20 +4,21 @@ import type { Component } from 'vue';
 import {
     APIScope,
     InstanceAPI,
-    isVueConstructor,
     isComponentOptions,
+    isHTMLScreen,
     isTypeofImportVue,
+    isVueConstructor,
     type PanelTeleportObject
 } from './internal';
 
 import type {
+    AsyncComponentEh,
+    AsyncComponentFactoryEh,
     PanelConfig,
     PanelConfigRoute,
     PanelConfigScreens,
     PanelConfigStyle,
-    PanelDirection,
-    AsyncComponentFactoryEh,
-    AsyncComponentEh
+    PanelDirection
 } from '@/stores/panel';
 
 import ScreenSpinnerV from '@/components/panel-stack/screen-spinner.vue';
@@ -81,17 +82,22 @@ export class PanelInstance extends APIScope {
      */
     registerScreen(id: string): void {
         const screen = this.screens[id];
-
         let payload: AsyncComponentFactoryEh | Component;
 
-        // the `screen` value can be either a `string` component file path, an component `object`, a component constructor function, or an `AsynComponentFunction`
+        // the `screen` value can be either a `string` component file path, an component `object`, a component constructor function, an `HTMLScreen`, or an `AsynComponentFunction`
         // - `object` or `VueConstructor` => use as is as all the component code is already loaded
+        // - `HTMLScreen` => use it to create a component object
         // - `string` => load fixture file, pass as `component` in `AsyncComponentFactory` function
         // - `AsyncComponentFunction` => execute as it returns a promise, pass the output as `component` in `AsyncComponentFactory` function
         // https://vuejs.org/v2/guide/components-dynamic-async.html#Handling-Loading-State
         if (isComponentOptions(screen) || isVueConstructor(screen)) {
             payload = screen;
             this.loadedScreens.push(id); // mark this screen immediately as loaded
+        } else if (isHTMLScreen(screen)) {
+            payload = {
+                template: `<panel-screen :panel="this" :screenId="'${id}'">
+                           </panel-screen>`
+            };
         } else {
             let asyncComponent: Promise<AsyncComponentEh>;
 
@@ -373,9 +379,7 @@ export class PanelInstance extends APIScope {
      * @returns {this}
      * @memberof PanelInstance
      */
-    toggle(
-        value?: boolean | { screen: string; props?: object; toggle?: boolean }
-    ): this {
+    toggle(value?: boolean | { screen: string; props?: object; toggle?: boolean }): this {
         // toggle panel if no value provided, force toggle panel if value specified, or toggle panel on specified screen if provided
         // ensure that a toggle value must be provided to panel API toggle if called
         if (typeof value === 'undefined') {
@@ -388,9 +392,7 @@ export class PanelInstance extends APIScope {
         } else {
             this.$iApi.panel.toggle(
                 { id: this.id, screen: value.screen, props: value.props },
-                typeof value.toggle !== 'undefined'
-                    ? value.toggle
-                    : !this.isOpen
+                typeof value.toggle !== 'undefined' ? value.toggle : !this.isOpen
             );
         }
 
@@ -405,9 +407,7 @@ export class PanelInstance extends APIScope {
      * @returns {this}
      * @memberof PanelInstance
      */
-    toggleMinimize(
-        value?: boolean | { screen: string; props?: object; toggle?: boolean }
-    ): this {
+    toggleMinimize(value?: boolean | { screen: string; props?: object; toggle?: boolean }): this {
         if (typeof value === 'undefined' || typeof value === 'boolean') {
             // value is a toggle so we pass it through
             this.$iApi.panel.toggleMinimize(this, value);
@@ -415,9 +415,7 @@ export class PanelInstance extends APIScope {
             // value is not a toggle, split into what panel.toggleMinimize is expecting
             this.$iApi.panel.toggleMinimize(
                 { id: this.id, screen: value.screen, props: value.props },
-                typeof value.toggle !== 'undefined'
-                    ? value.toggle
-                    : !this.isOpen
+                typeof value.toggle !== 'undefined' ? value.toggle : !this.isOpen
             );
         }
 
@@ -450,9 +448,7 @@ export class PanelInstance extends APIScope {
      * @memberof PanelInstance
      */
     get isPinned(): boolean {
-        return (
-            !!this.$iApi.panel.pinned && this.$iApi.panel.pinned.id === this.id
-        );
+        return !!this.$iApi.panel.pinned && this.$iApi.panel.pinned.id === this.id;
     }
 
     /**

@@ -15,20 +15,20 @@ export class GeoJsonLayer extends FileLayer {
         // get geojson from appropriate source and set to special property.
         // then initiate the FileLayer
 
+        let gj: any;
+        const startTime = Date.now();
+
         if (this.origRampConfig.rawData) {
-            this.sourceGeoJson = this.$iApi.geo.layer.files.rawDataJsonParser(
-                this.origRampConfig.rawData,
-                this.origRampConfig.caching
-            );
+            gj = this.$iApi.geo.layer.files.rawDataJsonParser(this.origRampConfig.rawData, this.origRampConfig.caching);
         } else if (this.origRampConfig.url) {
-            this.sourceGeoJson = await this.$iApi.geo.layer.files.fetchFileData(
-                this.origRampConfig.url,
-                this.layerType
-            );
+            gj = await this.$iApi.geo.layer.files.fetchFileData(this.origRampConfig.url, this.layerType);
         } else {
             throw new Error('GeoJson layer config contains no raw data or url');
         }
 
-        await super.onInitiate();
+        if (startTime > this.lastCancel) {
+            this.sourceGeoJson = gj;
+            await super.onInitiate();
+        }
     }
 }

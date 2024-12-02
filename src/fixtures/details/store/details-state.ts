@@ -4,7 +4,7 @@ export type DetailsItemSet = { [name: string]: DetailsItemInstance };
 
 /**
  * Types of requests for the details panel. Currently, consists of requests
- * from the toggle events, such as the grid (details for a single item) and 
+ * from the toggle events, such as the grid (details for a single item) and
  * requests from a map click (details for all items at a point).
  */
 export type DetailsRequestOrigin = 'toggleEvent' | 'identify';
@@ -73,6 +73,14 @@ export interface DetailsConfigItem {
      * @memberof DetailsConfigItem
      */
     fields?: DetailsFieldItem[];
+
+    /**
+     * Specifies result priority for auto-open. Lower number is higher priority.
+     *
+     * @type {number}
+     * @memberof DetailsConfigItem
+     */
+    priority: number;
 }
 
 export class DetailsItemInstance implements DetailsConfigItem {
@@ -82,21 +90,22 @@ export class DetailsItemInstance implements DetailsConfigItem {
 
     template: string;
 
+    priority: number;
+
     fields?: DetailsFieldItem[];
 
     componentId?: string;
 
     constructor(value: string | DetailsConfigItem) {
         const params = {
-            ...(typeof value === 'string'
-                ? { id: value, template: '', name: '' }
-                : value)
+            ...(typeof value === 'string' ? { id: value, template: '', name: '', priority: 50 } : value)
         };
         ({
             template: this.template,
             id: this.id,
             name: this.name,
-            fields: this.fields
+            fields: this.fields,
+            priority: this.priority
         } = params);
     }
 }

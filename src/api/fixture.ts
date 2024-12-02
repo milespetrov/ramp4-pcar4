@@ -7,9 +7,7 @@ import type { FixtureBase } from '@/stores/fixture';
 import { useFixtureStore } from '@/stores/fixture';
 import { usePanelStore } from '@/stores/panel';
 
-const fixtureModules = import.meta.glob<{ default: typeof FixtureInstance }>(
-    '../fixtures/*/index.ts'
-);
+const fixtureModules = import.meta.glob<{ default: typeof FixtureInstance }>('../fixtures/*/index.ts');
 
 /**
  * A constructor returning an object implementing FixtureBase interface.
@@ -34,12 +32,12 @@ export class FixtureAPI extends APIScope {
 
     /**
      * Returns whether a given fixture exists.
-     * 
+     *
      * @param {string} id the fixture ID to be checked
      * @returns {boolean} whether the fixture identified by 'id' exists
      * @memberof FixtureAPI
      */
-    exists(id: string) : boolean {
+    exists(id: string): boolean {
         return id in useFixtureStore(this.$vApp.$pinia).items;
     }
 
@@ -67,15 +65,10 @@ export class FixtureAPI extends APIScope {
             }
 
             // run the provided constructor and update the resulting object with FixtureInstance functions/properties
-            fixture = FixtureInstance.updateBaseToInstance(
-                new constructor(),
-                id,
-                this.$iApi
-            );
+            fixture = FixtureInstance.updateBaseToInstance(new constructor(), id, this.$iApi);
         } else {
-            const instanceConstructor: IFixtureInstance = (
-                await fixtureModules[`../fixtures/${id}/index.ts`]()
-            ).default;
+            const instanceConstructor: IFixtureInstance = (await fixtureModules[`../fixtures/${id}/index.ts`]())
+                .default;
 
             fixture = new instanceConstructor(id, this.$iApi);
         }
@@ -98,21 +91,57 @@ export class FixtureAPI extends APIScope {
      * @returns {T}
      * @memberof FixtureAPI
      */
-    remove<T extends FixtureBase = FixtureBase>(
-        fixtureOrId: FixtureBase | string
-    ): T {
+    remove<T extends FixtureBase = FixtureBase>(fixtureOrId: FixtureBase | string): T {
         const fixture = this.get<T>(fixtureOrId);
 
         if (!fixture) {
-            throw new Error(
-                `Could not find fixture ${fixtureOrId} for removal`
-            );
+            throw new Error(`Could not find fixture ${fixtureOrId} for removal`);
         }
 
         useFixtureStore(this.$vApp.$pinia).removeFixture(fixture);
 
         this.$iApi.event.emit(GlobalEvents.FIXTURE_REMOVED, fixture);
         return fixture;
+    }
+
+    // See https://github.com/ramp4-pcar4/ramp4-pcar4/issues/2296#issuecomment-2262964384 for background of flush and restore.
+
+    /**
+     * Remove every fixture whose persist flag is set to false from the R4MP instance.
+     * For all other fixtures, simply call their removed hook.
+     */
+    flush(): void {
+        const fixtureStore = useFixtureStore(this.$vApp.$pinia);
+        const fixtureIds = Object.keys(fixtureStore.items);
+        fixtureIds.forEach((id: string) => {
+            const fixture = this.get(id);
+            if (fixture?.persist && typeof fixture?.removed === 'function') {
+                // call the `removed` life hook if available
+                fixture.removed();
+            } else if (fixture) {
+                this.remove(id);
+            }
+        });
+    }
+
+    /**
+     * Restores every remaining fixture by calling its added/initialized hooks.
+     */
+    restore(): void {
+        // See https://github.com/ramp4-pcar4/ramp4-pcar4/issues/2296#issuecomment-2262964384 for background
+        // on why this was done.
+        const fixtureStore = useFixtureStore(this.$vApp.$pinia);
+        const fixtureIds = Object.keys(fixtureStore.items);
+        fixtureIds.forEach((id: string) => {
+            const fixture = fixtureStore.items[id];
+            // call the `added` life hook if available
+            if (typeof fixture.added === 'function') {
+                fixture.added();
+            }
+            if (this.$iApi.geo.map.created && typeof fixture.initialized === 'function') {
+                fixture.initialized();
+            }
+        });
     }
 
     /**
@@ -137,9 +166,7 @@ export class FixtureAPI extends APIScope {
      * @memberof FixtureAPI
      */
     get<T extends FixtureBase = FixtureBase>(item: string[]): T[];
-    get<T extends FixtureBase = FixtureBase>(
-        item: string | FixtureBase | string[]
-    ): T | undefined | (T | undefined)[] {
+    get<T extends FixtureBase = FixtureBase>(item: string | FixtureBase | string[]): T | undefined | (T | undefined)[] {
         const ids: string[] = [];
 
         // parse the input and figure our what it is
@@ -169,17 +196,19 @@ export class FixtureAPI extends APIScope {
      * @param {(string | string[])} fixtureId the fixture ID(s) for which the promise is requested
      * @memberof FixtureAPI
      */
-    isLoaded(fixtureId: string | string[]): Promise<any> {
+    isLoaded<T extends string | string[]>(fixtureId: T): Promise<T extends string ? FixtureBase : FixtureBase[]> {
         const fixtureStore = useFixtureStore(this.$vApp.$pinia);
         // We first create loadPromises for fixtures that don't have one
-        const idsToCheck = Array.isArray(fixtureId) ? fixtureId : [fixtureId];
+        const idsToCheck: Array<string> = Array.isArray(fixtureId) ? fixtureId : [fixtureId];
         idsToCheck.forEach((id: string) => {
             if (fixtureStore.loadPromises[id] === undefined) {
                 fixtureStore.addLoadPromise(id);
             }
         });
         // Now, get all the promises and return
-        return Promise.all(fixtureStore.getLoadPromises(idsToCheck));
+        const proms = fixtureStore.getLoadPromises(idsToCheck);
+        // @ts-ignore I give up, TS is hopeless
+        return Array.isArray(fixtureId) ? Promise.all(proms) : proms[0];
     }
 
     /**
@@ -194,9 +223,7 @@ export class FixtureAPI extends APIScope {
      * @returns {Promise<Array<FixtureBase>>} resolves with array of default fixtures
      * @memberof FixtureAPI
      */
-    addDefaultFixtures(
-        fixtureNames?: Array<string>
-    ): Promise<Array<FixtureBase>> {
+    addDefaultFixtures(fixtureNames?: Array<string>): Promise<Array<FixtureBase>> {
         if (!Array.isArray(fixtureNames) || fixtureNames.length === 0) {
             fixtureNames = [
                 'appbar',
@@ -248,16 +275,13 @@ export class FixtureInstance extends APIScope implements FixtureBase {
      * @returns {FixtureInstance}
      * @memberof FixtureInstance
      */
-    static updateBaseToInstance(
-        value: FixtureBase,
-        id: string,
-        $iApi: InstanceAPI
-    ): FixtureInstance {
+    static updateBaseToInstance(rawFixture: FixtureBase, id: string, $iApi: InstanceAPI): FixtureInstance {
         const instance = new FixtureInstance(id, $iApi);
 
-        Object.defineProperties(value, {
+        Object.defineProperties(rawFixture, {
             id: { value: id },
             $iApi: { value: $iApi },
+            persist: { value: rawFixture.persist ?? true },
             $vApp: {
                 get() {
                     return instance.$vApp;
@@ -273,7 +297,7 @@ export class FixtureInstance extends APIScope implements FixtureBase {
             mount: { value: instance.mount }
         });
 
-        return value as FixtureInstance;
+        return rawFixture as FixtureInstance;
     }
 
     /**
@@ -283,6 +307,8 @@ export class FixtureInstance extends APIScope implements FixtureBase {
      * @memberof FixtureInstance
      */
     readonly id: string;
+
+    persist: boolean;
 
     /**
      * Creates an instance of FixtureInstance.
@@ -295,6 +321,7 @@ export class FixtureInstance extends APIScope implements FixtureBase {
         super(iApi);
 
         this.id = id;
+        this.persist = true;
     }
 
     /**
@@ -356,9 +383,7 @@ export class FixtureInstance extends APIScope implements FixtureBase {
         if (app && app._context) {
             vNode.appContext = app._context;
         }
-        el
-            ? render(vNode, el)
-            : render(vNode, (el = document.createElement('div')));
+        el ? render(vNode, el) : render(vNode, (el = document.createElement('div')));
 
         const destroy = () => {
             if (el) {
@@ -395,8 +420,7 @@ export class FixtureInstance extends APIScope implements FixtureBase {
      * @returns {any} This fixture's config for the given layer
      */
     getLayerFixtureConfig(layerId: string): any {
-        const fixtureConfigs: { [layerId: string]: any } =
-            this.getLayerFixtureConfigs();
+        const fixtureConfigs: { [layerId: string]: any } = this.getLayerFixtureConfigs();
         return fixtureConfigs[layerId];
     }
 
@@ -420,16 +444,12 @@ export class FixtureInstance extends APIScope implements FixtureBase {
 
             // process child layer entries
             if (layer.sublayers) {
-                layer.sublayers.forEach((sublayer: any) =>
-                    layerCrawler(sublayer, layer)
-                );
+                layer.sublayers.forEach((sublayer: any) => layerCrawler(sublayer, layer));
             }
         };
 
         // Crawl through the layer store and check for layers that may have a custom config.
-        this.$iApi.geo.layer
-            .allLayers()
-            .forEach((layer: LayerInstance) => layerCrawler(layer.config));
+        this.$iApi.geo.layer.allLayers().forEach((layer: LayerInstance) => layerCrawler(layer.config));
 
         return fixtureConfigs;
     }
@@ -484,9 +504,7 @@ export class FixtureInstance extends APIScope implements FixtureBase {
             const panelStore = usePanelStore(this.$vApp.$pinia);
             const oneConfig = !!this.config.panelTeleport.target;
             panels.forEach(p => {
-                panelStore.items[p].teleport = oneConfig
-                    ? this.config.panelTeleport
-                    : this.config.panelTeleport[p];
+                panelStore.items[p].teleport = oneConfig ? this.config.panelTeleport : this.config.panelTeleport[p];
                 panelStore.items[p].style.width = '100%';
             });
         }
