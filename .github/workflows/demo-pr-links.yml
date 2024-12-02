@@ -10,16 +10,18 @@ jobs:
         steps:
             - name: Comment on the PR
               uses: peter-evans/create-or-update-comment@v4
+              env:
+                  PR_USER: ${{ github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name && github.event.pull_request.base.repo.owner.login || github.event.pull_request.head.repo.owner.login }}
               with:
                   issue-number: ${{ github.event.pull_request.number }}
                   body: |
                       Your demo site is ready! 🚀
 
                       Enhanced Testing:
-                      Samples: https://${{github.event.pull_request.user.login}}.github.io/ramp4-pcar4/${{github.head_ref}}/demos/enhanced-samples.html
-                      Catalogue: https://${{github.event.pull_request.user.login}}.github.io/ramp4-pcar4/${{github.head_ref}}/demos/enhanced-all.html
+                      Samples: https://${{ env.PR_USER }}.github.io/ramp4-pcar4/${{github.head_ref}}/demos/enhanced-samples.html
+                      Catalogue: https://${{ env.PR_USER }}.github.io/ramp4-pcar4/${{github.head_ref}}/demos/enhanced-all.html
 
                       Legacy Testing:
-                      Main: https://${{github.event.pull_request.user.login}}.github.io/ramp4-pcar4/${{github.head_ref}}/
-                      Catalogue: https://${{github.event.pull_request.user.login}}.github.io/ramp4-pcar4/${{github.head_ref}}/demos/index-all.html
-                      Samples: https://${{github.event.pull_request.user.login}}.github.io/ramp4-pcar4/${{github.head_ref}}/demos/index-samples.html
+                      Main: https://${{ env.PR_USER }}.github.io/ramp4-pcar4/${{github.head_ref}}/
+                      Catalogue: https://${{ env.PR_USER }}.github.io/ramp4-pcar4/${{github.head_ref}}/demos/index-all.html
+                      Samples: https://${{ env.PR_USER }}.github.io/ramp4-pcar4/${{github.head_ref}}/demos/index-samples.html
