@@ -1,0 +1,1 @@
+import{cm as m,cT as c,b8 as i}from"./main-CQd9Cxe2.js";import{d as r}from"./queryTopFeatures-C_gEmDE7.js";async function x(n,o,s){const e=m(n),a=await r(e,c.from(o),{...s}),t=a.data.extent;return!t||isNaN(t.xmin)||isNaN(t.ymin)||isNaN(t.xmax)||isNaN(t.ymax)?{count:a.data.count,extent:null}:{count:a.data.count,extent:i.fromJSON(t)}}export{x as executeForTopExtents};
