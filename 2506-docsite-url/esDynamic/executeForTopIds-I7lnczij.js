@@ -1,1 +1,0 @@
-import{b$ as s,cw as c}from"./main-iz4SANmq.js";import{m as e}from"./queryTopFeatures-B75_WQbp.js";async function m(o,r,t){const a=s(o);return(await e(a,c.from(r),{...t})).data.objectIds}export{m as executeForTopIds};

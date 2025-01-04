@@ -1,1 +1,0 @@
-import{bt as f,bT as i,bA as p}from"./main-De-Q_Gql.js";import{p as n}from"./queryTopFeatures-CxDoRmHX.js";import"./preload-helper-ExcqyqRp.js";async function d(r,t,o,a){const e=f(r),m={...a},{data:s}=await n(e,i.from(t),o,m);return p.fromJSON(s)}export{d as executeTopFeaturesQuery};

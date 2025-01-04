@@ -1,1 +1,0 @@
-import{cp as s,cW as c}from"./main-BA62-fz9.js";import{m}from"./queryTopFeatures-CouNMXK5.js";import"./preload-helper-ExcqyqRp.js";async function i(o,t,r){const a=s(o);return(await m(a,c.from(t),{...r})).data.objectIds}export{i as executeForTopIds};

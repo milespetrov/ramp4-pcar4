@@ -1,1 +1,0 @@
-import{bt as n,bT as c}from"./main-De-Q_Gql.js";import{c as m}from"./queryTopFeatures-CxDoRmHX.js";import"./preload-helper-ExcqyqRp.js";async function f(o,t,r){const a=n(o);return(await m(a,c.from(t),{...r})).data.count}export{f as executeForTopCount};

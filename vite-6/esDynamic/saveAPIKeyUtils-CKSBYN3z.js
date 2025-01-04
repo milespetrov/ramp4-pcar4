@@ -1,1 +1,0 @@
-import{a1 as o,a2 as p,s as i}from"./main-CQd9Cxe2.js";function t(a){if(o.apiKey&&p(a.portal.url))throw new i("save-api-key-utils:api-key-not-supported",`Saving is not supported on ${a.portal.url} when using an api key`)}export{t as i};

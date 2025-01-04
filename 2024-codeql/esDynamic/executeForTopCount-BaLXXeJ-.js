@@ -1,1 +1,0 @@
-import{b$ as c,cw as n}from"./main-DQJyCutj.js";import{c as s}from"./queryTopFeatures-BK6BYEe5.js";async function e(o,t,a){const r=c(o);return(await s(r,n.from(t),{...a})).data.count}export{e as executeForTopCount};

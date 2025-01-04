@@ -1,1 +1,0 @@
-import{cm as c,cT as f,U as n}from"./main-CQd9Cxe2.js";import{p as i}from"./queryTopFeatures-C_gEmDE7.js";async function p(a,r,o,t){const e=c(a),s={...t},{data:m}=await i(e,f.from(r),o,s);return n.fromJSON(m)}export{p as executeTopFeaturesQuery};
