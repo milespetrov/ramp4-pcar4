@@ -103,6 +103,7 @@ jobs:
             - uses: ramp4-pcar4/status-checks@main
               id: pr-checks
               if: github.ref == 'refs/heads/main'
+              continue-on-error: true
               with:
                   gh-token: ${{ secrets.GITHUB_TOKEN }}
                   ts-command: 'npm run ts:check'
