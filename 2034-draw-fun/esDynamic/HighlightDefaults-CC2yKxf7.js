@@ -1,0 +1,1 @@
+import{b5 as a}from"./main-CZM6prq-.js";const s=new a("cyan"),e=1,n=.25;new a("black");const o=.25,r="default",t="temporary",c=new a("yellow"),l=8;export{r as c,s as e,n as l,t as m,c as p,e as r,o as w,l as y};

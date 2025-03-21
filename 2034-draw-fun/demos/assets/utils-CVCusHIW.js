@@ -1,0 +1,1 @@
+import{bg as p,bh as a}from"./main-DvRWqUGe.js";function s(e){return{geometryType:p(e[0]),geometries:e.map(r=>r.toJSON())}}function f(e,r,o){const n=a(r);return e.map(m=>{const t=n.fromJSON(m);return t.spatialReference=o,t})}export{f as o,s as r};

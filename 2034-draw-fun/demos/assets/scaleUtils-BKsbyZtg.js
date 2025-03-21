@@ -1,0 +1,1 @@
+import{bI as i,bJ as u,bK as c}from"./main-DvRWqUGe.js";const e=96;function b(n,t){const r=n.extent,o=n.width,f=i(r?.spatialReference);return r&&o?r.width/o*f*u*e:0}function d(n,t){return n/(i(t)*u*e)}function m(n,t,r){return a(n,t)&&s(n,r)}function a(n,t){return t===0||c(n,t)||n<t}function s(n,t){return t===0||c(n,t)||n>t}export{m as d,b as i,d as o};

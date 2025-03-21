@@ -1,0 +1,1 @@
+import{cZ as t,c_ as n,c$ as e,d0 as s}from"./main-DvRWqUGe.js";import"./preload-helper-ExcqyqRp.js";const c={},l={xmlns:"http://www.w3.org/2000/svg",viewBox:"0 0 24 24"};function r(a,o){return s(),n("svg",l,o[0]||(o[0]=[e("path",{d:"M0 0h24v24H0z",fill:"none"},null,-1),e("path",{d:"M3 6l6-3 6 3 6-3v12l-6 3-6-3-6 3z"},null,-1)]))}const d=t(c,[["render",r]]);export{d as default};
