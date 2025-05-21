@@ -1,0 +1,1 @@
+import{bd as a,be as c}from"./main-D6zA-zpq.js";function s(e){return{geometryType:a(e[0]),geometries:e.map(r=>r.toJSON())}}function f(e,r,o){const n=c(r);return e.map(m=>{const t=n.fromJSON(m);return t.spatialReference=o,t})}export{f as o,s as r};

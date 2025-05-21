@@ -1,0 +1,1 @@
+import{d2 as o,d3 as r,d4 as n,d5 as l}from"./main-W1WhlPr3.js";const s={},d={xmlns:"http://www.w3.org/2000/svg",viewBox:"0 0 24 24"};function e(i,t){return l(),r("svg",d,t[0]||(t[0]=[n("path",{d:"M0 0h24v24H0z",fill:"none"},null,-1),n("path",{d:"M5 17l3-3 4 4 8-8","stroke-width":"2",fill:"none",stroke:"currentColor"},null,-1)]))}const a=o(s,[["render",e]]);export{a as default};
