@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import type { Ref } from 'vue';
 
 export interface KeyItem {
     key: string;
@@ -16,23 +15,28 @@ export interface NamespaceRegistration {
     deactiveHandler?: (e?: KeyboardEvent) => void;
 }
 
+export type ChainState = 'idle' | 'awaitNamespace' | 'awaitAction' | 'complete';
+
 export interface KeyboardnavStore {
-    activeNamespace: Ref<string | null>;
-    namespaces: Ref<Record<string, NamespaceRegistration>>;
-    helpVisible: Ref<boolean>;
-    keyChain: Ref<string[]>;
-    lastAction: Ref<{ namespace: string; key: string } | null>;
+    activeNamespace: string | null;
+    namespaces: Record<string, NamespaceRegistration>;
+    helpVisible: boolean;
+    keyChain: string[];
+    lastAction: { namespace: string; key: string } | null;
+    chainState: ChainState;
     register: (namespace: string, options: NamespaceRegistration) => string;
     unregister: (namespace: string) => void;
     activate: (namespace: string, e: KeyboardEvent) => void;
-    deactivate: (e?: KeyboardEvent) => void;
+    deactivate: (e?: KeyboardEvent, options?: { suppressHandler?: boolean }) => void;
     trigger: (key: string, e: KeyboardEvent) => { namespace: string; key: string } | null;
     setHelpVisible: (val: boolean) => void;
-    resetChain: (e?: KeyboardEvent) => void;
+    resetChain: (options?: { event?: KeyboardEvent; suppressHandler?: boolean; preserveLastAction?: boolean; preserveChain?: boolean }) => void;
     setChain: (keys: string[]) => void;
     appendKey: (key: string) => void;
     popChain: () => string | undefined;
     setLastAction: (action: { namespace: string; key: string } | null) => void;
+    setChainState: (state: ChainState) => void;
+    finalizeChain: (options?: { event?: KeyboardEvent }) => void;
 }
 
 export const useKeyboardnavStore = defineStore('keyboardnav', () => {
@@ -41,6 +45,7 @@ export const useKeyboardnavStore = defineStore('keyboardnav', () => {
     const helpVisible = ref<boolean>(false);
     const keyChain = ref<string[]>([]);
     const lastAction = ref<{ namespace: string; key: string } | null>(null);
+    const chainState = ref<ChainState>('idle');
 
     const RESERVED = ['H', '?'];
 
@@ -94,8 +99,8 @@ export const useKeyboardnavStore = defineStore('keyboardnav', () => {
         namespaces.value[namespace]?.activeHandler?.(e);
     }
 
-    function deactivate(e?: KeyboardEvent): void {
-        if (activeNamespace.value) {
+    function deactivate(e?: KeyboardEvent, options?: { suppressHandler?: boolean }): void {
+        if (activeNamespace.value && !options?.suppressHandler) {
             namespaces.value[activeNamespace.value]?.deactiveHandler?.(e);
         }
         activeNamespace.value = null;
@@ -122,10 +127,16 @@ export const useKeyboardnavStore = defineStore('keyboardnav', () => {
         return null;
     }
 
-    function resetChain(e?: KeyboardEvent): void {
-        deactivate(e);
-        keyChain.value = [];
-        lastAction.value = null;
+    function resetChain(options?: {
+        event?: KeyboardEvent;
+        suppressHandler?: boolean;
+        preserveLastAction?: boolean;
+        preserveChain?: boolean;
+    }): void {
+        deactivate(options?.event, { suppressHandler: options?.suppressHandler });
+        if (!options?.preserveChain) keyChain.value = [];
+        if (!options?.preserveLastAction) lastAction.value = null;
+        chainState.value = 'idle';
     }
 
     function setChain(keys: string[]): void {
@@ -148,12 +159,22 @@ export const useKeyboardnavStore = defineStore('keyboardnav', () => {
         lastAction.value = action;
     }
 
+    function setChainState(state: ChainState): void {
+        chainState.value = state;
+    }
+
+    function finalizeChain(options?: { event?: KeyboardEvent }): void {
+        deactivate(options?.event, { suppressHandler: true });
+        chainState.value = 'complete';
+    }
+
     return {
         activeNamespace,
         namespaces,
         helpVisible,
         keyChain,
         lastAction,
+        chainState,
         register,
         unregister,
         activate,
@@ -164,6 +185,8 @@ export const useKeyboardnavStore = defineStore('keyboardnav', () => {
         setChain,
         appendKey,
         popChain,
-        setLastAction
-    } as KeyboardnavStore;
+        setLastAction,
+        setChainState,
+        finalizeChain
+    } as unknown as KeyboardnavStore;
 });

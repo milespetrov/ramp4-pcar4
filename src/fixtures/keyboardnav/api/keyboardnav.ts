@@ -71,13 +71,28 @@ export class KeyboardnavAPI extends FixtureInstance {
             }
         }
 
-        if (e.key === 'Escape') {
-            if (chain.length) {
-                e.preventDefault();
-                store.resetChain(e);
-                return;
-            }
-            if (!e.shiftKey && !hasModifier) {
+        const rawKey = e.key;
+        const key = rawKey.length === 1 ? rawKey.toUpperCase() : rawKey;
+
+        if (!hasModifier && key === 'Escape' && store.helpVisible) {
+            e.preventDefault();
+            store.setHelpVisible(false);
+            store.resetChain({ suppressHandler: true });
+            return;
+        }
+
+        if (!e.shiftKey && !hasModifier && key === ROOT_KEY) {
+            e.preventDefault();
+            const suppressHandler = store.chainState === 'complete';
+            store.resetChain({ suppressHandler });
+            store.setChain([ROOT_KEY]);
+            store.setLastAction(null);
+            store.setChainState('awaitNamespace');
+            return;
+        }
+
+        if (store.chainState === 'idle') {
+            if (key === 'Escape' && !e.shiftKey && !hasModifier) {
                 const target = e.target as HTMLElement;
                 const container = target.closest('[data-cy]') as HTMLElement | null;
                 if (container && this.$iApi.$rootEl?.querySelector('.panel-container')?.contains(container)) {
@@ -91,14 +106,39 @@ export class KeyboardnavAPI extends FixtureInstance {
             return;
         }
 
-        if ((e.key === 'Backspace' || e.key === 'Delete') && chain.length && !e.shiftKey && !hasModifier) {
+        if (key === 'Escape') {
             e.preventDefault();
-            const removed = store.popChain();
+            store.resetChain({ event: e });
+            return;
+        }
+
+        if (key === 'Backspace') {
+            if (!chain.length) return;
+            e.preventDefault();
+            const previousState = store.chainState;
             store.setLastAction(null);
-            const activeNamespace = store.activeNamespace;
-            if (removed && activeNamespace && removed === activeNamespace) {
-                store.deactivate(e);
+            store.popChain();
+
+            if (!store.keyChain.length) {
+                store.resetChain({ suppressHandler: true });
+                return;
             }
+
+            if (store.keyChain.length === 1) {
+                store.setChainState('awaitNamespace');
+                store.deactivate(e);
+                return;
+            }
+
+            if (store.keyChain.length === 2) {
+                store.setChainState('awaitAction');
+                const namespaceKey = store.keyChain[1];
+                if (previousState === 'complete' && namespaceKey) {
+                    store.activate(namespaceKey, e);
+                }
+                return;
+            }
+
             return;
         }
 
@@ -106,54 +146,51 @@ export class KeyboardnavAPI extends FixtureInstance {
             return;
         }
 
-        const key = e.key.length === 1 ? e.key.toUpperCase() : e.key;
+        if (store.chainState === 'awaitNamespace') {
+            const namespaces = Object.keys(store.namespaces);
 
-        if (key === ROOT_KEY) {
-            e.preventDefault();
-            store.deactivate(e);
-            store.setChain([ROOT_KEY]);
-            store.setLastAction(null);
-            return;
-        }
-
-        if (!store.keyChain.length) {
-            return;
-        }
-
-        if (store.keyChain.length === 1) {
-            const namespaces = store.namespaces;
             if (key === 'H') {
                 e.preventDefault();
-                store.appendKey(key);
-                store.setLastAction({ namespace: HELP_NAMESPACE, key });
+                store.appendKey('H');
+                store.setLastAction({ namespace: HELP_NAMESPACE, key: 'H' });
+                store.finalizeChain({ event: e });
                 store.setHelpVisible(!store.helpVisible);
                 return;
             }
 
-            if (key in namespaces) {
+            if (namespaces.includes(key)) {
                 e.preventDefault();
                 store.appendKey(key);
                 store.setLastAction(null);
                 store.activate(key, e);
+                store.setChainState('awaitAction');
                 return;
             }
-        }
 
-        const activeNamespace = store.activeNamespace;
-        if (activeNamespace && key.length === 1) {
-            e.preventDefault();
-            store.appendKey(key);
-            const action = store.trigger(key, e);
-            store.setLastAction(action);
-            store.deactivate(e);
             return;
         }
 
-        if (key.length === 1) {
-            // Chain is active but key is not handled; record it so the UI reflects the attempted sequence.
+        if (store.chainState === 'awaitAction') {
+            const namespaceKey = store.activeNamespace ?? (chain[1] || '');
+            const namespace = store.namespaces[namespaceKey];
+            if (!namespace) {
+                store.resetChain({ suppressHandler: true });
+                return;
+            }
+
+            const validKeys = namespace.keys.map(item => item.key.toUpperCase());
+            if (!validKeys.includes(key)) {
+                return;
+            }
+
             e.preventDefault();
             store.appendKey(key);
-            store.setLastAction(null);
+            const action = store.trigger(key, e);
+            if (action) {
+                store.setLastAction(action);
+            }
+            store.finalizeChain({ event: e });
+            return;
         }
     };
 

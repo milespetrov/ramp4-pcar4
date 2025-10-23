@@ -26,8 +26,13 @@
             class="relative ml-10 top-2 text-sm sm:text-base font-mono flex items-center gap-2"
             aria-live="polite"
         >
-            <span>: {{ chainDisplay.keys }}</span>
-            <span v-if="chainDisplay.description">- {{ chainDisplay.description }}…</span>
+            <span class="chain-content">
+                <span class="chain-colon">:</span>
+                <span class="chain-keys">{{ chainDisplay.keys }}</span>
+                <span v-if="chainDisplay.cursor" class="chain-cursor">_</span>
+                <span v-if="chainDisplay.options" class="chain-options">{{ chainDisplay.options }}</span>
+            </span>
+            <span v-if="chainDisplay.description">- {{ chainDisplay.description }}...</span>
         </span>
         <span
             class="relative ml-10 top-2 text-sm sm:text-base"
@@ -148,13 +153,16 @@ const coords = computed(() => mapCaptionStore.coords);
 const langtoggle = computed(() => mapCaptionStore.langtoggle);
 const mapConfig = computed(() => configStore.config.map);
 
-const { keyChain, lastAction } = storeToRefs(keyboardnavStore);
+const { keyChain, lastAction, chainState, namespaces, activeNamespace } = storeToRefs(keyboardnavStore);
 
 const chainDisplay = computed(() => {
     if (!keyChain.value.length) return null;
 
-    const action = lastAction.value;
+    const keys = keyChain.value.join(' ');
+    const cursor = chainState.value === 'awaitNamespace' || chainState.value === 'awaitAction';
+
     let description: string | null = null;
+    const action = lastAction.value;
     if (action) {
         if (action.namespace === HELP_NAMESPACE) {
             description = t('keyboardnav.chain.help');
@@ -167,9 +175,36 @@ const chainDisplay = computed(() => {
         }
     }
 
+    let options: string | null = null;
+    if (chainState.value === 'awaitNamespace') {
+        const helpOption = `H - ${t('keyboardnav.chain.help')}`;
+        const namespaceOptions = Object.keys(namespaces.value).map(nsKey => {
+            const labelKey = `keyboardnav.ns.${nsKey}`;
+            const translated = t(labelKey);
+            const label = translated === labelKey ? nsKey : translated;
+            return `${nsKey} - ${label}`;
+        });
+        const optionLabels = [helpOption, ...namespaceOptions];
+        options = `[${optionLabels.join(', ')}]`;
+    } else if (chainState.value === 'awaitAction') {
+        const nsKey = activeNamespace.value ?? keyChain.value[1];
+        const namespace = nsKey ? namespaces.value[nsKey] : undefined;
+        if (namespace && namespace.keys?.length) {
+            const optionLabels = namespace.keys.map(item => {
+                const labelKey = `keyboardnav.key.${nsKey}.${item.key}`;
+                const translated = t(labelKey);
+                const label = translated === labelKey ? item.key : translated;
+                return `${item.key} - ${label}`;
+            });
+            options = `[${optionLabels.join(', ')}]`;
+        }
+    }
+
     return {
-        keys: keyChain.value.join(' '),
-        description
+        keys,
+        options,
+        description,
+        cursor: cursor && !!options
     };
 });
 
@@ -229,6 +264,30 @@ const changeScaleMessage = (isImperialScale: boolean = false) => {
 
     button:focus {
         outline: 2px solid #1e3a8a !important;
+    }
+}
+
+.chain-content {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.chain-cursor {
+    animation: chain-cursor-blink 1s steps(2, start) infinite;
+}
+
+.chain-options {
+    white-space: nowrap;
+}
+
+@keyframes chain-cursor-blink {
+    0%,
+    100% {
+        opacity: 0;
+    }
+    50% {
+        opacity: 1;
     }
 }
 </style>

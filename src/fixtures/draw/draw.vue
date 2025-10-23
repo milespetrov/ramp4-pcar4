@@ -35,6 +35,7 @@ import {
 } from '@/geo/esri';
 import { GlobalEvents } from '@/api';
 import type { KeyboardnavAPI } from '@/fixtures/keyboardnav/api/keyboardnav';
+import { useKeyboardnavStore } from '@/fixtures/keyboardnav/store/keyboardnav-store';
 
 /* --------------------------------------------------------------------------
  * CONSTANTS & GLOBAL VARIABLES
@@ -46,6 +47,7 @@ const translateTerm = (key?: string): string => (key ? t(`draw.${key}`) : t('dra
 
 const iApi = inject('iApi') as InstanceAPI;
 const drawStore = useDrawStore();
+const keyboardnavStore = useKeyboardnavStore();
 
 // Sketch widget and graphics layer reference variables
 let sketch: HTMLArcgisSketchElement | null = null;
@@ -372,6 +374,7 @@ const createGraphicAtCenter = async () => {
         if (drawStore.activeTool !== 'point') {
             drawStore.clearSelection();
             drawStore.setActiveTool(null);
+            keyboardnavStore.resetChain({ suppressHandler: true });
             sketch.cancel();
         }
 
@@ -791,6 +794,7 @@ const handleSketchCreateEvent = (event: __esri.SketchCreateEvent) => {
 
         if (event.tool !== 'point') {
             drawStore.setActiveTool(null);
+            keyboardnavStore.resetChain({ suppressHandler: true });
         }
     }
 };
