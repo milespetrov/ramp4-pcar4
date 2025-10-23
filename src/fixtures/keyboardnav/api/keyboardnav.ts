@@ -134,7 +134,7 @@ export class KeyboardnavAPI extends FixtureInstance {
                 store.setChainState('awaitAction');
                 const namespaceKey = store.keyChain[1];
                 if (previousState === 'complete' && namespaceKey) {
-                    store.activate(namespaceKey, e);
+                    store.activate(namespaceKey, e, { suppressHandler: false });
                 }
                 return;
             }
@@ -186,6 +186,9 @@ export class KeyboardnavAPI extends FixtureInstance {
             e.preventDefault();
             store.appendKey(key);
             const action = store.trigger(key, e);
+            if (action?.chainAction) {
+                return;
+            }
             if (action) {
                 store.setLastAction(action);
             }

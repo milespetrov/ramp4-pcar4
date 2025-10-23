@@ -1,17 +1,19 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
+import { ROOT_KEY } from '../constants';
+import type { KeyboardnavHandlerAPI, KeyboardnavChainAction } from '../types';
 
 export interface KeyItem {
     key: string;
     description: Record<string, string>;
-    handler?: (e: KeyboardEvent) => void;
+    handler?: (api: KeyboardnavHandlerAPI, e: KeyboardEvent) => void;
 }
 
 export interface NamespaceRegistration {
     name: Record<string, string>;
     keys: KeyItem[];
-    handler?: (key: string, e: KeyboardEvent) => void;
-    activeHandler?: (e?: KeyboardEvent) => void;
+    handler?: (api: KeyboardnavHandlerAPI, e: KeyboardEvent, key: string) => void;
+    activeHandler?: (api: KeyboardnavHandlerAPI, e?: KeyboardEvent) => void;
     deactiveHandler?: (e?: KeyboardEvent) => void;
 }
 
@@ -26,9 +28,12 @@ export interface KeyboardnavStore {
     chainState: ChainState;
     register: (namespace: string, options: NamespaceRegistration) => string;
     unregister: (namespace: string) => void;
-    activate: (namespace: string, e: KeyboardEvent) => void;
+    activate: (namespace: string, e: KeyboardEvent, options?: { suppressHandler?: boolean }) => void;
     deactivate: (e?: KeyboardEvent, options?: { suppressHandler?: boolean }) => void;
-    trigger: (key: string, e: KeyboardEvent) => { namespace: string; key: string } | null;
+    trigger: (
+        key: string,
+        e: KeyboardEvent
+    ) => { namespace: string; key: string; chainAction?: KeyboardnavChainAction } | null;
     setHelpVisible: (val: boolean) => void;
     resetChain: (options?: { event?: KeyboardEvent; suppressHandler?: boolean; preserveLastAction?: boolean; preserveChain?: boolean }) => void;
     setChain: (keys: string[]) => void;
@@ -94,9 +99,33 @@ export const useKeyboardnavStore = defineStore('keyboardnav', () => {
         delete namespaces.value[namespace];
     }
 
-    function activate(namespace: string, e: KeyboardEvent): void {
+    function createHandlerAPI(namespaceKey: string, e: KeyboardEvent, state: { action: KeyboardnavChainAction | null }): KeyboardnavHandlerAPI {
+        return {
+            clear: () => {
+                state.action = 'clear';
+                resetChain({ event: e, suppressHandler: true });
+            },
+            reset: () => {
+                state.action = 'reset';
+                const nsKey = namespaceKey || keyChain.value[1];
+                if (!nsKey) {
+                    resetChain({ event: e, suppressHandler: true });
+                    return;
+                }
+                setChain([ROOT_KEY, nsKey]);
+                setLastAction(null);
+                setChainState('awaitAction');
+                activeNamespace.value = nsKey;
+            }
+        };
+    }
+
+    function activate(namespace: string, e: KeyboardEvent, options?: { suppressHandler?: boolean }): void {
         activeNamespace.value = namespace;
-        namespaces.value[namespace]?.activeHandler?.(e);
+        if (options?.suppressHandler) return;
+        const state = { action: null as KeyboardnavChainAction | null };
+        const api = createHandlerAPI(namespace, e, state);
+        namespaces.value[namespace]?.activeHandler?.(api, e);
     }
 
     function deactivate(e?: KeyboardEvent, options?: { suppressHandler?: boolean }): void {
@@ -109,21 +138,25 @@ export const useKeyboardnavStore = defineStore('keyboardnav', () => {
     function trigger(
         key: string,
         e: KeyboardEvent
-    ): { namespace: string; key: string } | null {
+    ): { namespace: string; key: string; chainAction?: KeyboardnavChainAction } | null {
         const ns = activeNamespace.value;
         if (!ns) return null;
         const options = namespaces.value[ns];
         if (!options) return null;
+        const state: { action: KeyboardnavChainAction | null } = { action: null };
+        const api = createHandlerAPI(ns, e, state);
+
         if (options.handler) {
-            options.handler(key, e);
-            return { namespace: ns, key };
-        } else {
-            const item = options.keys.find(k => k.key === key);
-            item?.handler?.(e);
-            if (item) {
-                return { namespace: ns, key: item.key };
-            }
+            options.handler(api, e, key);
+            return { namespace: ns, key, chainAction: state.action ?? undefined };
         }
+
+        const item = options.keys.find(k => k.key === key);
+        item?.handler?.(api, e);
+        if (item) {
+            return { namespace: ns, key: item.key, chainAction: state.action ?? undefined };
+        }
+
         return null;
     }
 

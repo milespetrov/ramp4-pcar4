@@ -35,7 +35,7 @@ import {
 } from '@/geo/esri';
 import { GlobalEvents } from '@/api';
 import type { KeyboardnavAPI } from '@/fixtures/keyboardnav/api/keyboardnav';
-import { useKeyboardnavStore } from '@/fixtures/keyboardnav/store/keyboardnav-store';
+import type { KeyboardnavHandlerAPI } from '@/fixtures/keyboardnav/types';
 
 /* --------------------------------------------------------------------------
  * CONSTANTS & GLOBAL VARIABLES
@@ -47,7 +47,6 @@ const translateTerm = (key?: string): string => (key ? t(`draw.${key}`) : t('dra
 
 const iApi = inject('iApi') as InstanceAPI;
 const drawStore = useDrawStore();
-const keyboardnavStore = useKeyboardnavStore();
 
 // Sketch widget and graphics layer reference variables
 let sketch: HTMLArcgisSketchElement | null = null;
@@ -67,6 +66,7 @@ type Vertex = [number, number]; // [x, y] coordinates
 let multiPointVertices: Vertex[] = [];
 
 const rampEventHandlers = reactive<Array<string>>([]);
+let keyboardNavHandler: KeyboardnavHandlerAPI | null = null;
 
 async function handleKeyboardShortcuts() {
     const keyboardNav = (await iApi.fixture.isLoaded('keyboardnav')) as KeyboardnavAPI;
@@ -76,10 +76,12 @@ async function handleKeyboardShortcuts() {
             en: 'Draw Tools',
             fr: 'Outils de dessin'
         },
-        activeHandler: () => {
+        activeHandler: (nav: KeyboardnavHandlerAPI) => {
             drawStore.setActiveTool('');
+            keyboardNavHandler = nav;
         },
         deactiveHandler: () => {
+            keyboardNavHandler = null;
             drawStore.setActiveTool(null);
         },
         keys: [
@@ -373,8 +375,8 @@ const createGraphicAtCenter = async () => {
         // cancel sketch if graphic is not a point
         if (drawStore.activeTool !== 'point') {
             drawStore.clearSelection();
-            drawStore.setActiveTool(null);
-            keyboardnavStore.resetChain({ suppressHandler: true });
+            drawStore.setActiveTool('');
+            keyboardNavHandler?.reset();
             sketch.cancel();
         }
 
@@ -776,6 +778,7 @@ const cleanupDrawTools = () => {
 
     sketch = null;
     graphicsLayer = null;
+    keyboardNavHandler = null;
 };
 
 // Extract the existing sketch event handlers for reuse
@@ -793,8 +796,8 @@ const handleSketchCreateEvent = (event: __esri.SketchCreateEvent) => {
         });
 
         if (event.tool !== 'point') {
-            drawStore.setActiveTool(null);
-            keyboardnavStore.resetChain({ suppressHandler: true });
+            drawStore.setActiveTool('');
+            keyboardNavHandler?.reset();
         }
     }
 };
