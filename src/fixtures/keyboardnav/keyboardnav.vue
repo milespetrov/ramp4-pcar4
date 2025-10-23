@@ -57,36 +57,57 @@
                                     {{ t('keyboardnav.mainShortcuts.escape') }}
                                 </span>
                             </div>
+                            <div class="flex items-center gap-x-12">
+                                <span
+                                    class="font-mono px-6 text-[0.825rem]/6 font-semibold rounded-lg px-1.5 ring-1 ring-inset ring-zinc-300 bg-zinc-400/10 text-zinc-500 dark:ring-zinc-400/30 dark:bg-zinc-400/10 dark:text-zinc-400"
+                                >
+                                    S
+                                </span>
+                                <span class="h-2 w-2 rounded-full bg-zinc-300 dark:bg-zinc-600"></span>
+                                <span class="font-mono text-md text-zinc-600">
+                                    {{ t('keyboardnav.mainShortcuts.start') }}
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-x-12">
+                                <span
+                                    class="font-mono px-6 text-[0.825rem]/6 font-semibold rounded-lg px-1.5 ring-1 ring-inset ring-zinc-300 bg-zinc-400/10 text-zinc-500 dark:ring-zinc-400/30 dark:bg-zinc-400/10 dark:text-zinc-400"
+                                >
+                                    Backspace
+                                </span>
+                                <span class="h-2 w-2 rounded-full bg-zinc-300 dark:bg-zinc-600"></span>
+                                <span class="font-mono text-md text-zinc-600">
+                                    {{ t('keyboardnav.mainShortcuts.backspace') }}
+                                </span>
+                            </div>
                         </div>
                     </li>
-                    <li v-if="namespaceList.length === 0" class="pl-24 mb-8 py-16 border-b">
+                    <li v-if="namespaceEntries.length === 0" class="pl-24 mb-8 py-16 border-b">
                         <p class="font-mono text-md text-zinc-600">
                             {{ t('keyboardnav.noShortcuts') }}
                         </p>
                     </li>
-                    <li v-for="ns in namespaceList" :key="ns" class="pl-24 mb-8 py-16 border-b">
-                        <div class="flex items-center gap-x-12">
-                            <span
-                                class="font-mono px-6 text-[0.825rem]/6 font-semibold rounded-lg px-1.5 ring-1 ring-inset ring-indigo-300 bg-indigo-400/10 text-indigo-500 dark:ring-indigo-400/30 dark:bg-indigo-400/10 dark:text-indigo-400"
-                            >
-                                SHIFT + {{ ns }}
-                            </span>
+                    <li v-for="entry in namespaceEntries" :key="entry.id" class="pl-24 mb-8 py-16 border-b">
+                        <div class="flex items-center gap-x-12" :class="{ 'opacity-60': activeNamespace && activeNamespace !== entry.id }">
+                            <div class="flex items-center gap-x-4">
+                                <span class="key indigo">S</span>
+                                <span class="key indigo">{{ entry.id }}</span>
+                            </div>
                             <span class="h-2 w-2 rounded-full bg-zinc-300 dark:bg-zinc-600"></span>
                             <span class="font-mono text-md text-zinc-600">
-                                {{ t(`keyboardnav.ns.${ns}`) }}
+                                {{ t(`keyboardnav.ns.${entry.id}`) }}
                             </span>
                         </div>
 
-                        <div v-if="activeNamespace === ns" class="space-y-4 p-16 pl-24">
-                            <div v-for="item in activeKeys" :key="item.key" class="flex items-center gap-x-12">
-                                <span
-                                    class="font-mono px-6 text-[0.825rem]/6 font-semibold rounded-lg px-1.5 ring-1 ring-inset ring-zinc-300 bg-zinc-400/10 text-zinc-500 dark:ring-zinc-400/30 dark:bg-zinc-400/10 dark:text-zinc-400"
-                                >
-                                    {{ item.key }}
-                                </span>
+                        <div v-if="entry.keys.length" class="space-y-4 p-16 pl-24">
+                            <div v-for="item in entry.keys" :key="item.key" class="flex items-center gap-x-12">
+                                <div class="flex items-center gap-x-4">
+                                    <span class="key zinc">S</span>
+                                    <span class="key zinc">{{ entry.id }}</span>
+                                    <span class="key zinc">{{ item.key }}</span>
+                                </div>
                                 <span class="h-2 w-2 rounded-full bg-zinc-300 dark:bg-zinc-600"></span>
                                 <span class="font-mono text-md text-zinc-600">
-                                    {{ t(`keyboardnav.key.${ns}.${item.key}`) }}
+                                    {{ t(`keyboardnav.key.${entry.id}.${item.key}`) }}
                                 </span>
                             </div>
                         </div>
@@ -106,12 +127,12 @@ const store = useKeyboardnavStore();
 const { activeNamespace, namespaces, helpVisible } = storeToRefs(store);
 const { t } = useI18n();
 
-const namespaceList = computed(() => Object.keys(namespaces.value));
-const activeKeys = computed(() => {
-    const ns = activeNamespace.value;
-    if (!ns) return [];
-    return namespaces.value[ns]?.keys || [];
-});
+const namespaceEntries = computed(() =>
+    Object.entries(namespaces.value).map(([id, options]) => ({
+        id,
+        keys: options?.keys ?? []
+    }))
+);
 
 const overlayRef = useTemplateRef('overlayRef');
 function closeHelp() {

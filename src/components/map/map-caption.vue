@@ -22,8 +22,16 @@
         </span>
 
         <span
+            v-if="chainDisplay"
+            class="relative ml-10 top-2 text-sm sm:text-base font-mono flex items-center gap-2"
+            aria-live="polite"
+        >
+            <span>: {{ chainDisplay.keys }}</span>
+            <span v-if="chainDisplay.description">- {{ chainDisplay.description }}…</span>
+        </span>
+        <span
             class="relative ml-10 top-2 text-sm sm:text-base"
-            v-if="!attribution?.text!.disabled"
+            v-else-if="!attribution?.text!.disabled"
             v-truncate="{
                 options: {
                     placement: 'top',
@@ -117,6 +125,7 @@
 
 <script setup lang="ts">
 import { computed, inject, nextTick, onBeforeUnmount, onUpdated, reactive, ref, watch } from 'vue';
+import { storeToRefs } from 'pinia';
 import { useMapCaptionStore } from '@/stores/map-caption';
 import NotificationsCaptionButton from '@/components/notification-center/caption-button.vue';
 import AboutRampDropdown from '@/components/about-ramp/about-ramp-dropdown.vue';
@@ -124,8 +133,11 @@ import { useI18n } from 'vue-i18n';
 
 import type { InstanceAPI } from '@/api';
 import { useConfigStore } from '@/stores/config';
+import { useKeyboardnavStore } from '@/fixtures/keyboardnav/store/keyboardnav-store';
+import { HELP_NAMESPACE } from '@/fixtures/keyboardnav/constants';
 
 const mapCaptionStore = useMapCaptionStore();
+const keyboardnavStore = useKeyboardnavStore();
 const configStore = useConfigStore();
 const { t } = useI18n();
 const iApi = inject('iApi') as InstanceAPI;
@@ -135,6 +147,31 @@ const attribution = computed(() => mapCaptionStore.attribution);
 const coords = computed(() => mapCaptionStore.coords);
 const langtoggle = computed(() => mapCaptionStore.langtoggle);
 const mapConfig = computed(() => configStore.config.map);
+
+const { keyChain, lastAction } = storeToRefs(keyboardnavStore);
+
+const chainDisplay = computed(() => {
+    if (!keyChain.value.length) return null;
+
+    const action = lastAction.value;
+    let description: string | null = null;
+    if (action) {
+        if (action.namespace === HELP_NAMESPACE) {
+            description = t('keyboardnav.chain.help');
+        } else {
+            const translationKey = `keyboardnav.key.${action.namespace}.${action.key}`;
+            const translated = t(translationKey);
+            if (translated !== translationKey) {
+                description = translated;
+            }
+        }
+    }
+
+    return {
+        keys: keyChain.value.join(' '),
+        description
+    };
+});
 
 const lang = ref<Array<string>>([]);
 const watchers = reactive<Array<() => void>>([]);

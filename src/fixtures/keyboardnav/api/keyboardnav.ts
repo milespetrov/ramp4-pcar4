@@ -1,6 +1,7 @@
 import { FixtureInstance } from '@/api';
 import { useKeyboardnavStore } from '../store/keyboardnav-store';
 import type { NamespaceRegistration } from '../store/keyboardnav-store';
+import { ROOT_KEY, HELP_NAMESPACE } from '../constants';
 
 /**
  * @internal
@@ -37,31 +38,46 @@ export class KeyboardnavAPI extends FixtureInstance {
 
     /** @internal */
     added(): void {
-        this.$iApi.$rootEl?.addEventListener('keydown', (e: Event) => this._handleKeyDown(e as KeyboardEvent));
-        this.$iApi.$rootEl?.addEventListener('keyup', (e: Event) => this._handleKeyUp(e as KeyboardEvent));
-        this.$iApi.$rootEl?.addEventListener('blur', this._handleBlur);
+        const root = this.$iApi.$rootEl as HTMLElement | null;
+        root?.addEventListener('keydown', this._handleKeyDown);
+        root?.addEventListener('blur', this._handleBlur);
     }
 
     /** @internal */
     removed(): void {
-        this.$iApi.$rootEl?.removeEventListener('keydown', (e: Event) => this._handleKeyDown(e as KeyboardEvent));
-        this.$iApi.$rootEl?.removeEventListener('keyup', (e: Event) => this._handleKeyUp(e as KeyboardEvent));
-        this.$iApi.$rootEl?.removeEventListener('blur', this._handleBlur);
+        const root = this.$iApi.$rootEl as HTMLElement | null;
+        root?.removeEventListener('keydown', this._handleKeyDown);
+        root?.removeEventListener('blur', this._handleBlur);
     }
 
-    private _handleKeyDown = (e: KeyboardEvent): void => {
+    private _handleKeyDown = (event: Event): void => {
+        if (!(event instanceof KeyboardEvent)) return;
+        const e = event;
         if (this._isInput(e.target)) return;
 
-        if (!e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey) {
-            if (/^[1-5]$/.test(e.key)) {
-                const idx = parseInt(e.key) - 1;
+        const store = this.keyboardnavStore;
+        const chain = store.keyChain;
+        const hasModifier = e.altKey || e.ctrlKey || e.metaKey;
+
+        if (!e.shiftKey && !hasModifier) {
+            if (!chain.length && /^[1-5]$/.test(e.key)) {
+                const idx = parseInt(e.key, 10) - 1;
                 const panel = this.$iApi.panel.visible[idx];
                 if (panel) {
                     e.preventDefault();
                     this.$iApi.panel.focus(panel);
                 }
                 return;
-            } else if (e.key === 'Escape') {
+            }
+        }
+
+        if (e.key === 'Escape') {
+            if (chain.length) {
+                e.preventDefault();
+                store.resetChain(e);
+                return;
+            }
+            if (!e.shiftKey && !hasModifier) {
                 const target = e.target as HTMLElement;
                 const container = target.closest('[data-cy]') as HTMLElement | null;
                 if (container && this.$iApi.$rootEl?.querySelector('.panel-container')?.contains(container)) {
@@ -71,38 +87,78 @@ export class KeyboardnavAPI extends FixtureInstance {
                         this.$iApi.panel.close(id);
                     }
                 }
+            }
+            return;
+        }
+
+        if ((e.key === 'Backspace' || e.key === 'Delete') && chain.length && !e.shiftKey && !hasModifier) {
+            e.preventDefault();
+            const removed = store.popChain();
+            store.setLastAction(null);
+            const activeNamespace = store.activeNamespace;
+            if (removed && activeNamespace && removed === activeNamespace) {
+                store.deactivate(e);
+            }
+            return;
+        }
+
+        if (e.shiftKey || hasModifier) {
+            return;
+        }
+
+        const key = e.key.length === 1 ? e.key.toUpperCase() : e.key;
+
+        if (key === ROOT_KEY) {
+            e.preventDefault();
+            store.deactivate(e);
+            store.setChain([ROOT_KEY]);
+            store.setLastAction(null);
+            return;
+        }
+
+        if (!store.keyChain.length) {
+            return;
+        }
+
+        if (store.keyChain.length === 1) {
+            const namespaces = store.namespaces;
+            if (key === 'H') {
+                e.preventDefault();
+                store.appendKey(key);
+                store.setLastAction({ namespace: HELP_NAMESPACE, key });
+                store.setHelpVisible(!store.helpVisible);
+                return;
+            }
+
+            if (key in namespaces) {
+                e.preventDefault();
+                store.appendKey(key);
+                store.setLastAction(null);
+                store.activate(key, e);
                 return;
             }
         }
 
-        const key = e.key.toUpperCase();
-        if (e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey) {
-            if (key in this.keyboardnavStore.namespaces) {
-                e.preventDefault();
-                if (this.keyboardnavStore.activeNamespace === key) {
-                    this.keyboardnavStore.deactivate(e);
-                } else {
-                    this.keyboardnavStore.activate(key, e);
-                }
-            }
-        } else if (!e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey && key.length === 1) {
-            if (this.keyboardnavStore.activeNamespace) {
-                e.preventDefault();
-                this.keyboardnavStore.trigger(key, e);
-            }
-        }
-    };
-
-    private _handleKeyUp = (e: KeyboardEvent): void => {
-        if (this._isInput(e.target)) return;
-        if ((e.key.toUpperCase() === 'H' || e.key === '?') && e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey) {
+        const activeNamespace = store.activeNamespace;
+        if (activeNamespace && key.length === 1) {
             e.preventDefault();
-            this.keyboardnavStore.setHelpVisible(!this.keyboardnavStore.helpVisible);
+            store.appendKey(key);
+            const action = store.trigger(key, e);
+            store.setLastAction(action);
+            store.deactivate(e);
+            return;
+        }
+
+        if (key.length === 1) {
+            // Chain is active but key is not handled; record it so the UI reflects the attempted sequence.
+            e.preventDefault();
+            store.appendKey(key);
+            store.setLastAction(null);
         }
     };
 
-    private _handleBlur = (e?: Event): void => {
-        this.keyboardnavStore.deactivate(e as KeyboardEvent);
+    private _handleBlur = (): void => {
+        this.keyboardnavStore.resetChain();
         this.keyboardnavStore.setHelpVisible(false);
     };
 }
