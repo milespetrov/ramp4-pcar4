@@ -35,23 +35,25 @@ Once a namespace is active the fixture decides which action keys are available. 
 
 ## Registering Shortcuts in a Fixture
 
-Use the `KeyboardnavAPI` from inside your fixture to register a namespace and its actions. The final namespace letter is returned so you can keep track of collisions or auto-assigned letters.
+Use the `KeyboardnavAPI` exposed on `$iApi` to register a namespace and its actions. The final namespace letter is returned so you can keep track of collisions or auto-assigned letters.
 
 ```ts
 import type { KeyboardnavAPI } from '@/fixtures/keyboardnav/api/keyboardnav';
-import type { KeyboardnavHandlerAPI } from '@/fixtures/keyboardnav/types';
 
-async function registerKeyboardShortcuts(iApi: InstanceAPI) {
-    const keyboardNav = (await iApi.fixture.isLoaded('keyboardnav')) as KeyboardnavAPI;
+function registerKeyboardShortcuts(iApi: InstanceAPI) {
+    const keyboardNav = iApi.keyboardNav;
+    if (!keyboardNav) {
+        console.warn('Keyboard navigation fixture is not available; skipping shortcut registration.');
+        return;
+    }
 
     const namespace = keyboardNav.register('D', {
         name: {
             en: 'Draw tools',
             fr: 'Outils de dessin'
         },
-        activeHandler: nav => {
+        activeHandler: () => {
             drawStore.setActiveTool('');
-            // nav provides clear/reset helpers if you need to manage the chain manually.
         },
         deactiveHandler: () => drawStore.setActiveTool(null),
         keys: [
@@ -61,12 +63,12 @@ async function registerKeyboardShortcuts(iApi: InstanceAPI) {
                     en: 'Draw a line',
                     fr: 'Tracer une ligne'
                 },
-                handler: (nav: KeyboardnavHandlerAPI, event: KeyboardEvent) => {
+                handler: (_store, event) => {
                     event.preventDefault();
                     drawStore.setActiveTool('polyline');
 
-                    // Leave the draw namespace active so the user can pick another tool.
-                    nav.reset();
+                    // Keep the namespace alive so the user can launch another action immediately.
+                    return keyboardNav.reset();
                 }
             },
             {
@@ -75,12 +77,12 @@ async function registerKeyboardShortcuts(iApi: InstanceAPI) {
                     en: 'Clear graphics',
                     fr: 'Effacer les graphiques'
                 },
-                handler: (nav, event) => {
+                handler: (_store, event) => {
                     event.preventDefault();
                     drawStore.clearGraphics();
 
-                    // Exit the chain entirely so the user starts fresh.
-                    nav.clear();
+                    // Exit the chain entirely so the next shortcut starts from scratch.
+                    return keyboardNav.clear(event);
                 }
             }
         ]
@@ -98,38 +100,32 @@ The `register` method accepts a `NamespaceRegistration` object. Each field is op
 
 - **name** (`Record<string, string>`, required): Localized label for the namespace. Keys should match available locale codes (for example `en`, `fr`).  
 - **keys** (`KeyItem[]`, required): List of actions exposed once the namespace is active.  
-- **handler** (`(api, event, key) => void`, optional): Parent handler that can respond to any key in the namespace. Use this when every key shares the same logic. The third argument is the uppercase key that was pressed.  
-- **activeHandler** (`(api: KeyboardnavHandlerAPI, event?: KeyboardEvent) => void`, optional): Invoked when the namespace becomes active (after `S` plus the namespace letter). Handy for priming state or stashing the API for later use.  
-- **deactiveHandler** (`(event?: KeyboardEvent) => void`, optional): Invoked when the namespace is dismissed without suppression. Use it to clean up focus or reset state.
+- **handler** (`(store, event, key) => KeyboardnavChainAction | void`, optional): Parent handler that can respond to any key in the namespace. Use this when every key shares the same logic. The third argument is the uppercase key that was pressed.  
+- **activeHandler** (`(store, event?) => void`, optional): Invoked when the namespace becomes active (after `S` plus the namespace letter). Handy for priming state or caching the returned namespace.  
+- **deactiveHandler** (`(store, event?) => void`, optional): Invoked when the namespace is dismissed without suppression. Use it to clean up focus or reset state.
 
 Each `KeyItem` entry supports the following properties:
 
-- **key** (`string`, required): The single character (A–Z, 0–9, etc.) that triggers the action. It is stored in uppercase.  
+- **key** (`string`, required): The single character (A-Z, 0-9, etc.) that triggers the action. It is stored in uppercase.  
 - **description** (`Record<string, string>`, required): Localized description shown in the help overlay.  
-- **handler** (`(api, event) => void`, optional): Called when the user completes the chain with this key. If you omit the handler you must supply a namespace-level `handler` instead.
+- **handler** (`(store, event) => KeyboardnavChainAction | void`, optional): Called when the user completes the chain with this key. Return a chain action (see below) to control how the sequence proceeds. If you omit the handler you must supply a namespace-level `handler` instead.
 
-> Tip: Do not mutate the navigation store directly. Use the handler API described below so that the chain stays in sync with the fixture UI.
+The first parameter passed to every callback is the `KeyboardnavStore` instance for convenience, so you can query existing namespaces or state without importing the store directly.
 
-## Handler Callback API
+## Chain Actions
 
-When a handler is invoked the first parameter is a `KeyboardnavHandlerAPI` object followed by the `KeyboardEvent`. Namespace-level handlers receive the pressed key as a third argument.
+Handlers can influence how the navigation chain behaves by returning a `KeyboardnavChainAction` value:
 
-```ts
-interface KeyboardnavHandlerAPI {
-    clear(): void;
-    reset(): void;
-}
-```
+- `keyboardNav.reset()` (or returning `'reset'`) removes the most recent key from the chain and keeps the namespace active so another action can be chosen immediately.  
+- `keyboardNav.clear()` (or returning `'clear'`) clears the entire chain and puts the navigation system back into its idle state.
 
-- `reset()` keeps the current namespace in the chain (`S Namespace`) and removes any action keys. The namespace stays active but its `activeHandler` is not re-run, so perform any state resets before calling `reset()`. Use this when you want to let users run another action immediately without pressing `S` again.  
-- `clear()` cancels the entire chain, deactivates the namespace, and returns the navigation state to idle. Use this when the action completes a workflow and you want the next shortcut to start from scratch.
-
-Both methods ensure that the internal store updates consistently—handlers do not need to call `useKeyboardnavStore` themselves.
+Both helpers update the store consistently, so handlers rarely need to mutate the store directly.
 
 ## Best Practices
 
-- Call `nav.reset()` after actions that keep the namespace available (for example switching draw tools).  
-- Call `nav.clear()` after destructive or one-off actions (closing panels, clearing data) so that accessibility focus returns to the idle state.  
+- Call `keyboardNav.reset()` after actions that keep the namespace available (for example switching draw tools).  
+- Call `keyboardNav.clear()` after destructive or one-off actions (closing panels, clearing data) so that accessibility focus returns to the idle state.  
 - Provide descriptions for every key so the help overlay remains useful.  
-- Consider storing the returned namespace letter if your fixture can be configured with custom keys—this makes it easy to surface the active shortcut in your UI.  
+- Consider storing the returned namespace letter if your fixture can be configured with custom keys - this makes it easy to surface the active shortcut in your UI.  
 - If your fixture renders focusable elements while a namespace is active, use the `activeHandler`/`deactiveHandler` hooks to move focus in a screen-reader friendly way.
+

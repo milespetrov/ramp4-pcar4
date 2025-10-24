@@ -1,6 +1,7 @@
 import { FixtureInstance } from '@/api';
 import { useKeyboardnavStore } from '../store/keyboardnav-store';
 import type { NamespaceRegistration } from '../store/keyboardnav-store';
+import type { KeyboardnavChainAction } from '../types';
 import { ROOT_KEY, HELP_NAMESPACE } from '../constants';
 
 /**
@@ -34,6 +35,32 @@ export class KeyboardnavAPI extends FixtureInstance {
             });
         });
         return finalNs;
+    }
+
+    /**
+     * Returns the navigation chain to the active namespace so another action can be
+     * selected without restarting the shortcut sequence.
+     */
+    reset(): KeyboardnavChainAction {
+        const store = this.keyboardnavStore;
+        const nsKey = store.activeNamespace ?? store.keyChain[1];
+        if (!nsKey) {
+            store.resetChain({ suppressHandler: true });
+            return 'reset';
+        }
+        store.setChain([ROOT_KEY, nsKey]);
+        store.setLastAction(null);
+        store.setChainState('awaitAction');
+        store.activeNamespace = nsKey;
+        return 'reset';
+    }
+
+    /**
+     * Clears the active navigation chain and returns the system to the idle state.
+     */
+    clear(event?: KeyboardEvent): KeyboardnavChainAction {
+        this.keyboardnavStore.resetChain({ event, suppressHandler: true });
+        return 'clear';
     }
 
     /** @internal */

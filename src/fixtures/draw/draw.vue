@@ -35,7 +35,6 @@ import {
 } from '@/geo/esri';
 import { GlobalEvents } from '@/api';
 import type { KeyboardnavAPI } from '@/fixtures/keyboardnav/api/keyboardnav';
-import type { KeyboardnavHandlerAPI } from '@/fixtures/keyboardnav/types';
 
 /* --------------------------------------------------------------------------
  * CONSTANTS & GLOBAL VARIABLES
@@ -66,22 +65,24 @@ type Vertex = [number, number]; // [x, y] coordinates
 let multiPointVertices: Vertex[] = [];
 
 const rampEventHandlers = reactive<Array<string>>([]);
-let keyboardNavHandler: KeyboardnavHandlerAPI | null = null;
+let keyboardNav: KeyboardnavAPI | undefined;
 
 async function handleKeyboardShortcuts() {
-    const keyboardNav = (await iApi.fixture.isLoaded('keyboardnav')) as KeyboardnavAPI;
+    keyboardNav = iApi.keyboardNav;
+    if (!keyboardNav) {
+        console.warn('Keyboard navigation fixture is not available; draw shortcuts are disabled.');
+        return;
+    }
 
     keyboardNav.register('D', {
         name: {
             en: 'Draw Tools',
             fr: 'Outils de dessin'
         },
-        activeHandler: (nav: KeyboardnavHandlerAPI) => {
+        activeHandler: () => {
             drawStore.setActiveTool('');
-            keyboardNavHandler = nav;
         },
         deactiveHandler: () => {
-            keyboardNavHandler = null;
             drawStore.setActiveTool(null);
         },
         keys: [
@@ -376,7 +377,7 @@ const createGraphicAtCenter = async () => {
         if (drawStore.activeTool !== 'point') {
             drawStore.clearSelection();
             drawStore.setActiveTool('');
-            keyboardNavHandler?.reset();
+            keyboardNav?.reset();
             sketch.cancel();
         }
 
@@ -778,7 +779,7 @@ const cleanupDrawTools = () => {
 
     sketch = null;
     graphicsLayer = null;
-    keyboardNavHandler = null;
+    keyboardNav = undefined;
 };
 
 // Extract the existing sketch event handlers for reuse
@@ -797,7 +798,7 @@ const handleSketchCreateEvent = (event: __esri.SketchCreateEvent) => {
 
         if (event.tool !== 'point') {
             drawStore.setActiveTool('');
-            keyboardNavHandler?.reset();
+            keyboardNav?.reset();
         }
     }
 };
