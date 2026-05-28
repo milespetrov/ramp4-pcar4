@@ -1,0 +1,1 @@
+import"./multi-instances-Bu3fiXLv.js";

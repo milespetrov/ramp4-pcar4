@@ -1,0 +1,1 @@
+import"./multi-instances-CYvUZEUF.js";

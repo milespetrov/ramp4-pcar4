@@ -1,0 +1,1 @@
+import"./teleport-details-DUCBggvx.js";

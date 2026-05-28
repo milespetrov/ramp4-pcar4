@@ -1,0 +1,1 @@
+import{r as e}from"./chunk-CaO2_eQ1.js";import"./apiConverter-9jPUcYJy.js";import{n as t,t as n}from"./centroidOperator-BYf4i5r4.js";var r=e({execute:()=>t,supportsCurves:()=>n});export{r as t};

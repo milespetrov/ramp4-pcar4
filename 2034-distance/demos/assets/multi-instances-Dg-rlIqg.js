@@ -1,0 +1,1 @@
+import"./multi-instances-B8NgSVIi.js";

@@ -1,0 +1,1 @@
+import"./apiConverter-Q3sDwNSe.js";import{i as e,r as t,t as n}from"./equalsOperator-D-d8ZNIl.js";export{e as accelerateGeometry,n as execute,t as supportsCurves};

@@ -1,0 +1,6 @@
+import{n as e}from"./glsl-BA5tVIOE.js";import{t}from"./ShaderBuilder-CuzWnUzO.js";import{t as n}from"./HighlightCellGridScreenSpacePass.glsl-Bd-qN0F0.js";import{t as r}from"./IntegerPassUniform-BPXredQw.js";import{s as i}from"./HighlightDownsample.glsl-DmQborhD.js";import{t as a}from"./HighlightReadBitmap.glsl-Baic8GZV.js";function o(){let o=new t;o.include(n),o.include(a);let{fragment:s}=o;return o.outputs.add(`fragSingleHighlight`,`vec2`,0),s.uniforms.add(new i(`highlightTexture`,e=>e.highlightTexture),new r(`highlightLevel`,e=>e.highlightLevel)),s.main.add(e`ivec2 iuv = ivec2(gl_FragCoord.xy);
+uvec2 inputTexel = texelFetch(highlightTexture, iuv, 0).rg;
+uint bits = readLevelBits(inputTexel, highlightLevel);
+bool hasHighlight = (bits & 1u) == 1u;
+bool hasOccluded  = (bits & 2u) == 2u;
+fragSingleHighlight = vec2(hasHighlight ? 1.0 : 0.0, hasOccluded ? 1.0 : 0.0);`),o}var s=Object.freeze(Object.defineProperty({__proto__:null,build:o},Symbol.toStringTag,{value:`Module`}));export{o as n,s as t};

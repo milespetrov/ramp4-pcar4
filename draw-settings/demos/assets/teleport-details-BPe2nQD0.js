@@ -1,0 +1,1 @@
+import"./teleport-details-CgipKE25.js";
