@@ -1,0 +1,1 @@
+import{t as e}from"./request-DRB8E8hU.js";async function t(t,n){return(await e(t,{responseType:`json`,query:{f:`json`,...n?.customParameters,token:n?.apiKey}})).data}export{t};

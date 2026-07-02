@@ -1,0 +1,1 @@
+import{t as e}from"./assets-nKMSa3QW.js";var t=null;async function n(){return t||=r(),t}async function r(){let t=await import(`./bundle-CLY9um_K.js`).then(e=>e.t);return await t.default({module_or_path:e(`esri/libs/parquet/pkg/bundle_bg.wasm`)}),t}export{n as t};

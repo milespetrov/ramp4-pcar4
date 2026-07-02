@@ -1,0 +1,1 @@
+import"./teleport-details-FJNv5h_q.js";
